@@ -36,6 +36,12 @@ This device has an I2C interface making it very easy to read the values, also in
 I have currently chosen to use the Waveshare IMU faction as it appear better than the version I was intending to write. 
 However, I suggest watching some YouTube videos to understand how it works and its limitations.
 
+# RC Receiver
+
+
+# Reg/Green LED Status Module
+
+![KY-011 Two Colour Red and Green LED](docs/images/KY-011%20Two%20Colour%20Red%20and%20Green%20LED.png)
 
 # Quadcopter Frame
 Since I have a 3D printer I decided to print my own frame. There are lots of suitable frames on [Thingiverse.com](https://www.thingiverse.com/). 
@@ -72,3 +78,12 @@ void HardwareLayer_LED_Green(bool state);
 void HardwareLayer_LED_State(ledEnum led, bool state);
 ```
 **Layer 3:** This last layer now only has to call a nicely wrapped function, thus keeping you code much more readable.
+
+
+# TODO
+
+* Altitude does not appear to be working.
+* Red/Green LED Module (GPIO)
+* LiPo Fuel gauge (ADC)
+* 
+* 
