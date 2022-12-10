@@ -12,6 +12,8 @@
 #define DISPLAY_IMU 2
 #define DISPLAY_RECEIVER 3
 #define DISPLAY_ALTITUDE 4
+#define DISPLAY_LED_MENU 5
+#define DISPLAY_LED_NONE 6
 
 void UartInterface_OnReceive(uint8_t character);
 

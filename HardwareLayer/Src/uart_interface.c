@@ -8,6 +8,7 @@
 #include "uart_interface.h"
 #include "rc_receiver.h"
 #include "imu.h"
+#include "status_led.h"
 
 #define UART_REQUEST_INTERVAL 200 // uS eg 5 times per second
 
@@ -56,7 +57,20 @@ void DrawHomeScreen() {
     printf(OUTPUT_DIVIDER);
 
     display_mode = DISPLAY_NONE;
+}
 
+void DrawLedScreen(){
+    printf(OUTPUT_BLANK_LINE);
+    printf(OUTPUT_DIVIDER);
+    printf(OUTPUT_BLANK_LINE);
+    printf("q - Quit/Home.\r\n");
+    printf("0 - LED off.\r\n");
+    printf("1 - Green LED on.\r\n");
+    printf("2 - Red LED on.\r\n");
+    printf(OUTPUT_BLANK_LINE);
+    printf(OUTPUT_DIVIDER);
+
+    display_mode = DISPLAY_LED_NONE;
 }
 
 void PrintIMUValues() {
@@ -101,17 +115,41 @@ void UartInterface_OnTick(uint32_t now) {
             case 'h':
                 display_mode = DISPLAY_HOME;
                 break;
-            case 'i':
-                display_mode = DISPLAY_IMU;
-                break;
-            case 'r':
-                display_mode = DISPLAY_RECEIVER;
-                break;
-            case 'a':
-                display_mode = DISPLAY_ALTITUDE;
-                break;
-
-
+        }
+        if (display_mode == DISPLAY_NONE){
+            switch (character) {
+                case 'i':
+                    display_mode = DISPLAY_IMU;
+                    break;
+                case 'r':
+                    display_mode = DISPLAY_RECEIVER;
+                    break;
+                case 'a':
+                    display_mode = DISPLAY_ALTITUDE;
+                    break;
+                case 'l':
+                    display_mode = DISPLAY_LED_MENU;
+                    break;
+            }
+        }
+        if (display_mode == DISPLAY_LED_NONE){
+            switch (character) {
+                case 'q':
+                    display_mode = DISPLAY_HOME;
+                    break;
+                case '0':
+                    LED_SetLedState(LED_NONE);
+                    printf("Status LED off.\r\n");
+                    break;
+                case '1':
+                    LED_SetLedState(LED_GREEN);
+                    printf("Status LED Green.\r\n");
+                    break;
+                case '2':
+                    LED_SetLedState(LED_RED);
+                    printf("Status LED Red.\r\n");
+                    break;
+            }
         }
     }
 
@@ -128,6 +166,8 @@ void UartInterface_OnTick(uint32_t now) {
         case DISPLAY_ALTITUDE:
             PrintIMUAltitude();
             break;
+        case DISPLAY_LED_MENU:
+            DrawLedScreen();
     }
 }
 

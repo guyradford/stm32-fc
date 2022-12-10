@@ -7,8 +7,15 @@
 
 #include "main.h"
 
+
+typedef enum
+{
+    LED_NONE = 0,
+    LED_GREEN = 1,
+    LED_RED = 2
+} LED_Colour;
+
 void LED_OnTick(uint32_t now);
-void LED_ToggleGreen(void);
-void LED_ToggleRed(void);
+void LED_SetLedState(LED_Colour colour);
 
 #endif //STM32_FC_STATUS_LED_H
