@@ -11,8 +11,7 @@ Thank you
 Guy
 ___
 
-# Hardware
-
+# Controller Hardware
 ## STM32 Nucleo - STM32L152RE 
 ![STM32 Nucleo - STM32L152RE](https://m.media-amazon.com/images/I/51y0k1NVu6L._AC_SX425_.jpg)
 
@@ -28,8 +27,20 @@ This is important as it allows the software to compensate or even control the qu
 
 ## Waveshare 10 DOF IMU Sensor (D)
 
-![10 DOF IMU Sensor (D)](https://www.waveshare.com/media/catalog/product/cache/1/image/800x800/9df78eab33525d08d6e5fb8d27136e95/1/0/10-dof-imu-sensor-d-2.jpg =250x)
+![10 DOF IMU Sensor (D)](docs/images/10-dof-imu-sensor-d-2.jpg)
 * [Development Resources](https://www.waveshare.com/wiki/10_DOF_IMU_Sensor_(D))
 
 Note: I think there is now a newer version of this sensor available!
+
+This device has an I2C interface making it very easy to read the values, also included in the development resources is an IMU faction.
+I have currently chosen to use the Waveshare IMU faction as it appear better than the version I was intending to write. 
+However, I suggest watching some YouTube videos to understand how it works and its limitations.
+
+
+# Quadcopter Frame
+Since I have a 3D printer I decided to print my own frame. There are lots of suitable frames on [Thingiverse.com](https://www.thingiverse.com/). 
+The one I chose appears simple to print and symmetrical, hopefully making it easier to control.
+
+This is the main chassis I used [https://www.thingiverse.com/thing:1206960](https://www.thingiverse.com/thing:1206960),  
+however, I used this arm that prints better: [https://www.thingiverse.com/thing:2867221](https://www.thingiverse.com/thing:2867221).
 
