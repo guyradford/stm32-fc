@@ -9,6 +9,7 @@
 #include "main.h"
 #include "imu.h"
 
+#define IMU_REQUEST_INTERVAL 50 // uS eg 20 times per second
 
 IMU_EN_SENSOR_TYPE enMotionSensorType, enPressureType;
 IMU_ST_ANGLES_DATA stAngles;
@@ -43,12 +44,14 @@ void IMU_Init(void){
 }
 
 void IMU_OnTick(uint32_t now){
-	if (now - imuTimer > 50) {
-		imuTimer = now;
+	if (now - imuTimer < IMU_REQUEST_INTERVAL) {
+        return;
+    }
+    imuTimer = now;
 
-		imuDataGet( &stAngles, &stGyroRawData, &stAccelRawData, &stMagnRawData);
-		pressSensorDataGet(&s32TemperatureVal, &s32PressureVal, &s32AltitudeVal);
-	}
+    imuDataGet(&stAngles, &stGyroRawData, &stAccelRawData, &stMagnRawData);
+    pressSensorDataGet(&s32TemperatureVal, &s32PressureVal, &s32AltitudeVal);
+
 }
 
 IMU_ST_ANGLES_DATA IMU_Get_Angles(void){

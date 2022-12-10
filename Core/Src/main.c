@@ -27,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include "imu.h"
 #include "rc_receiver.h"
+#include "uart_interface.h"
 
 /* USER CODE END Includes */
 
@@ -47,6 +48,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint8_t UART1_rxBuffer[2] = {0};
 
 /* USER CODE END PV */
 
@@ -106,7 +108,7 @@ int main(void) {
     // Initialise IMU
     IMU_Init();
 
-    //Start Timers for RC receiver input capture
+    // Start Timers for RC receiver input capture
     HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1); // RC Channel 1
     HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_2); // RC Channel 2
     HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_3); // RC Channel 3
@@ -114,7 +116,8 @@ int main(void) {
     HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1); // RC Channel 5
     HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2); // RC Channel 6
 
-
+    // Setup UART to trigger interrupt on receipt of a character
+    HAL_UART_Receive_IT (&huart2, UART1_rxBuffer, 1);
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -123,6 +126,7 @@ int main(void) {
 
         now = HAL_GetTick();
         IMU_OnTick(now);
+        UartInterface_OnTick(now)
 
         /* USER CODE END WHILE */
 
@@ -182,6 +186,15 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
     } // End TIM2 or TIM3
 
 }
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART2){
+        UartInterface_OnReceive(UART1_rxBuffer[0]);
+        HAL_UART_Receive_IT(&huart2, UART1_rxBuffer, 1);
+    }
+}
+
 /* USER CODE END 4 */
 
 /**
