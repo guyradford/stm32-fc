@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "imu.h"
+#include "rc_receiver.h"
 
 /* USER CODE END Includes */
 
@@ -101,7 +102,18 @@ int main(void) {
     MX_TIM2_Init();
     MX_TIM3_Init();
     /* USER CODE BEGIN 2 */
+
+    // Initialise IMU
     IMU_Init();
+
+    //Start Timers for RC receiver input capture
+    HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1); // RC Channel 1
+    HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_2); // RC Channel 2
+    HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_3); // RC Channel 3
+    HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_4); // RC Channel 4
+    HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1); // RC Channel 5
+    HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2); // RC Channel 6
+
 
     /* USER CODE END 2 */
 
@@ -160,7 +172,16 @@ void SystemClock_Config(void) {
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
 
+    if (htim->Instance == TIM2 ){ // RC Channel 1-4
+        RC_TimerCallback(htim);
+    } // End TIM2 or TIM3
+    if (htim->Instance == TIM3){ // RC Channel 5-6
+        RC_TimerCallback(htim);
+    } // End TIM2 or TIM3
+
+}
 /* USER CODE END 4 */
 
 /**
