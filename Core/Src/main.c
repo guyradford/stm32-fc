@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "Waveshare_10Dof-D.h"
+#include "imu.h"
 
 /* USER CODE END Includes */
 
@@ -75,7 +75,7 @@ PUTCHAR_PROTOTYPE {
   */
 int main(void) {
     /* USER CODE BEGIN 1 */
-
+    uint32_t now = 0;
     /* USER CODE END 1 */
 
     /* MCU Configuration--------------------------------------------------------*/
@@ -101,21 +101,17 @@ int main(void) {
     MX_TIM2_Init();
     MX_TIM3_Init();
     /* USER CODE BEGIN 2 */
-    IMU_EN_SENSOR_TYPE enMotionSensorType, enPressureType;
-    IMU_ST_ANGLES_DATA stAngles;
-    IMU_ST_SENSOR_DATA stGyroRawData;
-    IMU_ST_SENSOR_DATA stAccelRawData;
-    IMU_ST_SENSOR_DATA stMagnRawData;
-    int32_t s32PressureVal = 0, s32TemperatureVal = 0, s32AltitudeVal = 0;
+    IMU_Init();
 
-    imuInit(&enMotionSensorType, &enPressureType);
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     while (1) {
-        HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-        HAL_Delay(200);
+
+        now = HAL_GetTick();
+        IMU_OnTick(now);
+
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
