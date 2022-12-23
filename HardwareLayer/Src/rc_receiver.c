@@ -33,7 +33,7 @@ rc_receiver_min_max_values min_max_values[6] = {
 uint8_t RC_Mode = RC_MODE_CALIBRATION;
 
 void RC_TimerCallback(TIM_HandleTypeDef *htim){
-	if (htim->Instance == TIM2){
+	if (htim->Instance == TIM3){
 		  if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1) {
 			  Edge_Trigger(htim, RC_CH_1);
 		  }
@@ -50,7 +50,7 @@ void RC_TimerCallback(TIM_HandleTypeDef *htim){
 			  Edge_Trigger(htim, RC_CH_4);
 		  }
 	}
-	if (htim->Instance == TIM3){
+	if (htim->Instance == TIM4){
 		  if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1) {
 			  Edge_Trigger(htim, RC_CH_5);
 		  }
