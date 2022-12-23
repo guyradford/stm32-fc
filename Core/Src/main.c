@@ -186,12 +186,10 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
 
-    if (htim->Instance == TIM3 ){ // RC Channel 1-4
+    if (htim->Instance == TIM3 || htim->Instance == TIM4){ // RC Channel 1-6
         RC_TimerCallback(htim);
-    } // End TIM2 or TIM3
-    if (htim->Instance == TIM4){ // RC Channel 5-6
-        RC_TimerCallback(htim);
-    } // End TIM2 or TIM3
+    } // End TIM3 or TIM4
+
 
 }
 
