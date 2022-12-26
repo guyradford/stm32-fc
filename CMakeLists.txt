@@ -50,11 +50,11 @@ else ()
 endif ()
 
 include_directories(Core/Inc Drivers/STM32L1xx_HAL_Driver/Inc Drivers/STM32L1xx_HAL_Driver/Inc/Legacy Drivers/CMSIS/Device/ST/STM32L1xx/Include Drivers/CMSIS/Include)
-include_directories(External/Inc HardwareLayer/Inc)
+include_directories(External/Inc HardwareLayer/Inc Application/Inc)
 
 add_definitions(-DDEBUG -DUSE_HAL_DRIVER -DSTM32L152xE)
 
-file(GLOB_RECURSE SOURCES "Core/*.*" "Drivers/*.*" "External/*.*" "HardwareLayer/*.*")
+file(GLOB_RECURSE SOURCES "Core/*.*" "Drivers/*.*" "External/*.*" "HardwareLayer/*.*"  "Application/*.*")
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/STM32L152RETX_FLASH.ld)
 

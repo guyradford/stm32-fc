@@ -9,6 +9,7 @@
 #include "rc_receiver.h"
 #include "imu.h"
 #include "status_led.h"
+#include "esc_output.h"
 
 #define UART_REQUEST_INTERVAL 200 // uS eg 5 times per second
 
@@ -51,7 +52,8 @@ void DrawHomeScreen() {
     printf("i - IMU Values.\r\n");
     printf("r - Receiver Inputs.\r\n");
     printf("a - Altitude.\r\n");
-    printf("l - Toggle Green LED.\r\n");
+    printf("l - Show LED Menu.\r\n");
+    printf("m - Motor Output Values.\r\n");
 
     printf(OUTPUT_BLANK_LINE);
     printf(OUTPUT_DIVIDER);
@@ -73,6 +75,13 @@ void DrawLedScreen(){
     display_mode = DISPLAY_LED_NONE;
 }
 
+void PrintMotorValue() {
+    printf("M1: %-5d M2: %-5d M3: %-5d M4: %-5d \r\n",
+           EscOutput_GetMotor(1),
+           EscOutput_GetMotor(2),
+           EscOutput_GetMotor(3),
+           EscOutput_GetMotor(4)
+    );}
 void PrintIMUValues() {
     IMU_ST_ANGLES_DATA stAngles = IMU_Get_Angles();
     printf("Roll: %3.2f     Pitch: %3.2f     Yaw: %3.2f \r\n", stAngles.fRoll, stAngles.fPitch, stAngles.fYaw);
@@ -130,6 +139,9 @@ void UartInterface_OnTick(uint32_t now) {
                 case 'l':
                     display_mode = DISPLAY_LED_MENU;
                     break;
+                case 'm':
+                    display_mode = DISPLAY_MOTOR;
+                    break;
             }
         }
         if (display_mode == DISPLAY_LED_NONE){
@@ -165,6 +177,9 @@ void UartInterface_OnTick(uint32_t now) {
             break;
         case DISPLAY_ALTITUDE:
             PrintIMUAltitude();
+            break;
+        case DISPLAY_MOTOR:
+                PrintMotorValue();
             break;
         case DISPLAY_LED_MENU:
             DrawLedScreen();

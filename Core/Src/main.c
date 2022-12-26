@@ -105,6 +105,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM4_Init();
   MX_TIM3_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
     // Initialise IMU
@@ -120,6 +121,12 @@ int main(void)
 
     // Setup UART to trigger interrupt on receipt of a character
     HAL_UART_Receive_IT (&huart2, UART1_rxBuffer, 1);
+
+
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+//    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+//    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+//    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -131,6 +138,10 @@ int main(void)
         UartInterface_OnTick(now);
         LED_OnTick(now);
 
+//        TIM2->CCR1 = 1000;
+//        TIM2->CCR2 = 1000;
+//        TIM2->CCR3 = 1000;
+//        TIM2->CCR4 = 1000;
 
 
     /* USER CODE END WHILE */

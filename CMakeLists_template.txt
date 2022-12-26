@@ -49,11 +49,11 @@ else ()
 endif ()
 
 include_directories(${includes})
-include_directories(External/Inc HardwareLayer/Inc)
+include_directories(External/Inc HardwareLayer/Inc Application/Inc)
 
 add_definitions(${defines})
 
-file(GLOB_RECURSE SOURCES ${sources} "External/*.*" "HardwareLayer/*.*")
+file(GLOB_RECURSE SOURCES ${sources} "External/*.*" "HardwareLayer/*.*"  "Application/*.*")
 
 set(LINKER_SCRIPT $${CMAKE_SOURCE_DIR}/${linkerScript})
 

@@ -98,7 +98,7 @@ TIM4 - RC Input CH 5-6
 | 3   |            | VDD   |   E5V |            |     |   I2C1_SCL | PB9  |  PC5 |            |
 | 4   |            | BOOT0 |   GND |            |     |            | AVDD |  U5V |            |
 | 5   |            | N/C   |   N/C |            |     |            | GND  |  N/C |            |
-| 6   |            | N/C   | IOREF |            |     |   ED_GREEN | PA5  | PA12 | LED_RED    |
+| 6   |            | N/C   | IOREF |            |     |  LED_GREEN | PA5  | PA12 | LED_RED    |
 | 7   |            | PA13  | RESET |            |     |    RC_CH_1 | PA6  | PA11 |            |
 | 8   |            | PA14  |   3V3 |            |     |    RC_CH_2 | PA7  | PB12 |            |
 | 9   |            | PA15  |    5V |            |     |    RC_CH_5 | PB6  | PB11 | ESC_4      |
