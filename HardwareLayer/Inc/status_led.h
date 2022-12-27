@@ -15,7 +15,6 @@ typedef enum
     LED_RED = 2
 } LED_Colour;
 
-void LED_OnTick(uint32_t now);
-void LED_SetLedState(LED_Colour colour);
+void StatusLED_SetLedState(LED_Colour colour);
 
 #endif //STM32_FC_STATUS_LED_H

@@ -95,9 +95,9 @@ void PrintIMUAltitude(void) {
 
 void PrintReceiverValues() {
     printf("Ch1: %-5d Ch2: %-5d Ch3: %-5d Ch4: %-5d Ch5: %-5d Ch6: %-5d\r\n",
-           RC_GetCorrectedValue(RC_CH_1), RC_GetCorrectedValue(RC_CH_2),
-           RC_GetCorrectedValue(RC_CH_3), RC_GetCorrectedValue(RC_CH_4),
-           RC_GetCorrectedValue(RC_CH_5), RC_GetCorrectedValue(RC_CH_6)
+           RC_GetRawValue(RC_CH_1), RC_GetRawValue(RC_CH_2),
+           RC_GetRawValue(RC_CH_3), RC_GetRawValue(RC_CH_4),
+           RC_GetRawValue(RC_CH_5), RC_GetRawValue(RC_CH_6)
     );
 }
 
@@ -150,15 +150,15 @@ void UartInterface_OnTick(uint32_t now) {
                     display_mode = DISPLAY_HOME;
                     break;
                 case '0':
-                    LED_SetLedState(LED_NONE);
+                    StatusLED_SetLedState(LED_NONE);
                     printf("Status LED off.\r\n");
                     break;
                 case '1':
-                    LED_SetLedState(LED_GREEN);
+                    StatusLED_SetLedState(LED_GREEN);
                     printf("Status LED Green.\r\n");
                     break;
                 case '2':
-                    LED_SetLedState(LED_RED);
+                    StatusLED_SetLedState(LED_RED);
                     printf("Status LED Red.\r\n");
                     break;
             }

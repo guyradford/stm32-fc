@@ -5,6 +5,7 @@
 #include "main.h"
 #include <stdbool.h>
 
+#define RC_CHANNEL_COUNT 6
 
 #define RC_CH_1 0
 #define RC_CH_2 1
@@ -32,27 +33,29 @@ typedef struct
 	uint32_t HAL_TIM_channel;
 	GPIO_TypeDef *GPIO_Port;
 	uint16_t GPIO_Pin;
-	bool invert_input;
+//	bool invert_input;
 } rc_receiver_definition ;
 
-
-typedef struct
-{
-	uint16_t max;
-	uint16_t min;
-	uint16_t middle;
-	uint16_t correction;
-	uint16_t samples;
-} rc_receiver_min_max_values ;
+//
+//typedef struct
+//{
+//	uint16_t max;
+//	uint16_t min;
+//	uint16_t middle;
+//	uint16_t correction;
+//	uint16_t samples;
+//} rc_receiver_min_max_values ;
 
 
 void RC_TimerCallback(TIM_HandleTypeDef *htim);
 void Edge_Trigger(TIM_HandleTypeDef *htim, uint16_t RC_Channel);
 
-uint16_t RC_GetCorrectedValue(uint16_t RC_Channel);
-uint16_t RC_getRawValue(uint16_t RC_Channel);
-uint8_t RC_getPercentage(uint16_t RC_Channel);
-rc_receiver_min_max_values RC_GetCalibration(uint16_t RC_Channel);
+uint16_t RC_GetRawValue(uint16_t RC_Channel);
+uint16_t * RC_GetChannelValues(void);
+
+//uint16_t RC_GetCorrectedValue(uint16_t RC_Channel);
+//uint8_t RC_getPercentage(uint16_t RC_Channel);
+//rc_receiver_min_max_values RC_GetCalibration(uint16_t RC_Channel);
 
 #ifdef __cplusplus
 }

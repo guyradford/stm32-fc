@@ -29,6 +29,7 @@
 #include "rc_receiver.h"
 #include "uart_interface.h"
 #include "status_led.h"
+#include "application.h"
 
 /* USER CODE END Includes */
 
@@ -136,12 +137,8 @@ int main(void)
         now = HAL_GetTick();
         IMU_OnTick(now);
         UartInterface_OnTick(now);
-        LED_OnTick(now);
+        Application_OnTick(now);
 
-//        TIM2->CCR1 = 1000;
-//        TIM2->CCR2 = 1000;
-//        TIM2->CCR3 = 1000;
-//        TIM2->CCR4 = 1000;
 
 
     /* USER CODE END WHILE */

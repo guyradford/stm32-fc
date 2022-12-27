@@ -7,4 +7,7 @@
 
 #include <stdint.h>
 
+void Output_Init(void);
+void Output_OnTick(uint32_t now);
+
 #endif //STM32_FC_OUTPUT_H

@@ -13,7 +13,8 @@
 #define RC_CH_6 5
 
 #include <stdint.h>
-
+void Input_Init(void);
+void Input_OnTick(uint32_t now);
 
 void Input_ReceiverValue(uint8_t Channel, uint16_t Value);
 
