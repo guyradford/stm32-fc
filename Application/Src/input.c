@@ -2,25 +2,22 @@
 // Created by guyra on 23/12/2022.
 //
 
+#include <stdbool.h>
 #include "input.h"
-#include "rc_receiver.h"
-
-uint16_t *Receiver_Values;
+#include "rc-input.h"
 
 float IMU_Pitch, IMU_Roll, IMU_Yaw = 0;
 
 void Input_Init(void){
-
+    RCInput_InitReceiverValues();
 }
 
 void Input_OnTick(uint32_t now){
-
+    RCInput_OnTick(now);
 }
 
-
-
-void Input_ReceiverValue(uint8_t Channel, uint16_t Value) {
-    Receiver_Values[Channel] = Value;
+bool Input_IsCalibrated(){
+    return RCInput_IsCalibrated();
 }
 
 
@@ -30,6 +27,3 @@ void Input_IMU(float Pitch, float Roll, float Yaw) {
     IMU_Yaw = Yaw;
 }
 
-void Input_InitReceiverValues() {
-    Receiver_Values = RC_GetChannelValues();
-}

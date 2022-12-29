@@ -6,22 +6,25 @@
 #include "esc_output.h"
 
 uint16_t Output_MotorSpeed[4] = {0};
-
+uint32_t Output_timer = 0;
 
 void Output_Init(void) {
 
 }
 
 void Output_OnTick(uint32_t now) {
+    if (now > Output_timer) {
+        Output_timer += OUTPUT_INTERVAL;
 
-    // Write new Motor speeds
-    EscOutput_SetSpeed(
-            Output_MotorSpeed[0],
-            Output_MotorSpeed[1],
-            Output_MotorSpeed[2],
-            Output_MotorSpeed[3]
-    );
 
+        // Write new Motor speeds
+        EscOutput_SetSpeed(
+                Output_MotorSpeed[0],
+                Output_MotorSpeed[1],
+                Output_MotorSpeed[2],
+                Output_MotorSpeed[3]
+        );
+    }
 }
 
 

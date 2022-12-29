@@ -13,8 +13,11 @@
 #define RC_CH_6 5
 
 #include <stdint.h>
+#include <stdbool.h>
+
 void Input_Init(void);
 void Input_OnTick(uint32_t now);
+bool Input_IsCalibrated();
 
 void Input_ReceiverValue(uint8_t Channel, uint16_t Value);
 

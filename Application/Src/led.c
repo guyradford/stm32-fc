@@ -6,7 +6,7 @@
 #include "led.h"
 #include "status_led.h"
 
-char * mode = LED_MODE_STARTUP;
+char * led_mode = LED_MODE_STARTUP;
 
 uint32_t timer = 0;
 uint8_t pointer = 0;
@@ -15,7 +15,7 @@ void LED_OnTick(uint32_t now){
     if (now > timer){
         timer = timer + LED_INTERVAL;
 
-        switch (mode[pointer]) {
+        switch (led_mode[pointer]) {
             case 'R':
                 StatusLED_SetLedState(LED_RED);
                 break;
@@ -27,8 +27,12 @@ void LED_OnTick(uint32_t now){
                 break;
         }
         pointer++;
-        if (pointer > strlen(mode)-1) pointer = 0;
+        if (pointer > strlen(led_mode)-1) pointer = 0;
 
 
     }
+}
+
+void LED_SetMode(char *newMode) {
+    led_mode = newMode;
 }

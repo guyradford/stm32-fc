@@ -14,13 +14,6 @@
 #define RC_CH_5 4
 #define RC_CH_6 5
 
-#define RC_MODE_CALIBRATION  0
-#define RC_MODE_WORKING 1
-
-#define RC_INPUT_MIN 500
-#define RC_INPUT_MAX 2000
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,15 +29,6 @@ typedef struct
 //	bool invert_input;
 } rc_receiver_definition ;
 
-//
-//typedef struct
-//{
-//	uint16_t max;
-//	uint16_t min;
-//	uint16_t middle;
-//	uint16_t correction;
-//	uint16_t samples;
-//} rc_receiver_min_max_values ;
 
 
 void RC_TimerCallback(TIM_HandleTypeDef *htim);

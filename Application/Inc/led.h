@@ -23,6 +23,7 @@
 #define LED_MODE_ERROR_3 "R___R___R_______"
 
 void LED_OnTick(uint32_t now);
+void LED_SetMode(char * newMode);
 
 
 #endif //STM32_FC_LED_H

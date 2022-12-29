@@ -5,20 +5,6 @@
 extern "C" {
 #endif
 
-#define RC_INPUT_NORMAL false
-#define RC_INPUT_INVERT true
-
-#include "rc_receiver.h"
-#include <stdlib.h>
-
-//rc_receiver_definition values[6] = {
-//        {0, 0, TIM_CHANNEL_1, RC_CH_1_GPIO_Port, RC_CH_1_Pin, RC_INPUT_NORMAL},
-//        {0, 0, TIM_CHANNEL_2, RC_CH_2_GPIO_Port, RC_CH_2_Pin, RC_INPUT_INVERT},
-//        {0, 0, TIM_CHANNEL_3, RC_CH_3_GPIO_Port, RC_CH_3_Pin, RC_INPUT_INVERT},
-//        {0, 0, TIM_CHANNEL_4, RC_CH_4_GPIO_Port, RC_CH_4_Pin, RC_INPUT_NORMAL},
-//        {0, 0, TIM_CHANNEL_1, RC_CH_5_GPIO_Port, RC_CH_5_Pin, RC_INPUT_NORMAL},
-//        {0, 0, TIM_CHANNEL_2, RC_CH_6_GPIO_Port, RC_CH_6_Pin, RC_INPUT_NORMAL}
-//};
 
 uint16_t RC_ChannelValues[RC_CHANNEL_COUNT] = {0};
 
@@ -31,17 +17,6 @@ rc_receiver_definition values[RC_CHANNEL_COUNT] = {
         {0, 0, TIM_CHANNEL_2, RC_CH_6_GPIO_Port, RC_CH_6_Pin}
 };
 
-
-//rc_receiver_min_max_values min_max_values[6] = {
-//        {1500, 1500, 0},
-//        {1500, 1500, 0},
-//        {1500, 1500, 0},
-//        {1500, 1500, 0},
-//        {1500, 1500, 0},
-//        {1500, 1500, 0},
-//};
-
-//uint8_t RC_Mode = RC_MODE_CALIBRATION;
 
 void RC_TimerCallback(TIM_HandleTypeDef *htim) {
 
@@ -93,17 +68,17 @@ void Edge_Trigger(TIM_HandleTypeDef *htim, uint16_t RC_Channel) {
 }
 
 //void Calibration(uint16_t RC_Channel, uint16_t duration) {
-//    if (duration < min_max_values[RC_Channel].min) {
-//        min_max_values[RC_Channel].min = duration;
-//        min_max_values[RC_Channel].samples++;
+//    if (duration < ChannelCalibration[RC_Channel].min) {
+//        ChannelCalibration[RC_Channel].min = duration;
+//        ChannelCalibration[RC_Channel].samples++;
 //    }
 //
-//    if (duration > min_max_values[RC_Channel].max) {
-//        min_max_values[RC_Channel].max = duration;
-//        min_max_values[RC_Channel].samples++;
+//    if (duration > ChannelCalibration[RC_Channel].max) {
+//        ChannelCalibration[RC_Channel].max = duration;
+//        ChannelCalibration[RC_Channel].samples++;
 //    }
-//    min_max_values[RC_Channel].middle = (min_max_values[RC_Channel].min + min_max_values[RC_Channel].max) / 2;
-//    min_max_values[RC_Channel].correction = 1500 - min_max_values[RC_Channel].middle;
+//    ChannelCalibration[RC_Channel].middle = (ChannelCalibration[RC_Channel].min + ChannelCalibration[RC_Channel].max) / 2;
+//    ChannelCalibration[RC_Channel].correction = 1500 - ChannelCalibration[RC_Channel].middle;
 //
 //}
 
@@ -118,19 +93,19 @@ uint16_t * RC_GetChannelValues(void){
 
 //uint16_t RC_GetCorrectedValue(uint16_t RC_Channel) {
 //    if (values[RC_Channel].invert_input) {
-//        return abs((int16_t) (values[RC_Channel].duration + min_max_values[RC_Channel].correction - 3000));
+//        return abs((int16_t) (values[RC_Channel].duration + ChannelCalibration[RC_Channel].correction - 3000));
 //    }
-//    return values[RC_Channel].duration + min_max_values[RC_Channel].correction;
+//    return values[RC_Channel].duration + ChannelCalibration[RC_Channel].correction;
 //}
 //
 //rc_receiver_min_max_values RC_GetCalibration(uint16_t RC_Channel) {
-//    return min_max_values[RC_Channel];
+//    return ChannelCalibration[RC_Channel];
 //}
 //
 //
 //uint8_t RC_getPercentage(uint16_t RC_Channel) {
-//    return ((float) (values[RC_Channel].duration - min_max_values[RC_Channel].min) /
-//            (float) (min_max_values[RC_Channel].max - min_max_values[RC_Channel].min)) * 100;
+//    return ((float) (values[RC_Channel].duration - ChannelCalibration[RC_Channel].min) /
+//            (float) (ChannelCalibration[RC_Channel].max - ChannelCalibration[RC_Channel].min)) * 100;
 //
 //}
 
