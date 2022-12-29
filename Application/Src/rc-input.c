@@ -117,7 +117,10 @@ uint16_t RCInput_GetInputValue(uint8_t RC_Channel) {
     }
     if (value < 0) return (uint16_t) 0;
     if (value > 1000) return (uint16_t) 1000;
-    return (uint16_t) (value * ChannelCalibration[RC_Channel].ratio);
+    if (ChannelConfig[RC_Channel] & RC_INPUT_INPUT_RANGE_ZEROED) {
+        return (uint16_t) (value * ChannelCalibration[RC_Channel].ratio);
+    }
+    return (uint16_t)value;
 
 
 }
