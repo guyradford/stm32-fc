@@ -54,10 +54,10 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, LED_GREEN_Pin|LED_RED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = B1_Pin;
+  GPIO_InitStruct.Pin = SETUP_BUTTON_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(SETUP_BUTTON_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PAPin PAPin */
   GPIO_InitStruct.Pin = LED_GREEN_Pin|LED_RED_Pin;

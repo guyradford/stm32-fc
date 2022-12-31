@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-#define LED_INTERVAL 100
+#define LED_INTERVAL 200
 
 /*
  * R = Reg
@@ -17,6 +17,8 @@
 
 #define LED_MODE_STARTUP "RG"
 #define LED_MODE_GOOD "GGGGG_____"
+#define LED_MODE_SETUP "G_"
+
 
 #define LED_MODE_ERROR_1 "R_______"
 #define LED_MODE_ERROR_2 "R___R_______"

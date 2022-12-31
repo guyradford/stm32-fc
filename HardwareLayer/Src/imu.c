@@ -37,10 +37,10 @@ void IMU_Init(void) {
 }
 
 void IMU_OnTick(uint32_t now) {
-    if (now - imuTimer < IMU_REQUEST_INTERVAL) {
+    if (now < imuTimer) {
         return;
     }
-    imuTimer = now;
+    imuTimer += IMU_REQUEST_INTERVAL;
 
     imuDataGet(&stAngles, &stGyroRawData, &stAccelRawData, &stMagnRawData);
     pressSensorDataGet(&s32TemperatureVal, &s32PressureVal, &s32AltitudeVal);
