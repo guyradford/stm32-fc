@@ -63,7 +63,7 @@ void Calibrate() {
 
     }
     calibrationCount++;
-    if (calibrationCount > RC_INPUT_CALIBRATION_SAMPLES) {
+    if (calibrationCount == RC_INPUT_CALIBRATION_SAMPLES) {
         for (uint8_t RC_Channel = 0; RC_Channel < 6; RC_Channel++) {
 
             ChannelCalibration[RC_Channel].min = GetMaxFrequency(FrequencyTable[RC_Channel][0]) + 1000;
