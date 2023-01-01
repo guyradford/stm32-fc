@@ -5,6 +5,7 @@
 #include "rc-input.h"
 
 #include "rc_receiver.h"
+#include "config.h"
 
 uint32_t RCInput_timer = 0;
 uint8_t rc_input_mode = RC_INPUT_MODE_CALIBRATING;
@@ -47,28 +48,61 @@ uint8_t GetMaxFrequency(uint16_t Frequency[]) {
 }
 
 void Calibrate() {
-    for (uint8_t RC_Channel = 0; RC_Channel < 6; RC_Channel++) {
-        uint16_t duration = Receiver_Values[RC_Channel];
+    if (RC_CALIBRATION_CONFIG){
 
-        if (duration > 2000) continue;
-        if (duration < 1000) continue;
+        ChannelCalibration[RC_CH_1].max = RC_CALIBRATION_CHANNEL_1_MAX;
+        ChannelCalibration[RC_CH_1].min = RC_CALIBRATION_CHANNEL_1_MIN;
 
-        if (duration <= 1000 + RC_INPUT_CALIBRATION_RANGE) {
-            FrequencyTable[RC_Channel][0][duration - 1000]++;
+        ChannelCalibration[RC_CH_2].max = RC_CALIBRATION_CHANNEL_2_MAX;
+        ChannelCalibration[RC_CH_2].min = RC_CALIBRATION_CHANNEL_2_MIN;
+
+        ChannelCalibration[RC_CH_3].max = RC_CALIBRATION_CHANNEL_3_MAX;
+        ChannelCalibration[RC_CH_3].min = RC_CALIBRATION_CHANNEL_3_MIN;
+
+        ChannelCalibration[RC_CH_4].max = RC_CALIBRATION_CHANNEL_4_MAX;
+        ChannelCalibration[RC_CH_4].min = RC_CALIBRATION_CHANNEL_4_MIN;
+
+        ChannelCalibration[RC_CH_5].max = RC_CALIBRATION_CHANNEL_5_MAX;
+        ChannelCalibration[RC_CH_5].min = RC_CALIBRATION_CHANNEL_5_MIN;
+
+        ChannelCalibration[RC_CH_6].max = RC_CALIBRATION_CHANNEL_6_MAX;
+        ChannelCalibration[RC_CH_6].min = RC_CALIBRATION_CHANNEL_6_MIN;
+
+        rc_input_mode = RC_INPUT_MODE_RUNNING;
+    } else {
+
+        for (uint8_t RC_Channel = 0; RC_Channel < 6; RC_Channel++) {
+            uint16_t duration = Receiver_Values[RC_Channel];
+
+            if (duration > 2000) continue;
+            if (duration < 1000) continue;
+
+            if (duration <= 1000 + RC_INPUT_CALIBRATION_RANGE) {
+                FrequencyTable[RC_Channel][0][duration - 1000]++;
+            }
+
+            if (duration >= 2000 - RC_INPUT_CALIBRATION_RANGE) {
+                FrequencyTable[RC_Channel][1][duration - (2000 - RC_INPUT_CALIBRATION_RANGE)]++;
+            }
+
         }
+        calibrationCount++;
+        if (calibrationCount == RC_INPUT_CALIBRATION_SAMPLES) {
+            for (uint8_t RC_Channel = 0; RC_Channel < 6; RC_Channel++) {
 
-        if (duration >= 2000 - RC_INPUT_CALIBRATION_RANGE) {
-            FrequencyTable[RC_Channel][1][duration - (2000 - RC_INPUT_CALIBRATION_RANGE)]++;
+                ChannelCalibration[RC_Channel].min = GetMaxFrequency(FrequencyTable[RC_Channel][0]) + 1000;
+                ChannelCalibration[RC_Channel].max =
+                        GetMaxFrequency(FrequencyTable[RC_Channel][1]) + (2000 - RC_INPUT_CALIBRATION_RANGE);
+
+            }
+
+            rc_input_mode = RC_INPUT_MODE_RUNNING;
         }
-
     }
-    calibrationCount++;
-    if (calibrationCount == RC_INPUT_CALIBRATION_SAMPLES) {
+
+    if (rc_input_mode == RC_INPUT_MODE_RUNNING) {
         for (uint8_t RC_Channel = 0; RC_Channel < 6; RC_Channel++) {
 
-            ChannelCalibration[RC_Channel].min = GetMaxFrequency(FrequencyTable[RC_Channel][0]) + 1000;
-            ChannelCalibration[RC_Channel].max =
-                    GetMaxFrequency(FrequencyTable[RC_Channel][1]) + (2000 - RC_INPUT_CALIBRATION_RANGE);
             ChannelCalibration[RC_Channel].ratio =
                     1000.0 / (ChannelCalibration[RC_Channel].max - ChannelCalibration[RC_Channel].min);
 
@@ -91,6 +125,7 @@ void Calibrate() {
 
         rc_input_mode = RC_INPUT_MODE_RUNNING;
     }
+
 }
 
 void RCInput_OnTick(uint32_t now) {

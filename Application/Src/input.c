@@ -7,7 +7,6 @@
 #include "rc-input.h"
 #include "imu_input.h"
 
-float IMU_Pitch, IMU_Roll, IMU_Yaw = 0;
 
 void Input_Init(void){
     RCInput_InitReceiverValues();

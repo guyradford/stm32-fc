@@ -10,6 +10,7 @@
 #include "led.h"
 #include "pid.h"
 #include "hmi.h"
+#include "esc_programming.h"
 
 
 uint8_t applicationMode = APPLICATION_MODE_CALIBRATING;
@@ -31,6 +32,7 @@ void Application_OnTick(uint32_t now){
         case APPLICATION_MODE_SETUP:
             Input_OnTick(now);
             Output_OnTick(now);
+            ESCProgramming_OnTick(now);
             LED_OnTick(now);
             HMI_OnTick(now);
             break;

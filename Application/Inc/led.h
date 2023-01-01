@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-#define LED_INTERVAL 200
+#define LED_INTERVAL 100
 
 /*
  * R = Reg

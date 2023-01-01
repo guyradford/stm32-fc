@@ -5,6 +5,7 @@
 #include "pid.h"
 #include "rc-input.h"
 #include "output.h"
+#include "rc_receiver.h"
 
 uint32_t PID_timer = 0;
 
@@ -12,7 +13,7 @@ void PID_OnTick(uint32_t now) {
     if (now > PID_timer) {
         PID_timer += PID_INTERVAL;
 
-        uint16_t value = RCInput_GetInputValue(0);
+        uint16_t value = RCInput_GetInputValue(RC_CH_2);
 
         Output_SetMotorSpeed(0, value);
         Output_SetMotorSpeed(1, value);
