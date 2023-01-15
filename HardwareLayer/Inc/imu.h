@@ -24,4 +24,8 @@ float IMU_GetAltitude(void);
 
 float IMU_GetPressure(void);
 
+IMU_ST_SENSOR_DATA IMU_GetRawGyroscope (void);
+IMU_ST_SENSOR_DATA IMU_GetRawMagnetometer (void);
+IMU_ST_SENSOR_DATA IMU_GetRawAccelerometer (void);
+
 #endif //INC_IMU_H

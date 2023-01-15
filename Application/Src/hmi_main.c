@@ -13,6 +13,10 @@
 #define HMI_LED_NONE 6
 #define HMI_MOTOR 7
 #define HMI_CORRECTED_IMU 8
+#define HMI_ACCELEROMETER 9
+#define HMI_GYROSCOPE 10
+#define HMI_MAGNETOMETER 11
+
 
 #include <stdio.h>
 #include <stdint.h>
@@ -38,10 +42,13 @@ void MenuMenu(void) {
     printf(OUTPUT_BLANK_LINE);
     printf("h - Home.\r\n");
     printf("i - Raw IMU Values.\r\n");
+    printf("a - Raw Accelerometer Data.\r\n");
+    printf("m - Raw Magnetometer Data.\r\n");
+    printf("g - Raw Gyroscope  Data.\r\n");
     printf("r - Raw Receiver Inputs.\r\n");
-    printf("a - Raw Altitude.\r\n");
+    printf("h - Raw Altitude/Height.\r\n");
 //    printf("4 - Show LED Menu.\r\n");
-    printf("m - Motor Output Values.\r\n");
+    printf("o - Motor Output Values.\r\n");
     printf("c - Corrected IMU Values.\r\n");
 
     printf(OUTPUT_BLANK_LINE);
@@ -66,13 +73,25 @@ void HMIMain_Handle(uint8_t character) {
             case 'r':
                 hmiMenu_Display = HMI_RECEIVER;
                 break;
-            case 'a':
+            case 'h':
                 hmiMenu_Display = HMI_ALTITUDE;
                 break;
+            case 'a':
+                hmiMenu_Display = HMI_ACCELEROMETER;
+                break;
+            case 'g':
+                hmiMenu_Display = HMI_GYROSCOPE;
+                break;
+            case 'm':
+                hmiMenu_Display = HMI_MAGNETOMETER;
+                break;
+
+
+
 //            case 'l':
 //                hmiMenu_Display = HMI_LED_MENU;
 //                break;
-            case 'm':
+            case 'o':
                 hmiMenu_Display = HMI_MOTOR;
                 break;
             case 'u':
@@ -111,6 +130,22 @@ void HMIMain_Handle(uint8_t character) {
             printf("Roll: %3.2f     Pitch: %3.2f     Yaw: %3.2f \r\n", stAngles.fRoll, stAngles.fPitch, stAngles.fYaw);
         }
             break;
+        case HMI_ACCELEROMETER: {
+            IMU_ST_SENSOR_DATA stData = IMU_GetRawAccelerometer();
+            printf("X: %-5d     PY: %-5d     Yaw: %-5d \r\n", stData.s16X, stData.s16Y, stData.s16Z);
+        }
+            break;
+        case HMI_GYROSCOPE: {
+            IMU_ST_SENSOR_DATA stData = IMU_GetRawGyroscope();
+            printf("X: %-5d     PY: %-5d     Yaw: %-5d \r\n", stData.s16X, stData.s16Y, stData.s16Z);
+        }
+            break;
+        case HMI_MAGNETOMETER: {
+            IMU_ST_SENSOR_DATA stData = IMU_GetRawMagnetometer();
+            printf("X: %-5d     PY: %-5d     Yaw: %-5d \r\n", stData.s16X, stData.s16Y, stData.s16Z);
+        }
+            break;
+
 
         case HMI_RECEIVER:
 

@@ -47,8 +47,20 @@ void IMU_OnTick(uint32_t now) {
 
 }
 
-IMU_ST_ANGLES_DATA IMU_GetAngles(void) {
+
+IMU_ST_ANGLES_DATA IMU_GetAngles(void){
     return stAngles;
+}
+
+
+IMU_ST_SENSOR_DATA IMU_GetRawGyroscope (void) {
+    return stGyroRawData;
+}
+IMU_ST_SENSOR_DATA IMU_GetRawMagnetometer (void) {
+    return stMagnRawData;
+}
+IMU_ST_SENSOR_DATA IMU_GetRawAccelerometer (void) {
+    return stAccelRawData;
 }
 
 float IMU_GetPitch(void ){
@@ -66,6 +78,12 @@ float IMU_GetYaw(void ){
 float IMU_GetAltitude(void) {
     return (float) s32AltitudeVal / 100.0;
 }
+
+IMU_ST_SENSOR_DATA IMU_GetRawAcclData(void ){
+    return stAccelRawData;
+}
+
+
 
 
 float IMU_GetPressure(void) {

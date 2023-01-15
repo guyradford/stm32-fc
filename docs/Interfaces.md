@@ -76,12 +76,12 @@ TIM4 - RC Input CH 5-6
 
 
 ## Speed Controller Output Timers
-| ESC | Timer | Channel | Pin  | Name  |
-|-----|-------|---------|------|-------|
-| 1   | TIM2  | CH1     | PA0  | ESC_1 |
-| 2   | TIM2  | CH2     | PA1  | ESC_2 |
-| 3   | TIM2  | CH3     | PB10 | ESC_3 |
-| 4   | TIM2  | CH4     | PB11 | ESC_4 |
+| ESC | Timer | Channel | Pin  | Name  | Location    | Wire Colour | Direction |
+|-----|-------|---------|------|-------|-------------|-------------|-----------|
+| 1   | TIM2  | CH1     | PA0  | ESC_1 | Front Right | Brown       | CW        |
+| 2   | TIM2  | CH2     | PA1  | ESC_2 | Back Right  | Grey        | CCW       |
+| 3   | TIM2  | CH3     | PB10 | ESC_3 | Back Left   | Yellow      | CW        |
+| 4   | TIM2  | CH4     | PB11 | ESC_4 | Front Left  | Purple      | CCW       |
 
 ## Fuel Gauge (potential divider)
 
