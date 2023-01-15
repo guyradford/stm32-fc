@@ -8,7 +8,7 @@
 #include "input.h"
 #include "output.h"
 #include "led.h"
-#include "pid.h"
+#include "flight_mode.h"
 #include "hmi.h"
 #include "esc_programming.h"
 

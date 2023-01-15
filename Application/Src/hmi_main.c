@@ -9,7 +9,7 @@
 #define HMI_IMU 2
 #define HMI_RECEIVER 3
 #define HMI_ALTITUDE 4
-#define HMI_LED_MENU 5
+#define HMI_CORRECTED_RC_VALUES 5
 #define HMI_LED_NONE 6
 #define HMI_MOTOR 7
 #define HMI_CORRECTED_IMU 8
@@ -27,6 +27,7 @@
 #include "imu.h"
 #include "esc_output.h"
 #include "imu_input.h"
+#include "rc-input.h"
 
 uint16_t hmiMenu_Display = HMI_MENU;
 
@@ -50,6 +51,8 @@ void MenuMenu(void) {
 //    printf("4 - Show LED Menu.\r\n");
     printf("o - Motor Output Values.\r\n");
     printf("c - Corrected IMU Values.\r\n");
+    printf("v - Corrected RC Input Values.\r\n");
+
 
     printf(OUTPUT_BLANK_LINE);
     printf(OUTPUT_DIVIDER);
@@ -88,9 +91,9 @@ void HMIMain_Handle(uint8_t character) {
 
 
 
-//            case 'l':
-//                hmiMenu_Display = HMI_LED_MENU;
-//                break;
+            case 'v':
+                hmiMenu_Display = HMI_CORRECTED_RC_VALUES;
+                break;
             case 'o':
                 hmiMenu_Display = HMI_MOTOR;
                 break;
@@ -153,6 +156,15 @@ void HMIMain_Handle(uint8_t character) {
                    RC_GetRawValue(RC_CH_1), RC_GetRawValue(RC_CH_2),
                    RC_GetRawValue(RC_CH_3), RC_GetRawValue(RC_CH_4),
                    RC_GetRawValue(RC_CH_5), RC_GetRawValue(RC_CH_6)
+            );
+            break;
+
+        case HMI_CORRECTED_RC_VALUES:
+
+            printf("Ch1: %-5d Ch2: %-5d Ch3: %-5d Ch4: %-5d Ch5: %-5d Ch6: %-5d\r\n",
+                   RCInput_GetInputValue(RC_CH_1), RCInput_GetInputValue(RC_CH_2),
+                   RCInput_GetInputValue(RC_CH_3), RCInput_GetInputValue(RC_CH_4),
+                   RCInput_GetInputValue(RC_CH_5), RCInput_GetInputValue(RC_CH_6)
             );
             break;
 

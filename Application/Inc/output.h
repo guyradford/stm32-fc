@@ -7,6 +7,11 @@
 
 #define OUTPUT_INTERVAL 20
 
+#define MOTOR_1 0
+#define MOTOR_2 1
+#define MOTOR_3 2
+#define MOTOR_4 3
+
 #include <stdint.h>
 
 void Output_Init(void);
