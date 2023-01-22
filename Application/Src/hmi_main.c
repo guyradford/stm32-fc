@@ -100,7 +100,7 @@ void HMIMain_Handle(uint8_t character) {
             case 'o':
                 hmiMenu_Display = HMI_MOTOR;
                 break;
-            case 'u':
+            case 'c':
                 hmiMenu_Display = HMI_CORRECTED_IMU;
                 break;
             case 'f':
@@ -193,7 +193,7 @@ void HMIMain_Handle(uint8_t character) {
             break;
 
         case HMI_FLIGHT_MODE:
-            printf("Mode: %2d, Throttle: %4d, Yaw:% 7.3f, Pitch: % 7.3f, Roll: % 7.3f\r\n", FlightMode_GetMode(), FlightMode_GetThrottle(), FlightMode_GetYaw(), FlightMode_GetPitch(), FlightMode_GetRoll());
+            printf("Mode: %2d, Throttle: %4d, Yaw: % 8.3f, Pitch: % 8.3f, Roll: % 8.3f\r\n", FlightMode_GetMode(), FlightMode_GetThrottle(), FlightMode_GetYaw(), FlightMode_GetPitch(), FlightMode_GetRoll());
             break;
     }
 }

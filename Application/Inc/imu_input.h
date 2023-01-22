@@ -20,5 +20,6 @@ bool IMUInput_IsCalibrated();
 float IMUInput_GetPitch(void);
 float IMUInput_GetRoll(void);
 float IMUInput_GetYaw(void);
+//void IMUInput_YawCalibrationYaw(void);
 
 #endif //STM32_FC_IMU_INPUT_H

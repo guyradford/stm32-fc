@@ -5,7 +5,6 @@
 #ifndef STM32_FC_FLIGHT_MODE_H
 #define STM32_FC_FLIGHT_MODE_H
 
-#define PID_INTERVAL 20
 
 #include <stdint.h>
 

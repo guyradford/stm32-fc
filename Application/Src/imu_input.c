@@ -19,7 +19,7 @@ void IMUInput_Calibrate(void) {
     if (IMU_CALIBRATION_CONFIG) {
         IMUInput_Calibration_Pitch = IMU_CALIBRATION_PITCH;
         IMUInput_Calibration_Roll = IMU_CALIBRATION_ROLL;
-        IMUInput_Calibration_Yaw = IMU_CALIBRATION_YAW;
+        IMUInput_Calibration_Yaw = 0;
 
         IMUInput_Mode = IMU_INPUT_MODE_RUNNING;
     } else {
@@ -59,5 +59,11 @@ float IMUInput_GetRoll(void) {
 }
 
 float IMUInput_GetYaw(void) {
-    return IMU_GetYaw() - IMUInput_Calibration_Yaw;
+//    return IMU_GetYaw() - IMUInput_Calibration_Yaw;
+    return IMU_GetYaw();
 }
+
+void IMUInput_YawCalibrationYaw(void){
+//    IMUInput_Calibration_Yaw = IMU_GetYaw();
+}
+
