@@ -16,6 +16,7 @@
 #define HMI_ACCELEROMETER 9
 #define HMI_GYROSCOPE 10
 #define HMI_MAGNETOMETER 11
+#define HMI_FLIGHT_MODE 12
 
 
 #include <stdio.h>
@@ -28,6 +29,7 @@
 #include "esc_output.h"
 #include "imu_input.h"
 #include "rc-input.h"
+#include "flight_mode.h"
 
 uint16_t hmiMenu_Display = HMI_MENU;
 
@@ -52,6 +54,7 @@ void MenuMenu(void) {
     printf("o - Motor Output Values.\r\n");
     printf("c - Corrected IMU Values.\r\n");
     printf("v - Corrected RC Input Values.\r\n");
+    printf("f - Flight Mode Output.\r\n");
 
 
     printf(OUTPUT_BLANK_LINE);
@@ -99,6 +102,9 @@ void HMIMain_Handle(uint8_t character) {
                 break;
             case 'u':
                 hmiMenu_Display = HMI_CORRECTED_IMU;
+                break;
+            case 'f':
+                hmiMenu_Display = HMI_FLIGHT_MODE;
                 break;
         }
     }
@@ -186,6 +192,9 @@ void HMIMain_Handle(uint8_t character) {
                    IMUInput_GetYaw());
             break;
 
+        case HMI_FLIGHT_MODE:
+            printf("Mode: %2d, Throttle: %4d, Yaw:% 7.3f, Pitch: % 7.3f, Roll: % 7.3f\r\n", FlightMode_GetMode(), FlightMode_GetThrottle(), FlightMode_GetYaw(), FlightMode_GetPitch(), FlightMode_GetRoll());
+            break;
     }
 }
 

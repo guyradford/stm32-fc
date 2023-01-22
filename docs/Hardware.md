@@ -10,7 +10,7 @@ This is only a 32MHz processor, I am hoping it will be enough, if not i'll need 
 
 # IMU - Inertial Measurement Unit
 
-This device allows us to track the movement of the quadcopter in space allowing us to always know it's pitch, roll and yaw from an initial starting point.
+This device allows us to track the movement of the quadcopter in space allowing us to always know it's pitch, roll and input_yaw from an initial starting point.
 This is important as it allows the software to compensate or even control the quadcopter.
 
 ## Waveshare 10 DOF IMU Sensor (D)

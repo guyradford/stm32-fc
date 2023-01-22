@@ -44,7 +44,7 @@ To Enter Setup and Calibration mode, press and hold the "User Button" whilst tur
      * Repeat until calibration mode complete.
 3. 5 Seconds pause (LED: TBC)
 4. Normal Running Pending Arming (LED: Slow Flash Green)
-   * To Arm ensure the throttle is at Zero and Yaw fully left, LED  will turn solid green.
+   * To Arm ensure the input_throttle is at Zero and Yaw fully left, LED  will turn solid green.
 5. Fly and be merry or Crash and be sad :(
 6. To de-arm:
    * Ensure Quadcopter is on the ground ;)

@@ -18,9 +18,9 @@ uint16_t EscOutput_GetMotor(uint8_t motor){
         case 2:
             return TIM2->CCR2;
         case 3:
-            return TIM2->CCR2;
-        case 4:
             return TIM2->CCR3;
+        case 4:
+            return TIM2->CCR4;
     }
 
 }

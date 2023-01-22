@@ -21,7 +21,7 @@
 
 uint16_t hmiSetup_Display = HMI_ESC_PROGRAMMING;
 uint8_t hmiSetup_Motor = 0;
-
+uint16_t hmiSetup_CalibrationCounter = 0;
 
 void SetupMenu(void) {
     printf(OUTPUT_CLEAR);
@@ -33,12 +33,14 @@ void SetupMenu(void) {
     printf(OUTPUT_DIVIDER);
     printf(OUTPUT_BLANK_LINE);
     printf("h - Home.\r\n");
-    printf("r - Calibrate Receiver Input.\r\n");
+//    printf("r - Calibrate Receiver Input.\r\n");
+    printf("i - Calibrate IMU.\r\n");
     printf("e - ESC output.\r\n");
     printf("1 - Motor 1 only.\r\n");
     printf("2 - Motor 2 only.\r\n");
     printf("3 - Motor 3 only.\r\n");
     printf("4 - Motor 4 only.\r\n");
+
 
 
     printf(OUTPUT_BLANK_LINE);
@@ -85,6 +87,16 @@ void HMISetup_Handle(uint8_t character) {
                 hmiSetup_Display = HMI_ESC_SINGLE_MOTOR;
                 hmiSetup_Motor = 4;
                 break;
+
+//            case 'r':
+//                hmiSetup_Display = HMI_CALIBRATE_RC_RECEIVER;
+//                hmiSetup_CalibrationCounter = 0;
+//                break;
+            case 'i':
+                hmiSetup_Display = HMI_CALIBRATE_IMU;
+                hmiSetup_CalibrationCounter = 0;
+
+                break;
         }
     }
 
@@ -105,8 +117,16 @@ void HMISetup_Handle(uint8_t character) {
             stAccelRawData = IMU_GetRawAccelerometer();
             printf("Motor: %d, Speed %-5d, Accl: %2.3f\r\n", hmiSetup_Motor, EscOutput_GetMotor(hmiSetup_Motor),
                    fmax(fabs(stAccelRawData.s16X) / 16384.0, fabs(stAccelRawData.s16Y) / 16384.0));
-//            printf("aX: %d, aY: %d, aZ: %d \r\n", stAccelRawData.s16X, stAccelRawData.s16Y, stAccelRawData.s16Z);
             break;
+        case HMI_CALIBRATE_IMU:
+            if (hmiSetup_CalibrationCounter < 100){
+                printf(".");
+                hmiSetup_CalibrationCounter++;
+            }else{
+                printf("CALIBRATED\r\n");
+                hmiSetup_Display = HMI_NONE;
+            }
+
     }
 
 }

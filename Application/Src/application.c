@@ -50,7 +50,7 @@ void Application_OnTick(uint32_t now){
 
         case APPLICATION_MODE_RUNNING:
             Input_OnTick(now);
-            PID_OnTick(now);
+            FlightMode_OnTick(now);
             Output_OnTick(now);
             LED_OnTick(now);
             HMI_OnTick(now);

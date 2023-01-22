@@ -12,6 +12,8 @@
 
 #define HMI_ESC_PROGRAMMING 2
 #define HMI_ESC_SINGLE_MOTOR 3
+#define HMI_CALIBRATE_RC_RECEIVER 4
+#define HMI_CALIBRATE_IMU 5
 
 
 void HMISetup_Handle(uint8_t character);

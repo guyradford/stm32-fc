@@ -14,6 +14,11 @@
 #define RC_CH_5 4
 #define RC_CH_6 5
 
+#define RC_THROTTLE RC_CH_2
+#define RC_YAW RC_CH_1
+#define RC_PITCH RC_CH_3
+#define RC_ROLL RC_CH_4
+
 #ifdef __cplusplus
 extern "C" {
 #endif
