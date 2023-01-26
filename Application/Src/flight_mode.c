@@ -27,13 +27,13 @@ uint32_t PID_timer = 0;
 #define FM_PREPARING_TO_STOP 30
 
 
-float pid_p_gain_roll = 1.3;               //Gain setting for the pitch and roll P-controller (default = 1.3).
-float pid_i_gain_roll = 0.04;              //Gain setting for the pitch and roll I-controller (default = 0.04).
+float pid_p_gain_roll = 10;               //Gain setting for the pitch and roll P-controller (default = 1.3).
+float pid_i_gain_roll = 0;              //Gain setting for the pitch and roll I-controller (default = 0.04).
 float pid_d_gain_roll = 0;              //Gain setting for the pitch and roll D-controller (default = 18.0).
 int pid_max_roll = 400;                    //Maximum output of the PID-controller (+/-).
 
-float pid_p_gain_pitch = 1.3;  //Gain setting for the pitch P-controller.
-float pid_i_gain_pitch = 0.04;  //Gain setting for the pitch I-controller.
+float pid_p_gain_pitch = 10;  //Gain setting for the pitch P-controller.
+float pid_i_gain_pitch = 0;  //Gain setting for the pitch I-controller.
 float pid_d_gain_pitch = 0;  //Gain setting for the pitch D-controller.
 int pid_max_pitch = 400;          //Maximum output of the PID-controller (+/-).
 
@@ -90,8 +90,8 @@ void calculate_pid(void) {
 
     pid_output_pitch = pid_p_gain_pitch * pid_error_temp + pid_i_mem_pitch +
                        pid_d_gain_pitch * (pid_error_temp - pid_last_pitch_d_error);
-    if (pid_output_pitch > pid_max_pitch)pid_output_pitch = pid_max_pitch;
-    else if (pid_output_pitch < pid_max_pitch * -1)pid_output_pitch = pid_max_pitch * -1;
+    if (pid_output_pitch > pid_max_pitch) pid_output_pitch = pid_max_pitch;
+    else if (pid_output_pitch < pid_max_pitch * -1) pid_output_pitch = pid_max_pitch * -1;
 
     pid_last_pitch_d_error = pid_error_temp;
 
@@ -132,6 +132,16 @@ float FlightMode_GetRoll(void) {
 }
 
 
+float FlightMode_GetPIDPitch(void){
+    return pid_output_pitch;
+}
+float FlightMode_GetPIDRoll(void){
+    return pid_output_roll;
+}
+float FlightMode_GetPIDYaw(void){
+    return pid_output_yaw;
+}
+
 void FlightMode_OnTick(uint32_t now) {
     if (now > PID_timer) {
         PID_timer += PID_INTERVAL;
@@ -140,6 +150,7 @@ void FlightMode_OnTick(uint32_t now) {
         input_yaw = RCInput_GetInputValue(RC_YAW) - 500;
 
         switch (FM_Mode) {
+
             case FM_STOPPED:
                 Output_SetMotorSpeed(MOTOR_1, 0);
                 Output_SetMotorSpeed(MOTOR_2, 0);
@@ -215,10 +226,10 @@ void FlightMode_OnTick(uint32_t now) {
 
                 calculate_pid();
 
-                esc_1 = demand_throttle - pid_output_pitch + pid_output_roll - pid_output_yaw;        //Calculate the pulse for esc 1 (front-right - CW).
-                esc_2 = demand_throttle + pid_output_pitch + pid_output_roll + pid_output_yaw;        //Calculate the pulse for esc 2 (rear-right - CCW).
-                esc_3 = demand_throttle + pid_output_pitch - pid_output_roll - pid_output_yaw;        //Calculate the pulse for esc 3 (rear-left - CW).
-                esc_4 = demand_throttle - pid_output_pitch - pid_output_roll + pid_output_yaw;        //Calculate the pulse for esc 4 (front-left - CCW).
+                esc_1 = demand_throttle + pid_output_pitch + pid_output_roll - pid_output_yaw;        //Calculate the pulse for esc 1 (front-right - CW).
+                esc_2 = demand_throttle - pid_output_pitch + pid_output_roll + pid_output_yaw;        //Calculate the pulse for esc 2 (rear-right - CCW).
+                esc_3 = demand_throttle - pid_output_pitch - pid_output_roll - pid_output_yaw;        //Calculate the pulse for esc 3 (rear-left - CW).
+                esc_4 = demand_throttle + pid_output_pitch - pid_output_roll + pid_output_yaw;        //Calculate the pulse for esc 4 (front-left - CCW).
 
 
 //                esc_1 = demand_throttle + demand_pitch - demand_roll - demand_yaw;        //Calculate the pulse for esc 1 (front-right - CW).

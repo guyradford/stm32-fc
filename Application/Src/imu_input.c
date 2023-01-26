@@ -51,7 +51,7 @@ bool IMUInput_IsCalibrated() {
 }
 
 float IMUInput_GetPitch(void) {
-    return -IMU_GetPitch() - IMUInput_Calibration_Pitch;
+    return IMU_GetPitch() - IMUInput_Calibration_Pitch;
 }
 
 float IMUInput_GetRoll(void) {
@@ -63,7 +63,4 @@ float IMUInput_GetYaw(void) {
     return IMU_GetYaw();
 }
 
-void IMUInput_YawCalibrationYaw(void){
-//    IMUInput_Calibration_Yaw = IMU_GetYaw();
-}
 

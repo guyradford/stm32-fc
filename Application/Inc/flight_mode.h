@@ -15,5 +15,9 @@ uint16_t FlightMode_GetThrottle(void);
 float FlightMode_GetPitch(void);
 float FlightMode_GetRoll(void);
 
+float FlightMode_GetPIDPitch(void);
+float FlightMode_GetPIDRoll(void);
+float FlightMode_GetPIDYaw(void);
+
 
 #endif //STM32_FC_FLIGHT_MODE_H

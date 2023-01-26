@@ -19,6 +19,7 @@
 #define LED_MODE_GOOD "GGGGG_____"
 #define LED_MODE_SETUP "G_"
 
+#define LED_MODE_CALIBRATION "RG"
 #define LED_MODE_STOPPED "R"
 #define LED_MODE_PREPARING_TO_RUN "RG"
 #define LED_MODE_RUNNING "G"

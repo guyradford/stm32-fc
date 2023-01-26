@@ -17,6 +17,7 @@
 #define HMI_GYROSCOPE 10
 #define HMI_MAGNETOMETER 11
 #define HMI_FLIGHT_MODE 12
+#define HMI_PID_VALUES 13
 
 
 #include <stdio.h>
@@ -55,6 +56,7 @@ void MenuMenu(void) {
     printf("c - Corrected IMU Values.\r\n");
     printf("v - Corrected RC Input Values.\r\n");
     printf("f - Flight Mode Output.\r\n");
+    printf("p - PID Output.\r\n");
 
 
     printf(OUTPUT_BLANK_LINE);
@@ -105,6 +107,9 @@ void HMIMain_Handle(uint8_t character) {
                 break;
             case 'f':
                 hmiMenu_Display = HMI_FLIGHT_MODE;
+                break;
+            case 'p':
+                hmiMenu_Display = HMI_PID_VALUES;
                 break;
         }
     }
@@ -195,6 +200,10 @@ void HMIMain_Handle(uint8_t character) {
         case HMI_FLIGHT_MODE:
             printf("Mode: %2d, Throttle: %4d, Yaw: % 8.3f, Pitch: % 8.3f, Roll: % 8.3f\r\n", FlightMode_GetMode(), FlightMode_GetThrottle(), FlightMode_GetYaw(), FlightMode_GetPitch(), FlightMode_GetRoll());
             break;
+        case HMI_PID_VALUES:
+            printf("Mode: %2d, Yaw: % 8.3f, Pitch: % 8.3f, Roll: % 8.3f\r\n", FlightMode_GetMode(), FlightMode_GetPIDYaw(), FlightMode_GetPIDPitch(), FlightMode_GetPIDRoll());
+            break;
+
     }
 }
 
