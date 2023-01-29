@@ -140,8 +140,6 @@ int main(void)
     while (1) {
 
         now = HAL_GetTick();
-        IMU_OnTick(now);
-//        UartInterface_OnTick(now);
         Application_OnTick(now);
 
 

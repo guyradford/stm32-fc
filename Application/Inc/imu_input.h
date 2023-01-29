@@ -12,14 +12,15 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "Waveshare_10Dof-D.h"
 
-void IMUInput_OnTick(uint32_t now);
 
 bool IMUInput_IsCalibrated();
 
-float IMUInput_GetPitch(void);
-float IMUInput_GetRoll(void);
-float IMUInput_GetYaw(void);
-//void IMUInput_YawCalibrationYaw(void);
+IMU_ST_ANGLES_DATA IMUInput_GetAngles(void);
+IMU_ST_ANGLES_DATA IMUInput_GetLastAngles(void);
+void IMUInput_Calibrate(void);
+
+
 
 #endif //STM32_FC_IMU_INPUT_H

@@ -17,7 +17,7 @@ uint32_t PID_timer = 0;
 #define CONFIG_MIN_MOTOR_SPEED 75
 #define CONFIG_MAX_INPUT_RANGE (500-CONFIG_DEAD_BAND)
 
-#define PID_INTERVAL 20
+#define FM_INTERVAL 5
 
 
 #define FM_STOPPED 0
@@ -64,13 +64,13 @@ float pid_i_mem_roll, pid_output_roll, pid_last_roll_d_error;
 float pid_i_mem_pitch, pid_output_pitch, pid_last_pitch_d_error;
 float pid_i_mem_yaw, pid_output_yaw, pid_last_yaw_d_error;
 
-
+IMU_ST_ANGLES_DATA imuAngles;
 
 void calculate_pid(void) {
     //Roll calculations
     float pid_error_temp;
 
-    pid_error_temp = IMUInput_GetRoll() - demand_roll;
+    pid_error_temp = imuAngles.fRoll - demand_roll;
     pid_i_mem_roll += pid_i_gain_roll * pid_error_temp;
     if (pid_i_mem_roll > pid_max_roll) pid_i_mem_roll = pid_max_roll;
     else if (pid_i_mem_roll < pid_max_roll * -1) pid_i_mem_roll = pid_max_roll * -1;
@@ -83,7 +83,7 @@ void calculate_pid(void) {
     pid_last_roll_d_error = pid_error_temp;
 
     //Pitch calculations
-    pid_error_temp = IMUInput_GetPitch() - demand_pitch;
+    pid_error_temp = imuAngles.fPitch - demand_pitch;
     pid_i_mem_pitch += pid_i_gain_pitch * pid_error_temp;
     if (pid_i_mem_pitch > pid_max_pitch)pid_i_mem_pitch = pid_max_pitch;
     else if (pid_i_mem_pitch < pid_max_pitch * -1)pid_i_mem_pitch = pid_max_pitch * -1;
@@ -96,7 +96,7 @@ void calculate_pid(void) {
     pid_last_pitch_d_error = pid_error_temp;
 
     //Yaw calculations
-    pid_error_temp = IMUInput_GetYaw() - demand_yaw;
+    pid_error_temp = imuAngles.fYaw - demand_yaw;
     pid_i_mem_yaw += pid_i_gain_yaw * pid_error_temp;
     if (pid_i_mem_yaw > pid_max_yaw)pid_i_mem_yaw = pid_max_yaw;
     else if (pid_i_mem_yaw < pid_max_yaw * -1)pid_i_mem_yaw = pid_max_yaw * -1;
@@ -108,7 +108,6 @@ void calculate_pid(void) {
 
     pid_last_yaw_d_error = pid_error_temp;
 }
-
 
 
 uint8_t FlightMode_GetMode(void) {
@@ -131,91 +130,92 @@ float FlightMode_GetRoll(void) {
     return demand_roll;
 }
 
-
-float FlightMode_GetPIDPitch(void){
+float FlightMode_GetPIDPitch(void) {
     return pid_output_pitch;
 }
-float FlightMode_GetPIDRoll(void){
+
+float FlightMode_GetPIDRoll(void) {
     return pid_output_roll;
 }
-float FlightMode_GetPIDYaw(void){
+
+float FlightMode_GetPIDYaw(void) {
     return pid_output_yaw;
 }
 
 void FlightMode_OnTick(uint32_t now) {
-    if (now > PID_timer) {
-        PID_timer += PID_INTERVAL;
+//    if (now < PID_timer) {
+//        return;
+//    }
+//    PID_timer += FM_INTERVAL;
 
-        input_throttle = RCInput_GetInputValue(RC_THROTTLE);
-        input_yaw = RCInput_GetInputValue(RC_YAW) - 500;
+    input_throttle = RCInput_GetInputValue(RC_THROTTLE);
+    input_yaw = RCInput_GetInputValue(RC_YAW) - 500;
+    imuAngles = IMUInput_GetAngles();
 
-        switch (FM_Mode) {
+    switch (FM_Mode) {
 
-            case FM_STOPPED:
-                Output_SetMotorSpeed(MOTOR_1, 0);
-                Output_SetMotorSpeed(MOTOR_2, 0);
-                Output_SetMotorSpeed(MOTOR_3, 0);
-                Output_SetMotorSpeed(MOTOR_4, 0);
+        case FM_STOPPED:
+            Output_SetMotorSpeeds(0, 0, 0, 0);
 
-                // LED mode
-                LED_SetMode(LED_MODE_STOPPED);
+            // LED mode
+            LED_SetMode(LED_MODE_STOPPED);
 
-                if (input_throttle < CONFIG_DEAD_BAND && input_yaw < -250) {
-                    FM_Mode = FM_PREPARING_TO_RUN;
-                    LED_SetMode(LED_MODE_PREPARING_TO_RUN);
-                }
-                break;
-            case FM_PREPARING_TO_RUN:
-                if (input_throttle < CONFIG_DEAD_BAND && input_yaw > -50) {
-                    FM_Mode = FM_RUNNING;
-                    LED_SetMode(LED_MODE_RUNNING);
+            if (input_throttle < CONFIG_DEAD_BAND && input_yaw < -250) {
+                FM_Mode = FM_PREPARING_TO_RUN;
+                LED_SetMode(LED_MODE_PREPARING_TO_RUN);
+            }
+            break;
+        case FM_PREPARING_TO_RUN:
+            if (input_throttle < CONFIG_DEAD_BAND && input_yaw > -CONFIG_DEAD_BAND) {
+                FM_Mode = FM_RUNNING;
+                LED_SetMode(LED_MODE_RUNNING);
 
 //                    IMUInput_YawCalibrationYaw();
-                    demand_yaw = IMUInput_GetYaw();
-                    // reset controller
-                    //Reset the PID controllers for a bumpless start.
+                demand_yaw = imuAngles.fYaw;
+                // reset controller
+                //Reset the PID controllers for a bumpless start.
 //                    pid_i_mem_roll = 0;
 //                    pid_last_roll_d_error = 0;
 //                    pid_i_mem_pitch = 0;
 //                    pid_last_pitch_d_error = 0;
 //                    pid_i_mem_yaw = 0;
 //                    pid_last_yaw_d_error = 0;
+            }
+            break;
+        case FM_RUNNING:
+            if (input_throttle < CONFIG_DEAD_BAND && input_yaw > 250) {
+                FM_Mode = FM_PREPARING_TO_STOP;
+                LED_SetMode(LED_MODE_PREPARING_TO_RUN);
+                demand_pitch = 0;
+                demand_roll = 0;
+            }
+
+            input_pitch = RCInput_GetInputValue(RC_PITCH) - 500.0;
+            input_roll = RCInput_GetInputValue(RC_ROLL) - 500.0;
+
+            demand_pitch = 0;
+            if (input_pitch < -CONFIG_DEAD_BAND) demand_pitch = (input_pitch + CONFIG_DEAD_BAND) * anglePerInput;
+            if (input_pitch > CONFIG_DEAD_BAND) demand_pitch = (input_pitch - CONFIG_DEAD_BAND) * anglePerInput;
+
+            demand_roll = 0;
+            if (input_roll < -CONFIG_DEAD_BAND) demand_roll = (input_roll + CONFIG_DEAD_BAND) * anglePerInput;
+            if (input_roll > CONFIG_DEAD_BAND) demand_roll = (input_roll - CONFIG_DEAD_BAND) * anglePerInput;
+
+
+            // Calculate demand yaw between -180 to +180, but only when throttle is active
+            if (input_throttle > CONFIG_DEAD_BAND) {
+                if (input_yaw < -CONFIG_DEAD_BAND) {
+                    demand_yaw += (input_yaw + CONFIG_DEAD_BAND) * (yawAnglePerInput);
+                    if (demand_yaw < -180.0) demand_yaw += 360.0;
                 }
-                break;
-            case FM_RUNNING:
-                if (input_throttle < CONFIG_DEAD_BAND && input_yaw > 250) {
-                    FM_Mode = FM_PREPARING_TO_STOP;
-                    LED_SetMode(LED_MODE_PREPARING_TO_RUN);
-                    demand_pitch = 0;
-                    demand_roll = 0;
+                if (input_yaw > CONFIG_DEAD_BAND) {
+                    demand_yaw += (input_yaw - CONFIG_DEAD_BAND) * (yawAnglePerInput);
+                    if (demand_yaw > 180.0) demand_yaw -= 360.0;
                 }
+            }
 
-                input_pitch = RCInput_GetInputValue(RC_PITCH) - 500.0;
-                input_roll = RCInput_GetInputValue(RC_ROLL) - 500.0;
-
-                demand_pitch = 0.0;
-                if (input_pitch < -CONFIG_DEAD_BAND) demand_pitch = (input_pitch + CONFIG_DEAD_BAND) * anglePerInput;
-                if (input_pitch > CONFIG_DEAD_BAND) demand_pitch = (input_pitch - CONFIG_DEAD_BAND) * anglePerInput;
-
-                demand_roll = 0.0;
-                if (input_roll < -CONFIG_DEAD_BAND) demand_roll = (input_roll + CONFIG_DEAD_BAND) * anglePerInput;
-                if (input_roll > CONFIG_DEAD_BAND) demand_roll = (input_roll - CONFIG_DEAD_BAND) * anglePerInput;
-
-
-                // Calculate demand yaw between -180 to +180, but only when throttle is active
-                if (input_throttle > CONFIG_DEAD_BAND) {
-                    if (input_yaw < -CONFIG_DEAD_BAND) {
-                        demand_yaw += (input_yaw + CONFIG_DEAD_BAND) * (yawAnglePerInput);
-                        if (demand_yaw < -180.0) demand_yaw += 360.0;
-                    }
-                    if (input_yaw > CONFIG_DEAD_BAND) {
-                        demand_yaw += (input_yaw - CONFIG_DEAD_BAND) * (yawAnglePerInput);
-                        if (demand_yaw > 180.0) demand_yaw -= 360.0;
-                    }
-                }
-
-                demand_throttle = input_throttle;
-                if (demand_throttle > 800) demand_throttle = 800; // this allows some headroom for the PID controllers
+            demand_throttle = input_throttle;
+            if (demand_throttle > 800) demand_throttle = 800; // this allows some headroom for the PID controllers
 
 
 //                esc_1 = throttle - pid_output_pitch + pid_output_roll - pid_output_yaw;        //Calculate the pulse for esc 1 (front-right - CCW).
@@ -224,12 +224,17 @@ void FlightMode_OnTick(uint32_t now) {
 //                esc_4 = throttle - pid_output_pitch - pid_output_roll + pid_output_yaw;        //Calculate the pulse for esc 4 (front-left - CW).
 
 
-                calculate_pid();
 
-                esc_1 = demand_throttle + pid_output_pitch + pid_output_roll - pid_output_yaw;        //Calculate the pulse for esc 1 (front-right - CW).
-                esc_2 = demand_throttle - pid_output_pitch + pid_output_roll + pid_output_yaw;        //Calculate the pulse for esc 2 (rear-right - CCW).
-                esc_3 = demand_throttle - pid_output_pitch - pid_output_roll - pid_output_yaw;        //Calculate the pulse for esc 3 (rear-left - CW).
-                esc_4 = demand_throttle + pid_output_pitch - pid_output_roll + pid_output_yaw;        //Calculate the pulse for esc 4 (front-left - CCW).
+            calculate_pid();
+
+            esc_1 = (uint16_t) ((float) demand_throttle + pid_output_pitch + pid_output_roll -
+                                pid_output_yaw);        //Calculate the pulse for esc 1 (front-right - CW).
+            esc_2 = (uint16_t) ((float) demand_throttle - pid_output_pitch + pid_output_roll +
+                                pid_output_yaw);        //Calculate the pulse for esc 2 (rear-right - CCW).
+            esc_3 = (uint16_t) ((float) demand_throttle - pid_output_pitch - pid_output_roll -
+                                pid_output_yaw);        //Calculate the pulse for esc 3 (rear-left - CW).
+            esc_4 = (uint16_t) ((float) demand_throttle + pid_output_pitch - pid_output_roll +
+                                pid_output_yaw);        //Calculate the pulse for esc 4 (front-left - CCW).
 
 
 //                esc_1 = demand_throttle + demand_pitch - demand_roll - demand_yaw;        //Calculate the pulse for esc 1 (front-right - CW).
@@ -238,34 +243,27 @@ void FlightMode_OnTick(uint32_t now) {
 //                esc_4 = demand_throttle + demand_pitch + demand_roll + demand_yaw;        //Calculate the pulse for esc 4 (front-left - CCW).
 
 
-                // limit esc demand value
-                if (esc_1 > 1000) esc_1 = 1000;
-                if (esc_2 > 1000) esc_2 = 1000;
-                if (esc_3 > 1000) esc_3 = 1000;
-                if (esc_4 > 1000) esc_4 = 1000;
+            // limit esc demand value
+            if (esc_1 > 1000) esc_1 = 1000;
+            if (esc_2 > 1000) esc_2 = 1000;
+            if (esc_3 > 1000) esc_3 = 1000;
+            if (esc_4 > 1000) esc_4 = 1000;
 
-                // keep motors running
-                if (esc_1 < CONFIG_MIN_MOTOR_SPEED) esc_1 = CONFIG_MIN_MOTOR_SPEED;
-                if (esc_2 < CONFIG_MIN_MOTOR_SPEED) esc_2 = CONFIG_MIN_MOTOR_SPEED;
-                if (esc_3 < CONFIG_MIN_MOTOR_SPEED) esc_3 = CONFIG_MIN_MOTOR_SPEED;
-                if (esc_4 < CONFIG_MIN_MOTOR_SPEED) esc_4 = CONFIG_MIN_MOTOR_SPEED;
+            // keep motors running
+            if (esc_1 < CONFIG_MIN_MOTOR_SPEED) esc_1 = CONFIG_MIN_MOTOR_SPEED;
+            if (esc_2 < CONFIG_MIN_MOTOR_SPEED) esc_2 = CONFIG_MIN_MOTOR_SPEED;
+            if (esc_3 < CONFIG_MIN_MOTOR_SPEED) esc_3 = CONFIG_MIN_MOTOR_SPEED;
+            if (esc_4 < CONFIG_MIN_MOTOR_SPEED) esc_4 = CONFIG_MIN_MOTOR_SPEED;
 
-                Output_SetMotorSpeed(MOTOR_1, esc_1);
-                Output_SetMotorSpeed(MOTOR_2, esc_2);
-                Output_SetMotorSpeed(MOTOR_3, esc_3);
-                Output_SetMotorSpeed(MOTOR_4, esc_4);
-                break;
+            Output_SetMotorSpeeds(esc_1, esc_2, esc_3, esc_4);
+            break;
 
-            case FM_PREPARING_TO_STOP:
-                if (input_throttle < CONFIG_DEAD_BAND && input_yaw < 50) {
-                    FM_Mode = FM_STOPPED;
-                    LED_SetMode(LED_MODE_STOPPED);
-                }
-                break;
-
-
-        }
-
-
+        case FM_PREPARING_TO_STOP:
+            if (input_throttle < CONFIG_DEAD_BAND && input_yaw < 50) {
+                FM_Mode = FM_STOPPED;
+                LED_SetMode(LED_MODE_STOPPED);
+            }
+            break;
     }
+
 }

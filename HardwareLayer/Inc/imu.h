@@ -14,11 +14,11 @@ void IMU_OnTick(uint32_t now);
 
 IMU_ST_ANGLES_DATA IMU_GetAngles(void);
 
-float IMU_GetPitch(void);
-
-float IMU_GetRoll(void);
-
-float IMU_GetYaw(void);
+//float IMU_GetPitch(void);
+//
+//float IMU_GetRoll(void);
+//
+//float IMU_GetYaw(void);
 
 float IMU_GetAltitude(void);
 

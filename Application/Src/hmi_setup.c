@@ -18,6 +18,7 @@
 #include "esc_output.h"
 #include "Waveshare_10Dof-D.h"
 #include "imu.h"
+#include "output.h"
 
 uint16_t hmiSetup_Display = HMI_ESC_PROGRAMMING;
 uint8_t hmiSetup_Motor = 0;
@@ -73,19 +74,19 @@ void HMISetup_Handle(uint8_t character) {
                 break;
             case '1':
                 hmiSetup_Display = HMI_ESC_SINGLE_MOTOR;
-                hmiSetup_Motor = 1;
+                hmiSetup_Motor = MOTOR_1;
                 break;
             case '2':
                 hmiSetup_Display = HMI_ESC_SINGLE_MOTOR;
-                hmiSetup_Motor = 2;
+                hmiSetup_Motor = MOTOR_2;
                 break;
             case '3':
                 hmiSetup_Display = HMI_ESC_SINGLE_MOTOR;
-                hmiSetup_Motor = 3;
+                hmiSetup_Motor = MOTOR_3;
                 break;
             case '4':
                 hmiSetup_Display = HMI_ESC_SINGLE_MOTOR;
-                hmiSetup_Motor = 4;
+                hmiSetup_Motor = MOTOR_4;
                 break;
 
 //            case 'r':
@@ -107,15 +108,15 @@ void HMISetup_Handle(uint8_t character) {
             break;
         case HMI_ESC_PROGRAMMING:
             printf("M1: %-5d M2: %-5d M3: %-5d M4: %-5d \r\n",
-                   EscOutput_GetMotor(1),
-                   EscOutput_GetMotor(2),
-                   EscOutput_GetMotor(3),
-                   EscOutput_GetMotor(4)
+                   EscOutput_GetMotorSpeed(MOTOR_1),
+                   EscOutput_GetMotorSpeed(MOTOR_2),
+                   EscOutput_GetMotorSpeed(MOTOR_3),
+                   EscOutput_GetMotorSpeed(MOTOR_4)
             );
             break;
         case HMI_ESC_SINGLE_MOTOR:
             stAccelRawData = IMU_GetRawAccelerometer();
-            printf("Motor: %d, Speed %-5d, Accl: %2.3f\r\n", hmiSetup_Motor, EscOutput_GetMotor(hmiSetup_Motor),
+            printf("Motor: %d, Speed %-5d, Accl: %2.3f\r\n", hmiSetup_Motor, EscOutput_GetMotorSpeed(hmiSetup_Motor),
                    fmax(fabs(stAccelRawData.s16X) / 16384.0, fabs(stAccelRawData.s16Y) / 16384.0));
             break;
         case HMI_CALIBRATE_IMU:

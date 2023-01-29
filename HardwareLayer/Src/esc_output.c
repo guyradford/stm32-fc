@@ -3,6 +3,7 @@
 //
 
 #include "esc_output.h"
+#include "output.h"
 
 void EscOutput_SetSpeed(uint16_t motor_1, uint16_t motor_2, uint16_t motor_3, uint16_t motor_4){
     TIM2->CCR1 = motor_1 + 1000;
@@ -11,15 +12,15 @@ void EscOutput_SetSpeed(uint16_t motor_1, uint16_t motor_2, uint16_t motor_3, ui
     TIM2->CCR4 = motor_4 + 1000;
 }
 
-uint16_t EscOutput_GetMotor(uint8_t motor){
+uint16_t EscOutput_GetMotorSpeed(uint8_t motor){
     switch (motor) {
-        case 1:
+        case MOTOR_1:
             return TIM2->CCR1;
-        case 2:
+        case MOTOR_2:
             return TIM2->CCR2;
-        case 3:
+        case MOTOR_3:
             return TIM2->CCR3;
-        case 4:
+        case MOTOR_4:
             return TIM2->CCR4;
     }
 

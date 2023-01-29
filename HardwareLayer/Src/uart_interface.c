@@ -80,10 +80,10 @@ uint8_t UARTInterface_GetNextFromBuffer() {
 
 //void PrintMotorValue() {
 //    printf("M1: %-5d M2: %-5d M3: %-5d M4: %-5d \r\n",
-//           EscOutput_GetMotor(1),
-//           EscOutput_GetMotor(2),
-//           EscOutput_GetMotor(3),
-//           EscOutput_GetMotor(4)
+//           EscOutput_GetMotorSpeed(1),
+//           EscOutput_GetMotorSpeed(2),
+//           EscOutput_GetMotorSpeed(3),
+//           EscOutput_GetMotorSpeed(4)
 //    );}
 //
 //

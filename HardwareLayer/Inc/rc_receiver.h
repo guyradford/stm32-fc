@@ -41,6 +41,7 @@ void Edge_Trigger(TIM_HandleTypeDef *htim, uint16_t RC_Channel);
 
 uint16_t RC_GetRawValue(uint16_t RC_Channel);
 uint16_t * RC_GetChannelValues(void);
+void RCInput_Calibrate(void);
 
 //uint16_t RC_GetCorrectedValue(uint16_t RC_Channel);
 //uint8_t RC_getPercentage(uint16_t RC_Channel);

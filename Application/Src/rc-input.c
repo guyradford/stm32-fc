@@ -8,7 +8,7 @@
 #include "config.h"
 
 uint32_t RCInput_timer = 0;
-uint8_t rc_input_mode = RC_INPUT_MODE_CALIBRATING;
+uint8_t rc_input_mode = RC_INPUT_MODE_RUNNING;
 uint16_t calibrationCount = 0;
 
 uint16_t *Receiver_Values;
@@ -33,10 +33,6 @@ rc_receiver_min_max_values ChannelCalibration[6] = {
 
 uint16_t FrequencyTable[6][2][RC_INPUT_CALIBRATION_RANGE] = {0};
 
-void RCInput_InitReceiverValues() {
-    Receiver_Values = RC_GetChannelValues();
-}
-
 uint8_t GetMaxFrequency(uint16_t Frequency[]) {
     uint8_t index = 0;
     for (uint8_t i = 1; i < RC_INPUT_CALIBRATION_RANGE; i++) {
@@ -47,8 +43,8 @@ uint8_t GetMaxFrequency(uint16_t Frequency[]) {
     return index;
 }
 
-void Calibrate() {
-    if (RC_CALIBRATION_CONFIG){
+void RCInput_Calibrate(void) {
+    if (RC_CALIBRATION_CONFIG) {
 
         ChannelCalibration[RC_CH_1].max = RC_CALIBRATION_CHANNEL_1_MAX;
         ChannelCalibration[RC_CH_1].min = RC_CALIBRATION_CHANNEL_1_MIN;
@@ -128,15 +124,23 @@ void Calibrate() {
 
 }
 
-void RCInput_OnTick(uint32_t now) {
-    if (now > RCInput_timer) {
-        RCInput_timer += RC_INPUT_INTERVAL;
+void RCInput_Init() {
+    Receiver_Values = RC_GetChannelValues();
 
-        if (rc_input_mode == RC_INPUT_MODE_CALIBRATING) {
-            Calibrate();
-        }
-    }
 }
+
+
+
+
+//void RCInput_OnTick(uint32_t now) {
+//    if (now > RCInput_timer) {
+//        RCInput_timer += RC_INPUT_INTERVAL;
+//
+//        if (rc_input_mode == RC_INPUT_MODE_CALIBRATING) {
+//            Calibrate();
+//        }
+//    }
+//}
 
 bool RCInput_IsCalibrated() {
     if (rc_input_mode == RC_INPUT_MODE_RUNNING) return true;
@@ -155,7 +159,7 @@ uint16_t RCInput_GetInputValue(uint8_t RC_Channel) {
     if (ChannelConfig[RC_Channel] & RC_INPUT_INPUT_RANGE_ZEROED) {
         return (uint16_t) (value * ChannelCalibration[RC_Channel].ratio);
     }
-    return (uint16_t)value;
+    return (uint16_t) value;
 
 
 }

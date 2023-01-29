@@ -8,6 +8,6 @@
 #include "main.h"
 
 void EscOutput_SetSpeed(uint16_t motor_1, uint16_t motor_2, uint16_t motor_3, uint16_t motor_4);
-uint16_t EscOutput_GetMotor(uint8_t motor);
+uint16_t EscOutput_GetMotorSpeed(uint8_t motor);
 
 #endif //STM32_FC_ESC_OUTPUT_H

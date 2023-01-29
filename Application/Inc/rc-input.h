@@ -34,9 +34,9 @@ typedef struct {
 
 uint16_t RCInput_GetInputValue(uint8_t RC_Channel);
 
-void RCInput_InitReceiverValues(void);
+void RCInput_Init(void);
 
-void RCInput_OnTick(uint32_t now);
+//void RCInput_OnTick(uint32_t now);
 
 bool RCInput_IsCalibrated();
 

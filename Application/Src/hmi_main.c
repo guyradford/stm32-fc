@@ -68,6 +68,9 @@ void MenuMenu(void) {
 
 void HMIMain_Handle(uint8_t character) {
 
+    IMU_ST_ANGLES_DATA stAngles;
+    IMU_ST_SENSOR_DATA stData;
+
     switch (character) {
         case 'h':
             hmiMenu_Display = HMI_MENU;
@@ -95,7 +98,6 @@ void HMIMain_Handle(uint8_t character) {
                 break;
 
 
-
             case 'v':
                 hmiMenu_Display = HMI_CORRECTED_RC_VALUES;
                 break;
@@ -113,25 +115,6 @@ void HMIMain_Handle(uint8_t character) {
                 break;
         }
     }
-//        if (imuDisplay == HMI_LED_NONE){
-//            switch (character) {
-//                case 'q':
-//                    imuDisplay = HMI_HOME;
-//                    break;
-//                case '0':
-//                    StatusLED_SetLedState(LED_NONE);
-//                    printf("Status LED off.\r\n");
-//                    break;
-//                case '1':
-//                    StatusLED_SetLedState(LED_GREEN);
-//                    printf("Status LED Green.\r\n");
-//                    break;
-//                case '2':
-//                    StatusLED_SetLedState(LED_RED);
-//                    printf("Status LED Red.\r\n");
-//                    break;
-//            }
-//        }
 
 
     switch (hmiMenu_Display) {
@@ -140,22 +123,22 @@ void HMIMain_Handle(uint8_t character) {
             break;
 
         case HMI_IMU: {
-            IMU_ST_ANGLES_DATA stAngles = IMU_GetAngles();
+            stAngles = IMU_GetAngles();
             printf("Roll: %3.2f     Pitch: %3.2f     Yaw: %3.2f \r\n", stAngles.fRoll, stAngles.fPitch, stAngles.fYaw);
         }
             break;
         case HMI_ACCELEROMETER: {
-            IMU_ST_SENSOR_DATA stData = IMU_GetRawAccelerometer();
+            stData = IMU_GetRawAccelerometer();
             printf("X: %-5d     PY: %-5d     Yaw: %-5d \r\n", stData.s16X, stData.s16Y, stData.s16Z);
         }
             break;
         case HMI_GYROSCOPE: {
-            IMU_ST_SENSOR_DATA stData = IMU_GetRawGyroscope();
+            stData = IMU_GetRawGyroscope();
             printf("X: %-5d     PY: %-5d     Yaw: %-5d \r\n", stData.s16X, stData.s16Y, stData.s16Z);
         }
             break;
         case HMI_MAGNETOMETER: {
-            IMU_ST_SENSOR_DATA stData = IMU_GetRawMagnetometer();
+            stData = IMU_GetRawMagnetometer();
             printf("X: %-5d     PY: %-5d     Yaw: %-5d \r\n", stData.s16X, stData.s16Y, stData.s16Z);
         }
             break;
@@ -185,23 +168,26 @@ void HMIMain_Handle(uint8_t character) {
 
         case HMI_MOTOR:
             printf("M1: %-5d M2: %-5d M3: %-5d M4: %-5d \r\n",
-                   EscOutput_GetMotor(1),
-                   EscOutput_GetMotor(2),
-                   EscOutput_GetMotor(3),
-                   EscOutput_GetMotor(4)
+                   EscOutput_GetMotorSpeed(1),
+                   EscOutput_GetMotorSpeed(2),
+                   EscOutput_GetMotorSpeed(3),
+                   EscOutput_GetMotorSpeed(4)
             );
             break;
 
         case HMI_CORRECTED_IMU:
-            printf("Roll: %3.2f     Pitch: %3.2f     Yaw: %3.2f \r\n", IMUInput_GetRoll(), IMUInput_GetPitch(),
-                   IMUInput_GetYaw());
+            stAngles = IMUInput_GetLastAngles();
+            printf("Roll: %3.2f     Pitch: %3.2f     Yaw: %3.2f \r\n", stAngles.fRoll, stAngles.fPitch,
+                   stAngles.fYaw);
             break;
 
         case HMI_FLIGHT_MODE:
-            printf("Mode: %2d, Throttle: %4d, Yaw: % 8.3f, Pitch: % 8.3f, Roll: % 8.3f\r\n", FlightMode_GetMode(), FlightMode_GetThrottle(), FlightMode_GetYaw(), FlightMode_GetPitch(), FlightMode_GetRoll());
+            printf("Mode: %2d, Throttle: %4d, Yaw: % 8.3f, Pitch: % 8.3f, Roll: % 8.3f\r\n", FlightMode_GetMode(),
+                   FlightMode_GetThrottle(), FlightMode_GetYaw(), FlightMode_GetPitch(), FlightMode_GetRoll());
             break;
         case HMI_PID_VALUES:
-            printf("Mode: %2d, Yaw: % 8.3f, Pitch: % 8.3f, Roll: % 8.3f\r\n", FlightMode_GetMode(), FlightMode_GetPIDYaw(), FlightMode_GetPIDPitch(), FlightMode_GetPIDRoll());
+            printf("Mode: %2d, Yaw: % 8.3f, Pitch: % 8.3f, Roll: % 8.3f\r\n", FlightMode_GetMode(),
+                   FlightMode_GetPIDYaw(), FlightMode_GetPIDPitch(), FlightMode_GetPIDRoll());
             break;
 
     }

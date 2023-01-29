@@ -67,22 +67,6 @@ void Edge_Trigger(TIM_HandleTypeDef *htim, uint16_t RC_Channel) {
     }
 }
 
-//void Calibration(uint16_t RC_Channel, uint16_t duration) {
-//    if (duration < ChannelCalibration[RC_Channel].min) {
-//        ChannelCalibration[RC_Channel].min = duration;
-//        ChannelCalibration[RC_Channel].samples++;
-//    }
-//
-//    if (duration > ChannelCalibration[RC_Channel].max) {
-//        ChannelCalibration[RC_Channel].max = duration;
-//        ChannelCalibration[RC_Channel].samples++;
-//    }
-//    ChannelCalibration[RC_Channel].middle = (ChannelCalibration[RC_Channel].min + ChannelCalibration[RC_Channel].max) / 2;
-//    ChannelCalibration[RC_Channel].correction = 1500 - ChannelCalibration[RC_Channel].middle;
-//
-//}
-
-
 uint16_t RC_GetRawValue(uint16_t RC_Channel) {
     return RC_ChannelValues[RC_Channel];
 }
@@ -90,24 +74,6 @@ uint16_t RC_GetRawValue(uint16_t RC_Channel) {
 uint16_t * RC_GetChannelValues(void){
     return RC_ChannelValues;
 }
-
-//uint16_t RC_GetCorrectedValue(uint16_t RC_Channel) {
-//    if (values[RC_Channel].invert_input) {
-//        return abs((int16_t) (values[RC_Channel].duration + ChannelCalibration[RC_Channel].correction - 3000));
-//    }
-//    return values[RC_Channel].duration + ChannelCalibration[RC_Channel].correction;
-//}
-//
-//rc_receiver_min_max_values RC_GetCalibration(uint16_t RC_Channel) {
-//    return ChannelCalibration[RC_Channel];
-//}
-//
-//
-//uint8_t RC_getPercentage(uint16_t RC_Channel) {
-//    return ((float) (values[RC_Channel].duration - ChannelCalibration[RC_Channel].min) /
-//            (float) (ChannelCalibration[RC_Channel].max - ChannelCalibration[RC_Channel].min)) * 100;
-//
-//}
 
 
 #ifdef __cplusplus
