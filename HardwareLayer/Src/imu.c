@@ -20,20 +20,22 @@ int32_t s32PressureVal = 0, s32TemperatureVal = 0, s32AltitudeVal = 0;
 
 uint32_t imuGetTimer = 0;
 
-void IMU_Init(void) {
+bool IMU_Init(void) {
 
-
+    HAL_Delay(100);
     imuInit(&enMotionSensorType, &enPressureType);
     if (IMU_EN_SENSOR_TYPE_ICM20948 == enMotionSensorType) {
         printf("Motion sensor is ICM-20948\r\n");
+        return true;
     } else {
-        printf("Motion sensor NULL\r\rn");
+        printf("Motion sensor NULL\r\r");
     }
-    if (IMU_EN_SENSOR_TYPE_BMP280 == enPressureType) {
-        printf("Pressure sensor is BMP280\r\n");
-    } else {
-        printf("Pressure sensor NULL\r\n");
-    }
+//    if (IMU_EN_SENSOR_TYPE_BMP280 == enPressureType) {
+//        printf("Pressure sensor is BMP280\r\n");
+//    } else {
+//        printf("Pressure sensor NULL\r\n");
+//    }
+    return false;
 }
 
 void IMU_OnTick(uint32_t now) {
@@ -73,17 +75,6 @@ IMU_ST_SENSOR_DATA IMU_GetRawAccelerometer (void) {
     return stAccelRawData;
 }
 
-//float IMU_GetPitch(void ){
-//    return stAngles.fPitch;
-//}
-//float IMU_GetRoll(void ){
-//    return stAngles.fRoll;
-//
-//}
-//float IMU_GetYaw(void ){
-//    return stAngles.fYaw;
-//
-//}
 
 float IMU_GetAltitude(void) {
     return (float) s32AltitudeVal / 100.0;
@@ -92,8 +83,6 @@ float IMU_GetAltitude(void) {
 IMU_ST_SENSOR_DATA IMU_GetRawAcclData(void ){
     return stAccelRawData;
 }
-
-
 
 
 float IMU_GetPressure(void) {

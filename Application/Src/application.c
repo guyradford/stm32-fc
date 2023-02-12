@@ -27,9 +27,20 @@ void Application_Init(bool setupMode){
     RCInput_Calibrate();
 }
 
+void Application_SetMode(uint8_t mode){
+    applicationMode = mode;
+    switch(applicationMode){
+        case APPLICATION_MODE_ERROR:
+            LED_SetMode(LED_MODE_ERROR);
+            break;
+    }
+}
 
 void Application_OnTick(uint32_t now){
     switch (applicationMode) {
+        case APPLICATION_MODE_ERROR:
+            LED_OnTick(now);
+            break;
         case APPLICATION_MODE_SETUP:
             SetupMode_OnTick(now);
             LED_OnTick(now);

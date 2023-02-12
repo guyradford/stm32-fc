@@ -27,27 +27,27 @@ void SetupMode_OnTick(uint32_t now) {
                 motor = HMISetup_GetMotor();
 
                 if (motor == 1){
-                    Output_SetMotorSpeed(0, input_throttle);
+                    Output_SetMotorSpeed(MOTOR_1, input_throttle);
                 } else{
-                    Output_SetMotorSpeed(0, 0);
+                    Output_SetMotorSpeed(MOTOR_1, 0);
                 }
 
                 if (motor == 2){
-                    Output_SetMotorSpeed(1, input_throttle);
+                    Output_SetMotorSpeed(MOTOR_2, input_throttle);
                 } else{
-                    Output_SetMotorSpeed(1, 0);
+                    Output_SetMotorSpeed(MOTOR_2, 0);
                 }
 
                 if (motor == 3){
-                    Output_SetMotorSpeed(2, input_throttle);
+                    Output_SetMotorSpeed(MOTOR_3, input_throttle);
                 } else{
-                    Output_SetMotorSpeed(2, 0);
+                    Output_SetMotorSpeed(MOTOR_3, 0);
                 }
 
                 if (motor == 4){
-                    Output_SetMotorSpeed(3, input_throttle);
+                    Output_SetMotorSpeed(MOTOR_4, input_throttle);
                 } else{
-                    Output_SetMotorSpeed(3, 0);
+                    Output_SetMotorSpeed(MOTOR_4, 0);
                 }
 
                 break;

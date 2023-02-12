@@ -31,6 +31,7 @@
 #include "imu_input.h"
 #include "rc-input.h"
 #include "flight_mode.h"
+#include "output.h"
 
 uint16_t hmiMenu_Display = HMI_MENU;
 
@@ -168,16 +169,16 @@ void HMIMain_Handle(uint8_t character) {
 
         case HMI_MOTOR:
             printf("M1: %-5d M2: %-5d M3: %-5d M4: %-5d \r\n",
-                   EscOutput_GetMotorSpeed(1),
-                   EscOutput_GetMotorSpeed(2),
-                   EscOutput_GetMotorSpeed(3),
-                   EscOutput_GetMotorSpeed(4)
+                   EscOutput_GetMotorSpeed(MOTOR_1),
+                   EscOutput_GetMotorSpeed(MOTOR_2),
+                   EscOutput_GetMotorSpeed(MOTOR_3),
+                   EscOutput_GetMotorSpeed(MOTOR_4)
             );
             break;
 
         case HMI_CORRECTED_IMU:
             stAngles = IMUInput_GetLastAngles();
-            printf("Roll: %3.2f     Pitch: %3.2f     Yaw: %3.2f \r\n", stAngles.fRoll, stAngles.fPitch,
+            printf("Roll: %8.2f     Pitch: %8.2f     Yaw: %8.2f \r\n", stAngles.fRoll, stAngles.fPitch,
                    stAngles.fYaw);
             break;
 

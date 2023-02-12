@@ -12,10 +12,10 @@ void Output_SetMotorSpeed(uint8_t motor, uint16_t speed) {
     Output_MotorSpeed[motor] = speed;
     // Write new Motor speeds
     EscOutput_SetSpeed(
-            Output_MotorSpeed[0],
-            Output_MotorSpeed[1],
-            Output_MotorSpeed[2],
-            Output_MotorSpeed[3]
+            Output_MotorSpeed[MOTOR_1],
+            Output_MotorSpeed[MOTOR_2],
+            Output_MotorSpeed[MOTOR_3],
+            Output_MotorSpeed[MOTOR_4]
     );
 }
 
@@ -26,9 +26,9 @@ void Output_SetMotorSpeeds(uint16_t speed_1, uint16_t speed_2, uint16_t speed_3,
     Output_MotorSpeed[MOTOR_4] = speed_4;
     // Write new Motor speeds
     EscOutput_SetSpeed(
-            Output_MotorSpeed[0],
-            Output_MotorSpeed[1],
-            Output_MotorSpeed[2],
-            Output_MotorSpeed[3]
+            Output_MotorSpeed[MOTOR_1],
+            Output_MotorSpeed[MOTOR_2],
+            Output_MotorSpeed[MOTOR_3],
+            Output_MotorSpeed[MOTOR_4]
     );
 }

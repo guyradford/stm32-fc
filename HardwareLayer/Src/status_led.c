@@ -5,24 +5,15 @@
 #include <stdbool.h>
 #include "status_led.h"
 
-#define GREEN_FLASH_INTERVAL 300
-#define RED_FLASH_INTERVAL 500
-
-
-uint32_t ledTimer = 0;
-
-
-bool redState = false;
-bool greenState = false;
 
 
 void StatusLED_GreenLed(bool state) {
-    greenState = state;
+//    greenState = state;
     HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, (GPIO_PinState) state);
 }
 
 void StatusLED_RedLed(bool state) {
-    redState = state;
+//    redState = state;
     HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, (GPIO_PinState) state);
 }
 

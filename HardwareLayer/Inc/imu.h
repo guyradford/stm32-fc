@@ -8,7 +8,7 @@
 #include "main.h"
 #include "Waveshare_10Dof-D.h"
 
-void IMU_Init(void);
+bool IMU_Init(void);
 
 void IMU_OnTick(uint32_t now);
 

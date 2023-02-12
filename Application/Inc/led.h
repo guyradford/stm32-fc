@@ -25,6 +25,7 @@
 #define LED_MODE_RUNNING "G"
 
 
+#define LED_MODE_ERROR "RR__"
 #define LED_MODE_ERROR_1 "R_______"
 #define LED_MODE_ERROR_2 "R___R_______"
 #define LED_MODE_ERROR_3 "R___R___R_______"
