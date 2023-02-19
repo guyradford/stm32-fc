@@ -71,7 +71,8 @@ void SystemClock_Config(void);
 #endif
 
 PUTCHAR_PROTOTYPE {
-    HAL_UART_Transmit(&huart2, (uint8_t *) &ch, 1, 0xFFFF);
+//    HAL_UART_Transmit(&huart2, (uint8_t *) &ch, 1, 0xFFFF);
+    HAL_UART_Transmit_IT(&huart2, (uint8_t *) &ch, 1);
     return ch;
 }
 /* USER CODE END 0 */
@@ -119,6 +120,7 @@ int main(void)
 //        Application_SetMode(APPLICATION_MODE_ERROR);
 //    }
     bno055_assignI2C(&hi2c1);
+    HAL_Delay(1000);
     bno055_setup();
 
 //    bno055_axis_map_t axis = {

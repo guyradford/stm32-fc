@@ -2,9 +2,9 @@
 
 
 
-#define FM_PID_P_GAIN 1
-#define FM_PID_I_GAIN 0
-#define FM_PID_D_GAIN 0
+#define FM_PID_P_GAIN 1.3  //Gain setting for the pitch and roll P-controller (default = 1.3).
+#define FM_PID_I_GAIN 0.005 //Gain setting for the pitch and roll I-controller (default = 0.04).
+#define FM_PID_D_GAIN 20   //Gain setting for the pitch and roll D-controller (default = 18.0).
 
 #define  FM_MANUAL_GAIN 2.0
 

@@ -68,11 +68,21 @@ void UpdateIMUData() {
 
 IMU_ST_ANGLES_DATA IMU_GetAngles(void) {
 //    imuDataGet(&stAngles, &stGyroRawData, &stAccelRawData, &stMagnRawData);
-    bno055_vector_t v = bno055_getVectorEuler();
-    // printf("Heading: %.2f Roll: %.2f Pitch: %.2f\r\n", v.x, v.y, v.z);
-    stAngles.fYaw = (float) v.x;
-    stAngles.fRoll = (float) v.y;
-    stAngles.fPitch = (float) v.z;
+
+    uint8_t tmp = bno055_getSystemStatus();
+    if (tmp != BNO055_SYSTEM_STATUS_FUSION_ALGO_RUNNING){
+        stAngles.fYaw = (float) 0;
+        stAngles.fRoll = (float) 0;
+        stAngles.fPitch = (float) 0;
+        printf("BMO055 status: %u\r\n", tmp);
+    } else{
+        bno055_vector_t v = bno055_getVectorEuler();
+        // printf("Heading: %.2f Roll: %.2f Pitch: %.2f\r\n", v.x, v.y, v.z);
+        stAngles.fYaw = (float) v.x;
+        stAngles.fRoll = (float) v.y;
+        stAngles.fPitch = (float) v.z;
+    }
+
     return stAngles;
 }
 
