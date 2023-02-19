@@ -58,8 +58,8 @@ void UpdateIMUData() {
         bno055_vector_t v = bno055_getVectorEuler();
         // printf("Heading: %.2f Roll: %.2f Pitch: %.2f\r\n", v.x, v.y, v.z);
         stAngles.fYaw = (float) v.x;
-        stAngles.fRoll = -(float) v.y;
-        stAngles.fPitch = -(float) v.z;
+        stAngles.fRoll = (float) v.y;
+        stAngles.fPitch = (float) v.z;
 
 //        imuDataGet(&stAngles, &stGyroRawData, &stAccelRawData, &stMagnRawData);
         imuGetTimer = now + IMU_REQUEST_INTERVAL;
