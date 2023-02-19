@@ -5,8 +5,22 @@
 #ifndef INC_IMU_H
 #define INC_IMU_H
 
+#include <stdbool.h>
 #include "main.h"
-#include "Waveshare_10Dof-D.h"
+//#include "Waveshare_10Dof-D.h"
+
+typedef struct imu_st_angles_data_tag {
+    float fYaw;
+    float fPitch;
+    float fRoll;
+} IMU_ST_ANGLES_DATA;
+
+typedef struct imu_st_sensor_data_tag
+{
+    int16_t s16X;
+    int16_t s16Y;
+    int16_t s16Z;
+}IMU_ST_SENSOR_DATA;
 
 bool IMU_Init(void);
 

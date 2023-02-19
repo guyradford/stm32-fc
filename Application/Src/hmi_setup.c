@@ -16,7 +16,7 @@
 #include "hmi_setup.h"
 #include "hmi.h"
 #include "esc_output.h"
-#include "Waveshare_10Dof-D.h"
+//#include "Waveshare_10Dof-D.h"
 #include "imu.h"
 #include "output.h"
 

@@ -11,7 +11,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "Waveshare_10Dof-D.h"
+#include "imu.h"
+//#include "Waveshare_10Dof-D.h"
 
 
 bool IMUInput_IsCalibrated();

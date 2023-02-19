@@ -18,13 +18,14 @@
 #define HMI_MAGNETOMETER 11
 #define HMI_FLIGHT_MODE 12
 #define HMI_PID_VALUES 13
+#define HMI_LOOP_COUNTER 14
 
 
 #include <stdio.h>
 #include <stdint.h>
 #include "hmi_main.h"
 #include "hmi.h"
-#include "Waveshare_10Dof-D.h"
+//#include "Waveshare_10Dof-D.h"
 #include "rc_receiver.h"
 #include "imu.h"
 #include "esc_output.h"
@@ -58,6 +59,7 @@ void MenuMenu(void) {
     printf("v - Corrected RC Input Values.\r\n");
     printf("f - Flight Mode Output.\r\n");
     printf("p - PID Output.\r\n");
+    printf("l - Loop Counter.\r\n");
 
 
     printf(OUTPUT_BLANK_LINE);
@@ -113,6 +115,9 @@ void HMIMain_Handle(uint8_t character) {
                 break;
             case 'p':
                 hmiMenu_Display = HMI_PID_VALUES;
+                break;
+            case 'l':
+                hmiMenu_Display = HMI_LOOP_COUNTER;
                 break;
         }
     }
@@ -183,14 +188,18 @@ void HMIMain_Handle(uint8_t character) {
             break;
 
         case HMI_FLIGHT_MODE:
-            printf("Mode: %2d, Throttle: %4d, Yaw: % 8.3f, Pitch: % 8.3f, Roll: % 8.3f\r\n", FlightMode_GetMode(),
+            printf("Mode: %4s, Run Mode: %4s Throttle: %4d, Yaw: % 8.3f, Pitch: % 8.3f, Roll: % 8.3f\r\n",
+                   FlightMode_GetModeString(FlightMode_GetMode()),
+                   FlightMode_GetModeString(FlightMode_GetRunningMode()),
                    FlightMode_GetThrottle(), FlightMode_GetYaw(), FlightMode_GetPitch(), FlightMode_GetRoll());
             break;
         case HMI_PID_VALUES:
             printf("Mode: %2d, Yaw: % 8.3f, Pitch: % 8.3f, Roll: % 8.3f\r\n", FlightMode_GetMode(),
                    FlightMode_GetPIDYaw(), FlightMode_GetPIDPitch(), FlightMode_GetPIDRoll());
             break;
-
+        case HMI_LOOP_COUNTER:
+            printf("Loop Count: %u", 0);
+            break;
     }
 }
 

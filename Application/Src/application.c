@@ -27,6 +27,20 @@ void Application_Init(bool setupMode){
     RCInput_Calibrate();
 }
 
+void Application_OnButtonRelease(void){
+    switch (applicationMode) {
+        case APPLICATION_MODE_ERROR:
+        case APPLICATION_MODE_SETUP:
+        case APPLICATION_MODE_CALIBRATING:
+            break;
+
+        case APPLICATION_MODE_RUNNING:
+            FlightMode_ChangeRunMode();
+            break;
+
+    }
+}
+
 void Application_SetMode(uint8_t mode){
     applicationMode = mode;
     switch(applicationMode){

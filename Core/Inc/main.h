@@ -59,6 +59,7 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define SETUP_BUTTON_Pin GPIO_PIN_13
 #define SETUP_BUTTON_GPIO_Port GPIOC
+#define SETUP_BUTTON_EXTI_IRQn EXTI15_10_IRQn
 #define USART_TX_Pin GPIO_PIN_2
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin GPIO_PIN_3

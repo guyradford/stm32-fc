@@ -20,11 +20,14 @@
 #define LED_MODE_SETUP "G_"
 
 #define LED_MODE_CALIBRATION "RG"
-#define LED_MODE_STOPPED "R"
+#define LED_MODE_STOPPED_AUTO "R"
+#define LED_MODE_STOPPED_MANUAL "GRRRRR"
 #define LED_MODE_PREPARING_TO_RUN "RG"
-#define LED_MODE_RUNNING "G"
+#define LED_MODE_RUNNING_AUTO "G"
+#define LED_MODE_RUNNING_MANUAL "RGGGGG"
 
 
+#define LED_MODE_ESTOP "R_"
 #define LED_MODE_ERROR "RR__"
 #define LED_MODE_ERROR_1 "R_______"
 #define LED_MODE_ERROR_2 "R___R_______"

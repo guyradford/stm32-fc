@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+void Application_OnButtonRelease(void);
 void Application_SetMode(uint8_t mode);
 void Application_Init(bool setupMode);
 void Application_OnTick(uint32_t now);
