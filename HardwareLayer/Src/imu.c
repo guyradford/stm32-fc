@@ -13,7 +13,6 @@
 #define IMU_REQUEST_INTERVAL 10 // uS eg 20 times per second
 
 
-
 //IMU_EN_SENSOR_TYPE enMotionSensorType, enPressureType;
 IMU_ST_ANGLES_DATA stAngles;
 IMU_ST_SENSOR_DATA stGyroRawData;
@@ -59,9 +58,8 @@ void UpdateIMUData() {
         bno055_vector_t v = bno055_getVectorEuler();
         // printf("Heading: %.2f Roll: %.2f Pitch: %.2f\r\n", v.x, v.y, v.z);
         stAngles.fYaw = (float) v.x;
-        stAngles.fRoll = (float) v.y;
-        stAngles.fPitch = (float) v.z;
-
+        stAngles.fRoll = -(float) v.y;
+        stAngles.fPitch = -(float) v.z;
 
 //        imuDataGet(&stAngles, &stGyroRawData, &stAccelRawData, &stMagnRawData);
         imuGetTimer = now + IMU_REQUEST_INTERVAL;

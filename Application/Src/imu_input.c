@@ -46,6 +46,10 @@ bool IMUInput_IsCalibrated() {
 
 IMU_ST_ANGLES_DATA IMUInput_GetAngles(void) {
     stRawAngles = IMU_GetAngles();
+    //apply correction
+    stRawAngles.fPitch = -stRawAngles.fPitch;
+    stRawAngles.fRoll = -stRawAngles.fRoll;
+
     if (firstRead) {
         stCalibratedAngles.fRoll = stRawAngles.fRoll - IMUInput_Calibration_Roll;
         stCalibratedAngles.fPitch = stRawAngles.fPitch - IMUInput_Calibration_Pitch;
