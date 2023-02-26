@@ -26,12 +26,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "imu.h"
 #include "rc_receiver.h"
 #include "uart_interface.h"
-#include "status_led.h"
 #include "application.h"
 #include "bno055_stm32.h"
+#include "hmi_output_buffer.h"
 
 /* USER CODE END Includes */
 
@@ -64,16 +63,37 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#ifdef __GNUC__
-#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-#else
-#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-#endif
+//#ifdef __GNUC__
+//#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+//#else
+//#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+//#endif
+//
+//PUTCHAR_PROTOTYPE {
+////    HAL_UART_Transmit(&huart2, (uint8_t *) &ch, 1, 0xFFFF);
+//    // HAL_UART_Transmit_IT(&huart2, (uint8_t *) &ch, 1);
+//    UARTInterface_AddToSendBuffer((uint8_t) ch);
+//    return ch;
+//}
+#include  <errno.h>
+#include  <sys/unistd.h> // STDOUT_FILENO, STDERR_FILENO
 
-PUTCHAR_PROTOTYPE {
-//    HAL_UART_Transmit(&huart2, (uint8_t *) &ch, 1, 0xFFFF);
-    HAL_UART_Transmit_IT(&huart2, (uint8_t *) &ch, 1);
-    return ch;
+int _write(int file, char *data, int len)
+{
+    if ((file != STDOUT_FILENO) && (file != STDERR_FILENO))
+    {
+        errno = EBADF;
+        return -1;
+    }
+
+    // arbitrary timeout 1000
+//    HAL_StatusTypeDef status =
+//            HAL_UART_Transmit_IT(&huart2, (uint8_t*)data, len);
+    HMIOutput_AddToBuffer(data, len);
+
+    // return # of bytes written - as best we can tell
+//    return (status == HAL_OK ? len : 0);
+    return (len);
 }
 /* USER CODE END 0 */
 
@@ -234,16 +254,21 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
     if (htim->Instance == TIM3 || htim->Instance == TIM4) { // RC Channel 1-6
         RC_TimerCallback(htim);
     } // End TIM3 or TIM4
-
-
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == USART2) {
-        UartInterface_OnReceive(UART1_rxBuffer[0]);
+        UARTInterface_OnReceive(UART1_rxBuffer[0]);
         HAL_UART_Receive_IT(&huart2, UART1_rxBuffer, 1);
     }
 }
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == USART2) {
+        HMIOutput_OnSendComplete();
+    }
+}
+
 
 // EXTI Line9 External Interrupt ISR Handler CallBackFun
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)

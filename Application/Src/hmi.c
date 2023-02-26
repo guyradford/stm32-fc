@@ -39,7 +39,7 @@ void HMI_OnTick(uint32_t now) {
     hmiTimer += IMU_REQUEST_INTERVAL;
 
     uint8_t character;
-    character = UARTInterface_GetNextFromBuffer();
+    character = UARTInterface_GetNextFromRecvBuffer();
     switch (imuMode) {
         case IMU_MODE_MAIN:
             HMIMain_Handle(character);
