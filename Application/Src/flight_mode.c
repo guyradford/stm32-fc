@@ -277,14 +277,22 @@ void FlightMode_OnTick(uint32_t now) {
 
 
 
-                esc_1 = ClampMotorSpeed((float) demand_throttle - demand_pitch - demand_roll -
-                                    demand_yaw);        //Calculate the pulse for esc 1 (front-right - CW).
-                esc_2 = ClampMotorSpeed((float) demand_throttle + demand_pitch - demand_roll +
-                                    demand_yaw);        //Calculate the pulse for esc 2 (rear-right - CCW).
-                esc_3 = ClampMotorSpeed((float) demand_throttle + demand_pitch + demand_roll -
-                                    demand_yaw);        //Calculate the pulse for esc 3 (rear-left - CW).
-                esc_4 = ClampMotorSpeed((float) demand_throttle - demand_pitch + demand_roll +
-                                    demand_yaw);        //Calculate the pulse for esc 4 (front-left - CCW).
+                esc_1 = ClampMotorSpeed((float) demand_throttle +
+                                         (demand_pitch * FM_MIX_MOTOR_1_PITCH) +
+                                         (demand_roll * FM_MIX_MOTOR_1_ROLL) +
+                                         (demand_yaw * FM_MIX_MOTOR_1_YAW));
+                esc_2 = ClampMotorSpeed((float) demand_throttle +
+                                         (demand_pitch * FM_MIX_MOTOR_2_PITCH) +
+                                         (demand_roll * FM_MIX_MOTOR_2_ROLL) +
+                                         (demand_yaw * FM_MIX_MOTOR_2_YAW));
+                esc_3 = ClampMotorSpeed((float) demand_throttle +
+                                         (demand_pitch * FM_MIX_MOTOR_3_PITCH) +
+                                         (demand_roll * FM_MIX_MOTOR_3_ROLL) +
+                                         (demand_yaw * FM_MIX_MOTOR_3_YAW));
+                esc_4 = ClampMotorSpeed((float) demand_throttle +
+                                         (demand_pitch * FM_MIX_MOTOR_4_PITCH) +
+                                         (demand_roll * FM_MIX_MOTOR_4_ROLL) +
+                                         (demand_yaw * FM_MIX_MOTOR_4_YAW));
 
             }else { // FM_RUNNING_AUTO
 
@@ -298,14 +306,22 @@ void FlightMode_OnTick(uint32_t now) {
 //            esc_4 = (uint16_t) ((float) demand_throttle + pid_output_pitch - pid_output_roll +
 //                                pid_output_yaw);        //Calculate the pulse for esc 4 (front-left - CCW).
 
-                esc_1 = ClampMotorSpeed((float) demand_throttle - pid_output_pitch + pid_output_roll -
-                        pid_output_yaw);        //Calculate the pulse for esc 1 (front-right - CW).
-                esc_2 = ClampMotorSpeed((float) demand_throttle + pid_output_pitch + pid_output_roll +
-                        pid_output_yaw);        //Calculate the pulse for esc 2 (rear-right - CCW).
-                esc_3 = ClampMotorSpeed((float) demand_throttle + pid_output_pitch - pid_output_roll -
-                        pid_output_yaw);        //Calculate the pulse for esc 3 (rear-left - CW).
-                esc_4 = ClampMotorSpeed((float) demand_throttle - pid_output_pitch - pid_output_roll +
-                        pid_output_yaw);        //Calculate the pulse for esc 4 (front-left - CCW).
+                esc_1 = ClampMotorSpeed((float) demand_throttle +
+                                         (pid_output_pitch * FM_MIX_MOTOR_1_PITCH) +
+                                         (pid_output_roll * FM_MIX_MOTOR_1_ROLL) +
+                                         (pid_output_yaw * FM_MIX_MOTOR_1_YAW));
+                esc_2 = ClampMotorSpeed((float) demand_throttle +
+                                         (pid_output_pitch * FM_MIX_MOTOR_2_PITCH) +
+                                         (pid_output_roll * FM_MIX_MOTOR_2_ROLL) +
+                                         (pid_output_yaw * FM_MIX_MOTOR_2_YAW));
+                esc_3 = ClampMotorSpeed((float) demand_throttle +
+                                         (pid_output_pitch * FM_MIX_MOTOR_3_PITCH) +
+                                         (pid_output_roll * FM_MIX_MOTOR_3_ROLL) +
+                                         (pid_output_yaw * FM_MIX_MOTOR_3_YAW));
+                esc_4 = ClampMotorSpeed((float) demand_throttle +
+                                         (pid_output_pitch * FM_MIX_MOTOR_4_PITCH) +
+                                         (pid_output_roll * FM_MIX_MOTOR_4_ROLL) +
+                                         (pid_output_yaw * FM_MIX_MOTOR_4_YAW));
 
 
             }
