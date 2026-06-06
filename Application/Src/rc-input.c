@@ -14,12 +14,12 @@ uint16_t calibrationCount = 0;
 uint16_t *Receiver_Values;
 
 uint8_t ChannelConfig[6] = {
-        RC_INPUT_INPUT_NORMAL | RC_INPUT_INPUT_RANGE_CENTERED, // Channel 1
-        RC_INPUT_INPUT_REVERSED | RC_INPUT_INPUT_RANGE_ZEROED, // Channel 2
-        RC_INPUT_INPUT_NORMAL | RC_INPUT_INPUT_RANGE_CENTERED, // Channel 3
-        RC_INPUT_INPUT_NORMAL | RC_INPUT_INPUT_RANGE_CENTERED, // Channel 4
-        RC_INPUT_INPUT_NORMAL | RC_INPUT_INPUT_RANGE_CENTERED, // Channel 5
-        RC_INPUT_INPUT_NORMAL | RC_INPUT_INPUT_RANGE_CENTERED  // Channel 6
+        RC_CHANNEL_1_CONFIG,
+        RC_CHANNEL_2_CONFIG,
+        RC_CHANNEL_3_CONFIG,
+        RC_CHANNEL_4_CONFIG,
+        RC_CHANNEL_5_CONFIG,
+        RC_CHANNEL_6_CONFIG
 };
 
 rc_receiver_min_max_values ChannelCalibration[6] = {

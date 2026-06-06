@@ -3,6 +3,7 @@
 //
 
 #include <stdio.h>
+#include <stdbool.h>
 #include "flight_mode.h"
 #include "rc-input.h"
 #include "output.h"
@@ -66,11 +67,27 @@ float pid_i_mem_pitch, pid_output_pitch, pid_last_pitch_d_error;
 float pid_i_mem_yaw, pid_output_yaw, pid_last_yaw_d_error;
 
 IMU_ST_ANGLES_DATA imuAngles;
+uint32_t FlightMode_NextUpdate = 0;
 
 static uint16_t ClampMotorSpeed(float speed) {
     if (speed < CONFIG_MIN_MOTOR_SPEED) return CONFIG_MIN_MOTOR_SPEED;
     if (speed > 1000.0f) return 1000;
     return (uint16_t) speed;
+}
+
+static bool FlightMode_IsUpdateDue(uint32_t now) {
+    if (FlightMode_NextUpdate == 0) {
+        FlightMode_NextUpdate = now + FM_CONTROL_INTERVAL_MS;
+        return true;
+    }
+
+    if ((int32_t) (now - FlightMode_NextUpdate) < 0) return false;
+
+    FlightMode_NextUpdate += FM_CONTROL_INTERVAL_MS;
+    if ((int32_t) (now - FlightMode_NextUpdate) >= 0) {
+        FlightMode_NextUpdate = now + FM_CONTROL_INTERVAL_MS;
+    }
+    return true;
 }
 
 void calculate_pid(void) {
@@ -181,16 +198,18 @@ float FlightMode_GetPIDYaw(void) {
 
 void FlightMode_OnTick(uint32_t now) {
 
-    input_throttle = RCInput_GetInputValue(RC_THROTTLE);
-    input_yaw = RCInput_GetInputValue(RC_YAW) - 500;
-    if (FlightMode_Mode != FM_RUNNING_MANUAL) imuAngles = IMUInput_GetAngles();
-
-    if (RCInput_GetInputValue(RC_CH_5) < 500){
+    if (RCInput_GetInputValue(RC_ESTOP) < 500){
         Output_SetMotorSpeeds(0, 0, 0, 0);
         LED_SetMode(LED_MODE_ESTOP);
         printf("ESTOP!!\r\n");
         return;
     }
+
+    if (!FlightMode_IsUpdateDue(now)) return;
+
+    input_throttle = RCInput_GetInputValue(RC_THROTTLE);
+    input_yaw = RCInput_GetInputValue(RC_YAW) - 500;
+    if (FlightMode_Mode != FM_RUNNING_MANUAL) imuAngles = IMUInput_GetAngles();
 
     switch (FlightMode_Mode) {
 

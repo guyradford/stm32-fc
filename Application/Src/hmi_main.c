@@ -169,6 +169,13 @@ void HMIMain_Handle(uint8_t character) {
                    RCInput_GetInputValue(RC_CH_3), RCInput_GetInputValue(RC_CH_4),
                    RCInput_GetInputValue(RC_CH_5), RCInput_GetInputValue(RC_CH_6)
             );
+            printf("Thr: %-5d Yaw: %-5d Pit: %-5d Rol: %-5d Arm: %-5d\r\n",
+                   RCInput_GetInputValue(RC_THROTTLE),
+                   RCInput_GetInputValue(RC_YAW),
+                   RCInput_GetInputValue(RC_PITCH),
+                   RCInput_GetInputValue(RC_ROLL),
+                   RCInput_GetInputValue(RC_ESTOP)
+            );
             break;
 
         case HMI_ALTITUDE:
