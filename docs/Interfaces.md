@@ -43,12 +43,22 @@ TIM4 - RC Input CH 5-6
 | SDA      | PB8 | I2C1_SDA |
 | SCL      | PB9 | I2C1_SCL |
 
-## UART (This cant change!)
+## UART
 
 | Function | Pin   | Name     |
 |----------|-------|----------|
 | Tx       | PA2   | USART_TX |
 | Rx       | PA3   | USART_RX |
+
+USART2 on PA2/PA3 is the Nucleo ST-LINK USB virtual COM port. USART1 on PA9/PA10 is available for the wireless serial module.
+
+The active HMI port is selected in `Application/Inc/config.h`:
+
+```c
+#define HMI_UART_SELECT HMI_UART_USART2
+```
+
+Use `HMI_UART_USART2` for the USB programming cable and `HMI_UART_USART1` for the wireless serial cable.
 
 
 ## LED
