@@ -6,7 +6,6 @@
 #include "application.h"
 #include "output.h"
 #include "led.h"
-#include "flight_mode.h"
 #include "hmi.h"
 #include "setup_mode.h"
 #include "imu_input.h"

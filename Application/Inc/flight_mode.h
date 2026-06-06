@@ -8,7 +8,17 @@
 
 #include <stdint.h>
 
+
+extern float pid_p_gain_roll;               //Gain setting for the pitch and roll P-controller (default = 1.3).
+extern float pid_i_gain_roll;              //Gain setting for the pitch and roll I-controller (default = 0.04).
+extern float pid_d_gain_roll;              //Gain setting for the pitch and roll D-controller (default = 18.0).
+
+extern float pid_p_gain_pitch;  //Gain setting for the pitch P-controller.
+extern float pid_i_gain_pitch;  //Gain setting for the pitch I-controller.
+extern float pid_d_gain_pitch;  //Gain setting for the pitch D-controller.
+
 void FlightMode_ChangeRunMode(void);
+
 uint8_t FlightMode_GetRunningMode(void);
 
 

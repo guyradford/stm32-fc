@@ -17,7 +17,6 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include <stdio.h>
 #include "main.h"
 #include "i2c.h"
 #include "tim.h"
@@ -130,9 +129,11 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM3_Init();
   MX_TIM2_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
     // Setup UART to trigger interrupt on receipt of a character
+    HAL_UART_Receive_IT(&huart1, UART1_rxBuffer, 1);
     HAL_UART_Receive_IT(&huart2, UART1_rxBuffer, 1);
 
     // Initialise IMU
@@ -261,10 +262,17 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         UARTInterface_OnReceive(UART1_rxBuffer[0]);
         HAL_UART_Receive_IT(&huart2, UART1_rxBuffer, 1);
     }
+    if (huart->Instance == USART1) {
+        UARTInterface_OnReceive(UART1_rxBuffer[0]);
+        HAL_UART_Receive_IT(&huart2, UART1_rxBuffer, 1);
+    }
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == USART2) {
+        HMIOutput_OnSendComplete();
+    }
+    if (huart->Instance == USART1) {
         HMIOutput_OnSendComplete();
     }
 }

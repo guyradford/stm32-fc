@@ -59,7 +59,7 @@ void MenuMenu(void) {
     printf("v - Corrected RC Input Values.\r\n");
     printf("f - Flight Mode Output.\r\n");
     printf("p - PID Output.\r\n");
-    printf("l - Loop Counter.\r\n");
+    printf("t - Tune PID Controllers.\r\n");
 
 
     printf(OUTPUT_BLANK_LINE);
@@ -118,6 +118,9 @@ void HMIMain_Handle(uint8_t character) {
                 break;
             case 'l':
                 hmiMenu_Display = HMI_LOOP_COUNTER;
+                break;
+            case 't':
+                HMI_SetMode(HMI_MODE_PID);
                 break;
         }
     }

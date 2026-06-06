@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "flight_mode.h"
 
 void Application_OnButtonRelease(void);
 void Application_SetMode(uint8_t mode);

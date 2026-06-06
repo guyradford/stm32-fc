@@ -34,7 +34,8 @@ void HMIOutput_SendNext(void) {
     if (sending) return;
     if (start == end) return;
     sending = true;
-    HAL_UART_Transmit_IT(&huart2, (uint8_t *) buffer[start], strlen(buffer[start]));
+    HAL_UART_Transmit_IT(&huart1, (uint8_t *) buffer[start], strlen(buffer[start]));
+//    HAL_UART_Transmit_IT(&huart2, (uint8_t *) buffer[start], strlen(buffer[start]));
 }
 
 void HMIOutput_OnSendComplete(void) {
