@@ -298,9 +298,6 @@ void FlightMode_OnTick(uint32_t now) {
 //            esc_4 = (uint16_t) ((float) demand_throttle + pid_output_pitch - pid_output_roll +
 //                                pid_output_yaw);        //Calculate the pulse for esc 4 (front-left - CCW).
 
-                pid_output_yaw = demand_yaw;
-                pid_output_yaw = 0;
-
                 esc_1 = ClampMotorSpeed((float) demand_throttle - pid_output_pitch + pid_output_roll -
                         pid_output_yaw);        //Calculate the pulse for esc 1 (front-right - CW).
                 esc_2 = ClampMotorSpeed((float) demand_throttle + pid_output_pitch + pid_output_roll +
