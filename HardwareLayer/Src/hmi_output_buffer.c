@@ -10,9 +10,11 @@
 #include "config.h"
 
 #define BUFFER_LENGTH 30
+#define BUFFER_MESSAGE_LENGTH 100
+#define BUFFER_MESSAGE_MAX_LENGTH (BUFFER_MESSAGE_LENGTH - 1)
 
 #define BUFFER_FULL "ERROR: Buffer full."
-char buffer[BUFFER_LENGTH][100] = {0};
+char buffer[BUFFER_LENGTH][BUFFER_MESSAGE_LENGTH] = {0};
 
 uint8_t start = 0;
 uint8_t end = 0;
@@ -32,7 +34,10 @@ void HMIOutput_AddToBuffer(char *string, int len) {
 //        HAL_UART_Transmit(&huart2, (uint8_t*)BUFFER_FULL, strlen(BUFFER_FULL), 1000);
         return;
     }
-    // strcpy(buffer[end], string);
+
+    if (len < 0) len = 0;
+    if (len > BUFFER_MESSAGE_MAX_LENGTH) len = BUFFER_MESSAGE_MAX_LENGTH;
+
     memcpy(buffer[end], string, len);
     buffer[end][len] = 0;
     if (++end == BUFFER_LENGTH) end = 0;
