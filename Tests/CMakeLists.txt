@@ -67,3 +67,17 @@ target_link_libraries(test_rc_input PRIVATE
 )
 
 add_test(NAME rc_input COMMAND test_rc_input)
+
+add_executable(test_mixer
+    Application/test_mixer.c
+    ../Application/Src/mixer.c
+)
+target_include_directories(test_mixer PRIVATE
+    ../Application/Inc
+    vendor/unity
+)
+target_link_libraries(test_mixer PRIVATE
+    unity
+)
+
+add_test(NAME mixer COMMAND test_mixer)
