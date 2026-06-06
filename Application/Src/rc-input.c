@@ -36,6 +36,23 @@ rc_receiver_min_max_values ChannelCalibration[6] = {
 
 uint16_t FrequencyTable[6][2][RC_INPUT_CALIBRATION_RANGE] = {0};
 
+static bool RCInput_IsChannelIndexValid(uint8_t RC_Channel) {
+    return RC_Channel < RC_CHANNEL_COUNT;
+}
+
+static uint16_t RCInput_GetSafeValue(uint8_t RC_Channel) {
+    if (!RCInput_IsChannelIndexValid(RC_Channel)) return 0;
+    if (RC_Channel == RC_ESTOP) return 0;
+    if (ChannelConfig[RC_Channel] & RC_INPUT_INPUT_RANGE_ZEROED) return 0;
+    return 500;
+}
+
+static uint16_t RCInput_ClampValue(int32_t value) {
+    if (value < 0) return 0;
+    if (value > 1000) return 1000;
+    return (uint16_t) value;
+}
+
 uint8_t GetMaxFrequency(uint16_t Frequency[]) {
     uint8_t index = 0;
     for (uint8_t i = 1; i < RC_INPUT_CALIBRATION_RANGE; i++) {
@@ -101,6 +118,11 @@ void RCInput_Calibrate(void) {
 
     if (rc_input_mode == RC_INPUT_MODE_RUNNING) {
         for (uint8_t RC_Channel = 0; RC_Channel < 6; RC_Channel++) {
+            if (ChannelCalibration[RC_Channel].max <= ChannelCalibration[RC_Channel].min) {
+                ChannelCalibration[RC_Channel].ratio = 0.0f;
+                ChannelCalibration[RC_Channel].correction = 0;
+                continue;
+            }
 
             ChannelCalibration[RC_Channel].ratio =
                     1000.0 / (ChannelCalibration[RC_Channel].max - ChannelCalibration[RC_Channel].min);
@@ -163,7 +185,7 @@ void RCInput_TestReset(void) {
     RCInput_timer = 0;
     rc_input_mode = RC_INPUT_MODE_RUNNING;
     calibrationCount = 0;
-    Receiver_Values = NULL;
+    Receiver_Values = 0;
     memset(ChannelCalibration, 0, sizeof(ChannelCalibration));
     for (uint8_t RC_Channel = 0; RC_Channel < 6; RC_Channel++) {
         ChannelCalibration[RC_Channel].max = 1500;
@@ -173,17 +195,30 @@ void RCInput_TestReset(void) {
 }
 #endif
 
-uint16_t RCInput_GetInputValue(uint8_t RC_Channel) {
+bool RCInput_IsChannelValid(uint8_t RC_Channel, uint32_t now) {
+    if (Receiver_Values == 0) return false;
+    if (!RCInput_IsChannelIndexValid(RC_Channel)) return false;
+    return RC_IsChannelValid(RC_Channel, now);
+}
 
-    int16_t value = Receiver_Values[RC_Channel] + ChannelCalibration[RC_Channel].correction - 1000;
+uint16_t RCInput_GetInputValue(uint8_t RC_Channel) {
+    if (Receiver_Values == 0) return RCInput_GetSafeValue(RC_Channel);
+    if (!RCInput_IsChannelIndexValid(RC_Channel)) return RCInput_GetSafeValue(RC_Channel);
+    if (Receiver_Values[RC_Channel] < RC_SIGNAL_MIN_PULSE_US ||
+        Receiver_Values[RC_Channel] > RC_SIGNAL_MAX_PULSE_US) {
+        return RCInput_GetSafeValue(RC_Channel);
+    }
+    if (ChannelCalibration[RC_Channel].max <= ChannelCalibration[RC_Channel].min) return RCInput_GetSafeValue(RC_Channel);
+
+    int32_t value = (int32_t) Receiver_Values[RC_Channel] + ChannelCalibration[RC_Channel].correction - 1000;
 
     if (ChannelConfig[RC_Channel] & RC_INPUT_INPUT_REVERSED) {
         value = 1000 - value;
     }
-    if (value < 0) return (uint16_t) 0;
-    if (value > 1000) return (uint16_t) 1000;
+    value = RCInput_ClampValue(value);
+
     if (ChannelConfig[RC_Channel] & RC_INPUT_INPUT_RANGE_ZEROED) {
-        return (uint16_t) (value * ChannelCalibration[RC_Channel].ratio);
+        return RCInput_ClampValue((int32_t) ((float) value * ChannelCalibration[RC_Channel].ratio));
     }
     return (uint16_t) value;
 

@@ -8,49 +8,81 @@
 #include "hmi_setup.h"
 #include "rc_receiver.h"
 
+#include <stdbool.h>
+
+#define SETUP_MODE_THROTTLE_LOW_THRESHOLD 50
+#define SETUP_MODE_ESTOP_RUN_THRESHOLD 500
+
 uint32_t SetupMode_timer = 0;
+static bool SetupMode_safetyAccepted = false;
+
+static void SetupMode_StopMotors(void) {
+    Output_SetMotorSpeeds(0, 0, 0, 0);
+}
+
+static bool SetupMode_HasExplicitMotorOutputMode(void) {
+    uint8_t hmiMode = HMISetup_GetMode();
+    return hmiMode == HMI_ESC_PROGRAMMING || hmiMode == HMI_ESC_SINGLE_MOTOR;
+}
+
+static bool SetupMode_OutputIsAllowed(uint32_t now, uint16_t input_throttle, uint16_t input_estop) {
+    if (!RCInput_IsChannelValid(RC_THROTTLE, now) || !RCInput_IsChannelValid(RC_ESTOP, now)) {
+        SetupMode_safetyAccepted = false;
+        return false;
+    }
+
+    if (input_estop < SETUP_MODE_ESTOP_RUN_THRESHOLD) {
+        SetupMode_safetyAccepted = false;
+        return false;
+    }
+
+    if (!SetupMode_safetyAccepted) {
+        if (input_throttle >= SETUP_MODE_THROTTLE_LOW_THRESHOLD) return false;
+        SetupMode_safetyAccepted = true;
+    }
+
+    return true;
+}
+
+static void SetupMode_SetSingleMotorSpeed(uint8_t motor, uint16_t input_throttle) {
+    switch (motor) {
+        case MOTOR_1:
+            Output_SetMotorSpeeds(input_throttle, 0, 0, 0);
+            break;
+        case MOTOR_2:
+            Output_SetMotorSpeeds(0, input_throttle, 0, 0);
+            break;
+        case MOTOR_3:
+            Output_SetMotorSpeeds(0, 0, input_throttle, 0);
+            break;
+        case MOTOR_4:
+            Output_SetMotorSpeeds(0, 0, 0, input_throttle);
+            break;
+        default:
+            SetupMode_StopMotors();
+            break;
+    }
+}
 
 void SetupMode_OnTick(uint32_t now) {
-//    if (now > SetupMode_timer) {
-//        SetupMode_timer += SETUP_MODE_INTERVAL;
+    uint16_t input_throttle = RCInput_GetInputValue(RC_THROTTLE);
+    uint16_t input_estop = RCInput_GetInputValue(RC_ESTOP);
 
-//        uint16_t value = RCInput_GetInputValue(1);
-        uint16_t input_throttle = RCInput_GetInputValue(RC_THROTTLE);
+    if (!SetupMode_HasExplicitMotorOutputMode() || !SetupMode_OutputIsAllowed(now, input_throttle, input_estop)) {
+        SetupMode_StopMotors();
+        return;
+    }
 
-        uint8_t motor = 0;
-
-        switch(HMISetup_GetMode()){
-            case HMI_ESC_PROGRAMMING:
-                Output_SetMotorSpeeds(input_throttle, input_throttle, input_throttle, input_throttle);
-                break;
-            case HMI_ESC_SINGLE_MOTOR:
-                motor = HMISetup_GetMotor();
-
-                if (motor == 1){
-                    Output_SetMotorSpeed(MOTOR_1, input_throttle);
-                } else{
-                    Output_SetMotorSpeed(MOTOR_1, 0);
-                }
-
-                if (motor == 2){
-                    Output_SetMotorSpeed(MOTOR_2, input_throttle);
-                } else{
-                    Output_SetMotorSpeed(MOTOR_2, 0);
-                }
-
-                if (motor == 3){
-                    Output_SetMotorSpeed(MOTOR_3, input_throttle);
-                } else{
-                    Output_SetMotorSpeed(MOTOR_3, 0);
-                }
-
-                if (motor == 4){
-                    Output_SetMotorSpeed(MOTOR_4, input_throttle);
-                } else{
-                    Output_SetMotorSpeed(MOTOR_4, 0);
-                }
-
-                break;
-        }
+    switch (HMISetup_GetMode()) {
+        case HMI_ESC_PROGRAMMING:
+            Output_SetMotorSpeeds(input_throttle, input_throttle, input_throttle, input_throttle);
+            break;
+        case HMI_ESC_SINGLE_MOTOR:
+            SetupMode_SetSingleMotorSpeed(HMISetup_GetMotor(), input_throttle);
+            break;
+        default:
+            SetupMode_StopMotors();
+            break;
+    }
 
 }
