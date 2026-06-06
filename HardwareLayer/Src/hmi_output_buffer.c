@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include "hmi_output_buffer.h"
 #include "usart.h"
+#include "config.h"
 
 #define BUFFER_LENGTH 30
 
@@ -17,6 +18,14 @@ uint8_t start = 0;
 uint8_t end = 0;
 
 bool sending = false;
+
+static UART_HandleTypeDef *HMIOutput_GetUart(void) {
+#if HMI_UART_SELECT == HMI_UART_USART1
+    return &huart1;
+#else
+    return &huart2;
+#endif
+}
 
 void HMIOutput_AddToBuffer(char *string, int len) {
     if (end + 1 == start || end + 1 == start + BUFFER_LENGTH) {
@@ -34,8 +43,7 @@ void HMIOutput_SendNext(void) {
     if (sending) return;
     if (start == end) return;
     sending = true;
-    HAL_UART_Transmit_IT(&huart1, (uint8_t *) buffer[start], strlen(buffer[start]));
-//    HAL_UART_Transmit_IT(&huart2, (uint8_t *) buffer[start], strlen(buffer[start]));
+    HAL_UART_Transmit_IT(HMIOutput_GetUart(), (uint8_t *) buffer[start], strlen(buffer[start]));
 }
 
 void HMIOutput_OnSendComplete(void) {

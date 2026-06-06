@@ -30,6 +30,7 @@
 #include "application.h"
 #include "bno055_stm32.h"
 #include "hmi_output_buffer.h"
+#include "config.h"
 
 /* USER CODE END Includes */
 
@@ -50,7 +51,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint8_t UART1_rxBuffer[2] = {0};
+uint8_t UART1_rxBuffer[1] = {0};
+uint8_t UART2_rxBuffer[1] = {0};
 
 /* USER CODE END PV */
 
@@ -133,8 +135,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
     // Setup UART to trigger interrupt on receipt of a character
+#if HMI_UART_SELECT == HMI_UART_USART1
     HAL_UART_Receive_IT(&huart1, UART1_rxBuffer, 1);
-    HAL_UART_Receive_IT(&huart2, UART1_rxBuffer, 1);
+#else
+    HAL_UART_Receive_IT(&huart2, UART2_rxBuffer, 1);
+#endif
 
     // Initialise IMU
 //    if (!IMU_Init()) {
@@ -259,21 +264,29 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == USART2) {
-        UARTInterface_OnReceive(UART1_rxBuffer[0]);
-        HAL_UART_Receive_IT(&huart2, UART1_rxBuffer, 1);
+#if HMI_UART_SELECT == HMI_UART_USART2
+        UARTInterface_OnReceive(UART2_rxBuffer[0]);
+        HAL_UART_Receive_IT(&huart2, UART2_rxBuffer, 1);
+#endif
     }
     if (huart->Instance == USART1) {
+#if HMI_UART_SELECT == HMI_UART_USART1
         UARTInterface_OnReceive(UART1_rxBuffer[0]);
-        HAL_UART_Receive_IT(&huart2, UART1_rxBuffer, 1);
+        HAL_UART_Receive_IT(&huart1, UART1_rxBuffer, 1);
+#endif
     }
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == USART2) {
+#if HMI_UART_SELECT == HMI_UART_USART2
         HMIOutput_OnSendComplete();
+#endif
     }
     if (huart->Instance == USART1) {
+#if HMI_UART_SELECT == HMI_UART_USART1
         HMIOutput_OnSendComplete();
+#endif
     }
 }
 

@@ -13,6 +13,10 @@
 
 #define  FM_MANUAL_GAIN 2.0
 
+#define HMI_UART_USART1 1
+#define HMI_UART_USART2 2
+#define HMI_UART_SELECT HMI_UART_USART2
+
 #define FM_MIX_MOTOR_1_PITCH -1.0f
 #define FM_MIX_MOTOR_1_ROLL  -1.0f
 #define FM_MIX_MOTOR_1_YAW   -1.0f
