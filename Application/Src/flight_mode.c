@@ -185,7 +185,7 @@ void FlightMode_OnTick(uint32_t now) {
     input_yaw = RCInput_GetInputValue(RC_YAW) - 500;
     if (FlightMode_Mode != FM_RUNNING_MANUAL) imuAngles = IMUInput_GetAngles();
 
-    if (RCInput_GetInputValue(RC_CH_5) < 500){
+    if (RCInput_GetInputValue(RC_ESTOP) < 500){
         Output_SetMotorSpeeds(0, 0, 0, 0);
         LED_SetMode(LED_MODE_ESTOP);
         printf("ESTOP!!\r\n");
