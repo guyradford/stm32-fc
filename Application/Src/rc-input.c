@@ -6,6 +6,9 @@
 
 #include "rc_receiver.h"
 #include "config.h"
+#ifdef STM32_FC_TEST
+#include <string.h>
+#endif
 
 uint32_t RCInput_timer = 0;
 uint8_t rc_input_mode = RC_INPUT_MODE_RUNNING;
@@ -146,6 +149,21 @@ bool RCInput_IsCalibrated() {
     if (rc_input_mode == RC_INPUT_MODE_RUNNING) return true;
     return false;
 }
+
+#ifdef STM32_FC_TEST
+void RCInput_TestReset(void) {
+    RCInput_timer = 0;
+    rc_input_mode = RC_INPUT_MODE_RUNNING;
+    calibrationCount = 0;
+    Receiver_Values = NULL;
+    memset(ChannelCalibration, 0, sizeof(ChannelCalibration));
+    for (uint8_t RC_Channel = 0; RC_Channel < 6; RC_Channel++) {
+        ChannelCalibration[RC_Channel].max = 1500;
+        ChannelCalibration[RC_Channel].min = 1500;
+    }
+    memset(FrequencyTable, 0, sizeof(FrequencyTable));
+}
+#endif
 
 uint16_t RCInput_GetInputValue(uint8_t RC_Channel) {
 
