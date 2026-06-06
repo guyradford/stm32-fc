@@ -67,6 +67,12 @@ float pid_i_mem_yaw, pid_output_yaw, pid_last_yaw_d_error;
 
 IMU_ST_ANGLES_DATA imuAngles;
 
+static uint16_t ClampMotorSpeed(float speed) {
+    if (speed < CONFIG_MIN_MOTOR_SPEED) return CONFIG_MIN_MOTOR_SPEED;
+    if (speed > 1000.0f) return 1000;
+    return (uint16_t) speed;
+}
+
 void calculate_pid(void) {
     //Roll calculations
     float pid_error_temp;
@@ -271,13 +277,13 @@ void FlightMode_OnTick(uint32_t now) {
 
 
 
-                esc_1 = (uint16_t) ((float) demand_throttle - demand_pitch - demand_roll -
+                esc_1 = ClampMotorSpeed((float) demand_throttle - demand_pitch - demand_roll -
                                     demand_yaw);        //Calculate the pulse for esc 1 (front-right - CW).
-                esc_2 = (uint16_t) ((float) demand_throttle + demand_pitch - demand_roll +
+                esc_2 = ClampMotorSpeed((float) demand_throttle + demand_pitch - demand_roll +
                                     demand_yaw);        //Calculate the pulse for esc 2 (rear-right - CCW).
-                esc_3 = (uint16_t) ((float) demand_throttle + demand_pitch + demand_roll -
+                esc_3 = ClampMotorSpeed((float) demand_throttle + demand_pitch + demand_roll -
                                     demand_yaw);        //Calculate the pulse for esc 3 (rear-left - CW).
-                esc_4 = (uint16_t) ((float) demand_throttle - demand_pitch + demand_roll +
+                esc_4 = ClampMotorSpeed((float) demand_throttle - demand_pitch + demand_roll +
                                     demand_yaw);        //Calculate the pulse for esc 4 (front-left - CCW).
 
             }else { // FM_RUNNING_AUTO
@@ -295,29 +301,17 @@ void FlightMode_OnTick(uint32_t now) {
                 pid_output_yaw = demand_yaw;
                 pid_output_yaw = 0;
 
-                esc_1 = (uint16_t) ((float) demand_throttle - pid_output_pitch + pid_output_roll -
+                esc_1 = ClampMotorSpeed((float) demand_throttle - pid_output_pitch + pid_output_roll -
                         pid_output_yaw);        //Calculate the pulse for esc 1 (front-right - CW).
-                esc_2 = (uint16_t) ((float) demand_throttle + pid_output_pitch + pid_output_roll +
+                esc_2 = ClampMotorSpeed((float) demand_throttle + pid_output_pitch + pid_output_roll +
                         pid_output_yaw);        //Calculate the pulse for esc 2 (rear-right - CCW).
-                esc_3 = (uint16_t) ((float) demand_throttle + pid_output_pitch - pid_output_roll -
+                esc_3 = ClampMotorSpeed((float) demand_throttle + pid_output_pitch - pid_output_roll -
                         pid_output_yaw);        //Calculate the pulse for esc 3 (rear-left - CW).
-                esc_4 = (uint16_t) ((float) demand_throttle - pid_output_pitch - pid_output_roll +
+                esc_4 = ClampMotorSpeed((float) demand_throttle - pid_output_pitch - pid_output_roll +
                         pid_output_yaw);        //Calculate the pulse for esc 4 (front-left - CCW).
 
 
             }
-
-            // limit esc demand value
-            if (esc_1 > 1000) esc_1 = 1000;
-            if (esc_2 > 1000) esc_2 = 1000;
-            if (esc_3 > 1000) esc_3 = 1000;
-            if (esc_4 > 1000) esc_4 = 1000;
-
-            // keep motors running
-            if (esc_1 < CONFIG_MIN_MOTOR_SPEED) esc_1 = CONFIG_MIN_MOTOR_SPEED;
-            if (esc_2 < CONFIG_MIN_MOTOR_SPEED) esc_2 = CONFIG_MIN_MOTOR_SPEED;
-            if (esc_3 < CONFIG_MIN_MOTOR_SPEED) esc_3 = CONFIG_MIN_MOTOR_SPEED;
-            if (esc_4 < CONFIG_MIN_MOTOR_SPEED) esc_4 = CONFIG_MIN_MOTOR_SPEED;
 
             Output_SetMotorSpeeds(esc_1, esc_2, esc_3, esc_4);
 
