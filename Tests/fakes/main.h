@@ -3,4 +3,12 @@
 
 #include <stdint.h>
 
+typedef struct {
+    uint32_t unused;
+} GPIO_TypeDef;
+
+typedef struct {
+    uint32_t unused;
+} TIM_HandleTypeDef;
+
 #endif

@@ -22,6 +22,15 @@ target_include_directories(fake_esc_output PUBLIC
     ../HardwareLayer/Inc
 )
 
+add_library(fake_rc_receiver STATIC
+    fakes/fake_rc_receiver.c
+)
+target_include_directories(fake_rc_receiver PUBLIC
+    fakes
+    ../Application/Inc
+    ../HardwareLayer/Inc
+)
+
 add_executable(test_output
     Application/test_output.c
     ../Application/Src/output.c
@@ -38,3 +47,23 @@ target_link_libraries(test_output PRIVATE
 )
 
 add_test(NAME output COMMAND test_output)
+
+add_executable(test_rc_input
+    Application/test_rc_input.c
+    ../Application/Src/rc-input.c
+)
+target_compile_definitions(test_rc_input PRIVATE
+    STM32_FC_TEST
+)
+target_include_directories(test_rc_input PRIVATE
+    ../Application/Inc
+    ../HardwareLayer/Inc
+    fakes
+    vendor/unity
+)
+target_link_libraries(test_rc_input PRIVATE
+    unity
+    fake_rc_receiver
+)
+
+add_test(NAME rc_input COMMAND test_rc_input)

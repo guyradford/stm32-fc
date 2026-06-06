@@ -40,4 +40,8 @@ void RCInput_Init(void);
 
 bool RCInput_IsCalibrated();
 
+#ifdef STM32_FC_TEST
+void RCInput_TestReset(void);
+#endif
+
 #endif //STM32_FC_RC_INPUT_H
