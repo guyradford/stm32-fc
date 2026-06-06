@@ -10,6 +10,8 @@
 #define FM_PID_I_INCREMENTS 0.01
 #define FM_PID_D_INCREMENTS 1.0
 
+#define FM_CONTROL_INTERVAL_MS 20
+
 
 #define  FM_MANUAL_GAIN 2.0
 
