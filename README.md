@@ -17,6 +17,7 @@ ___
 * [Hardware](docs/Hardware.md)
 * [Software](docs/Software.md)
 * [Interfaces](docs/Interfaces.md)
+* [Bench Verification](docs/BenchVerification.md)
 
 
 ___

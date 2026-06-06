@@ -13,6 +13,22 @@
 
 #define  FM_MANUAL_GAIN 2.0
 
+#define FM_MIX_MOTOR_1_PITCH -1.0f
+#define FM_MIX_MOTOR_1_ROLL  -1.0f
+#define FM_MIX_MOTOR_1_YAW   -1.0f
+
+#define FM_MIX_MOTOR_2_PITCH  1.0f
+#define FM_MIX_MOTOR_2_ROLL  -1.0f
+#define FM_MIX_MOTOR_2_YAW    1.0f
+
+#define FM_MIX_MOTOR_3_PITCH  1.0f
+#define FM_MIX_MOTOR_3_ROLL   1.0f
+#define FM_MIX_MOTOR_3_YAW   -1.0f
+
+#define FM_MIX_MOTOR_4_PITCH -1.0f
+#define FM_MIX_MOTOR_4_ROLL   1.0f
+#define FM_MIX_MOTOR_4_YAW    1.0f
+
 #define RC_CALIBRATION_CONFIG true
 #define RC_CALIBRATION_CHANNEL_1_MAX 1935
 #define RC_CALIBRATION_CHANNEL_1_MIN 1111
@@ -35,6 +51,10 @@
 #define IMU_CALIBRATION_ROLL 0
 
 #define IMU_CALIBRATION_YAW -52.1528358
+
+#define IMU_INPUT_PITCH_SIGN -1.0f
+#define IMU_INPUT_ROLL_SIGN  -1.0f
+#define IMU_INPUT_YAW_SIGN    1.0f
 
 #define IMU_FILTER_PREVIOUS (float)0.0
 #define IMU_FILTER_NEW (float)1.0

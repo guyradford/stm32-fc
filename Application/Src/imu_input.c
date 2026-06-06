@@ -46,9 +46,10 @@ bool IMUInput_IsCalibrated() {
 
 IMU_ST_ANGLES_DATA IMUInput_GetAngles(void) {
     stRawAngles = IMU_GetAngles();
-    //apply correction
-    stRawAngles.fPitch = -stRawAngles.fPitch;
-    stRawAngles.fRoll = -stRawAngles.fRoll;
+    // Apply board-orientation signs before calibration and filtering.
+    stRawAngles.fPitch *= IMU_INPUT_PITCH_SIGN;
+    stRawAngles.fRoll *= IMU_INPUT_ROLL_SIGN;
+    stRawAngles.fYaw *= IMU_INPUT_YAW_SIGN;
 
     if (firstRead) {
         stCalibratedAngles.fRoll = stRawAngles.fRoll - IMUInput_Calibration_Roll;
