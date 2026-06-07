@@ -15,6 +15,12 @@ typedef struct imu_st_angles_data_tag {
     float fRoll;
 } IMU_ST_ANGLES_DATA;
 
+typedef struct imu_st_rates_data_tag {
+    float fYaw;
+    float fPitch;
+    float fRoll;
+} IMU_ST_RATES_DATA;
+
 typedef struct imu_st_sensor_data_tag
 {
     int16_t s16X;
@@ -42,6 +48,7 @@ void IMU_OnTick(uint32_t now);
 bool IMU_IsReady(void);
 IMU_ST_STATUS IMU_GetStatus(void);
 IMU_ST_ANGLES_DATA IMU_GetAngles(void);
+IMU_ST_RATES_DATA IMU_GetRates(void);
 
 //float IMU_GetPitch(void);
 //

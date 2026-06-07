@@ -8,6 +8,7 @@
 
 static uint16_t fake_rc_inputs[RC_CHANNEL_COUNT];
 static IMU_ST_ANGLES_DATA fake_angles;
+static IMU_ST_RATES_DATA fake_rates;
 static const char *fake_led_mode;
 
 void FakeFlightHardware_Reset(void) {
@@ -19,6 +20,9 @@ void FakeFlightHardware_Reset(void) {
     fake_angles.fYaw = 0.0f;
     fake_angles.fPitch = 0.0f;
     fake_angles.fRoll = 0.0f;
+    fake_rates.fYaw = 0.0f;
+    fake_rates.fPitch = 0.0f;
+    fake_rates.fRoll = 0.0f;
     fake_led_mode = "";
 }
 
@@ -30,6 +34,12 @@ void FakeFlightHardware_SetAngles(float yaw, float pitch, float roll) {
     fake_angles.fYaw = yaw;
     fake_angles.fPitch = pitch;
     fake_angles.fRoll = roll;
+}
+
+void FakeFlightHardware_SetRates(float yaw, float pitch, float roll) {
+    fake_rates.fYaw = yaw;
+    fake_rates.fPitch = pitch;
+    fake_rates.fRoll = roll;
 }
 
 const char *FakeFlightHardware_GetLedMode(void) {
@@ -58,6 +68,14 @@ IMU_ST_ANGLES_DATA IMUInput_GetAngles(void) {
 
 IMU_ST_ANGLES_DATA IMUInput_GetLastAngles(void) {
     return fake_angles;
+}
+
+IMU_ST_RATES_DATA IMUInput_GetRates(void) {
+    return fake_rates;
+}
+
+IMU_ST_RATES_DATA IMUInput_GetLastRates(void) {
+    return fake_rates;
 }
 
 void IMUInput_Calibrate(void) {

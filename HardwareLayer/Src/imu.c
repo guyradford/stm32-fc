@@ -15,6 +15,7 @@
 
 //IMU_EN_SENSOR_TYPE enMotionSensorType, enPressureType;
 IMU_ST_ANGLES_DATA stAngles;
+IMU_ST_RATES_DATA stRates;
 IMU_ST_SENSOR_DATA stGyroRawData;
 IMU_ST_SENSOR_DATA stAccelRawData;
 IMU_ST_SENSOR_DATA stMagnRawData;
@@ -139,8 +140,24 @@ IMU_ST_ANGLES_DATA IMU_GetAngles(void) {
     return stAngles;
 }
 
+IMU_ST_RATES_DATA IMU_GetRates(void) {
+    IMU_UpdateStatus();
+    if (imuStatus.fusionRunning && imuStatus.systemError == BNO055_SYSTEM_ERROR_NO_ERROR) {
+        bno055_vector_t v = bno055_getVectorGyroscope();
+        // The BNO055 driver scales gyroscope readings to degrees per second.
+        stRates.fYaw = (float) v.x;
+        stRates.fRoll = (float) v.y;
+        stRates.fPitch = (float) v.z;
+        stGyroRawData.s16X = (int16_t) v.x;
+        stGyroRawData.s16Y = (int16_t) v.y;
+        stGyroRawData.s16Z = (int16_t) v.z;
+    }
+
+    return stRates;
+}
+
 IMU_ST_SENSOR_DATA IMU_GetRawGyroscope(void) {
-    UpdateIMUData();
+    (void) IMU_GetRates();
     return stGyroRawData;
 }
 

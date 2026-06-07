@@ -244,9 +244,17 @@ void HMIMain_Handle(uint8_t character) {
                    FlightMode_GetModeString(FlightMode_GetMode()),
                    FlightMode_GetModeString(FlightMode_GetRunningMode()),
                    FlightMode_GetThrottle(), FlightMode_GetYaw(), FlightMode_GetPitch(), FlightMode_GetRoll());
+            printf("Rate dps actual Y:% 8.3f P:% 8.3f R:% 8.3f set Y:% 8.3f P:% 8.3f R:% 8.3f\r\n",
+                   FlightMode_GetYawRate(), FlightMode_GetPitchRate(), FlightMode_GetRollRate(),
+                   FlightMode_GetYawRateSetpoint(), FlightMode_GetPitchRateSetpoint(), FlightMode_GetRollRateSetpoint());
             break;
         case HMI_PID_VALUES:
-            printf("Mode: %2d, Yaw: % 8.3f, Pitch: % 8.3f, Roll: % 8.3f\r\n", FlightMode_GetMode(),
+            printf("Angles sp Y:% 8.3f P:% 8.3f R:% 8.3f\r\n",
+                   FlightMode_GetYaw(), FlightMode_GetPitch(), FlightMode_GetRoll());
+            printf("Rates dps actual Y:% 8.3f P:% 8.3f R:% 8.3f set Y:% 8.3f P:% 8.3f R:% 8.3f\r\n",
+                   FlightMode_GetYawRate(), FlightMode_GetPitchRate(), FlightMode_GetRollRate(),
+                   FlightMode_GetYawRateSetpoint(), FlightMode_GetPitchRateSetpoint(), FlightMode_GetRollRateSetpoint());
+            printf("PID out Mode:%2d Y:% 8.3f P:% 8.3f R:% 8.3f\r\n", FlightMode_GetMode(),
                    FlightMode_GetPIDYaw(), FlightMode_GetPIDPitch(), FlightMode_GetPIDRoll());
             break;
         case HMI_BENCH_VERIFICATION:

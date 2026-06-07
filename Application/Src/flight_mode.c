@@ -72,7 +72,18 @@ float pid_i_mem_yaw, pid_output_yaw, pid_last_yaw_d_error;
 bool FlightMode_PreviousMixerSaturated = false;
 
 IMU_ST_ANGLES_DATA imuAngles;
+IMU_ST_RATES_DATA imuRates;
 uint32_t FlightMode_NextUpdate = 0;
+uint32_t FlightMode_NextAngleUpdate = 0;
+float demand_pitch_rate = 0;
+float demand_roll_rate = 0;
+float demand_yaw_rate = 0;
+
+static float FlightMode_ClampFloat(float value, float min, float max) {
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
+}
 
 static float FlightMode_NormalizeYaw(float yaw) {
     while (yaw < 0.0f) yaw += FM_DEGREES_PER_ROTATION;
@@ -104,6 +115,9 @@ static void FlightMode_ResetPidState(void) {
     pid_i_mem_yaw = 0;
     pid_output_yaw = 0;
     pid_last_yaw_d_error = 0;
+    demand_pitch_rate = 0;
+    demand_roll_rate = 0;
+    demand_yaw_rate = 0;
 }
 
 static bool FlightMode_IsUpdateDue(uint32_t now) {
@@ -121,6 +135,21 @@ static bool FlightMode_IsUpdateDue(uint32_t now) {
     return true;
 }
 
+static bool FlightMode_IsAngleUpdateDue(uint32_t now) {
+    if (FlightMode_NextAngleUpdate == 0) {
+        FlightMode_NextAngleUpdate = now + FM_ANGLE_CONTROL_INTERVAL_MS;
+        return true;
+    }
+
+    if ((int32_t) (now - FlightMode_NextAngleUpdate) < 0) return false;
+
+    FlightMode_NextAngleUpdate += FM_ANGLE_CONTROL_INTERVAL_MS;
+    if ((int32_t) (now - FlightMode_NextAngleUpdate) >= 0) {
+        FlightMode_NextAngleUpdate = now + FM_ANGLE_CONTROL_INTERVAL_MS;
+    }
+    return true;
+}
+
 static void FlightMode_FailsafeStop(void) {
     FlightMode_Mode = FM_STOPPED;
     FlightMode_ResetPidState();
@@ -131,6 +160,9 @@ static void FlightMode_FailsafeStop(void) {
     demand_pitch = 0;
     demand_roll = 0;
     demand_yaw = 0;
+    demand_pitch_rate = 0;
+    demand_roll_rate = 0;
+    demand_yaw_rate = 0;
     esc_1 = 0;
     esc_2 = 0;
     esc_3 = 0;
@@ -153,43 +185,43 @@ static void FlightMode_EStop(void) {
     LED_SetMode(LED_MODE_ESTOP);
 }
 
-void calculate_pid(bool integrate) {
-    //Roll calculations
+void calculate_pid(bool integrate, float dt) {
+    //Roll rate calculations
     float pid_error_temp;
 
-    pid_error_temp = imuAngles.fRoll - demand_roll;
-    if (integrate) pid_i_mem_roll += pid_i_gain_roll * pid_error_temp;
+    pid_error_temp = imuRates.fRoll - demand_roll_rate;
+    if (integrate) pid_i_mem_roll += pid_i_gain_roll * pid_error_temp * dt;
     if (pid_i_mem_roll > pid_max_roll) pid_i_mem_roll = pid_max_roll;
     else if (pid_i_mem_roll < pid_max_roll * -1) pid_i_mem_roll = pid_max_roll * -1;
 
     pid_output_roll = pid_p_gain_roll * pid_error_temp + pid_i_mem_roll +
-                      pid_d_gain_roll * (pid_error_temp - pid_last_roll_d_error);
+                      pid_d_gain_roll * ((pid_error_temp - pid_last_roll_d_error) / dt);
     if (pid_output_roll > pid_max_roll) pid_output_roll = pid_max_roll;
     else if (pid_output_roll < pid_max_roll * -1) pid_output_roll = pid_max_roll * -1;
 
     pid_last_roll_d_error = pid_error_temp;
 
-    //Pitch calculations
-    pid_error_temp = imuAngles.fPitch - demand_pitch;
-    if (integrate) pid_i_mem_pitch += pid_i_gain_pitch * pid_error_temp;
+    //Pitch rate calculations
+    pid_error_temp = imuRates.fPitch - demand_pitch_rate;
+    if (integrate) pid_i_mem_pitch += pid_i_gain_pitch * pid_error_temp * dt;
     if (pid_i_mem_pitch > pid_max_pitch)pid_i_mem_pitch = pid_max_pitch;
     else if (pid_i_mem_pitch < pid_max_pitch * -1)pid_i_mem_pitch = pid_max_pitch * -1;
 
     pid_output_pitch = pid_p_gain_pitch * pid_error_temp + pid_i_mem_pitch +
-                       pid_d_gain_pitch * (pid_error_temp - pid_last_pitch_d_error);
+                       pid_d_gain_pitch * ((pid_error_temp - pid_last_pitch_d_error) / dt);
     if (pid_output_pitch > pid_max_pitch) pid_output_pitch = pid_max_pitch;
     else if (pid_output_pitch < pid_max_pitch * -1) pid_output_pitch = pid_max_pitch * -1;
 
     pid_last_pitch_d_error = pid_error_temp;
 
-    //Yaw calculations
-    pid_error_temp = FlightMode_GetWrappedYawError(imuAngles.fYaw, demand_yaw);
-    if (integrate) pid_i_mem_yaw += pid_i_gain_yaw * pid_error_temp;
+    //Yaw rate calculations
+    pid_error_temp = imuRates.fYaw - demand_yaw_rate;
+    if (integrate) pid_i_mem_yaw += pid_i_gain_yaw * pid_error_temp * dt;
     if (pid_i_mem_yaw > pid_max_yaw)pid_i_mem_yaw = pid_max_yaw;
     else if (pid_i_mem_yaw < pid_max_yaw * -1)pid_i_mem_yaw = pid_max_yaw * -1;
 
     pid_output_yaw =
-            pid_p_gain_yaw * pid_error_temp + pid_i_mem_yaw + pid_d_gain_yaw * (pid_error_temp - pid_last_yaw_d_error);
+            pid_p_gain_yaw * pid_error_temp + pid_i_mem_yaw + pid_d_gain_yaw * ((pid_error_temp - pid_last_yaw_d_error) / dt);
     if (pid_output_yaw > pid_max_yaw)pid_output_yaw = pid_max_yaw;
     else if (pid_output_yaw < pid_max_yaw * -1)pid_output_yaw = pid_max_yaw * -1;
 
@@ -247,6 +279,30 @@ float FlightMode_GetRoll(void) {
     return demand_roll;
 }
 
+float FlightMode_GetPitchRate(void) {
+    return imuRates.fPitch;
+}
+
+float FlightMode_GetRollRate(void) {
+    return imuRates.fRoll;
+}
+
+float FlightMode_GetYawRate(void) {
+    return imuRates.fYaw;
+}
+
+float FlightMode_GetPitchRateSetpoint(void) {
+    return demand_pitch_rate;
+}
+
+float FlightMode_GetRollRateSetpoint(void) {
+    return demand_roll_rate;
+}
+
+float FlightMode_GetYawRateSetpoint(void) {
+    return demand_yaw_rate;
+}
+
 float FlightMode_GetPIDPitch(void) {
     return pid_output_pitch;
 }
@@ -277,7 +333,10 @@ void FlightMode_OnTick(uint32_t now) {
 
     input_throttle = RCInput_GetInputValue(RC_THROTTLE);
     input_yaw = RCInput_GetInputValue(RC_YAW) - 500;
-    if (FlightMode_Mode != FM_RUNNING_MANUAL) imuAngles = IMUInput_GetAngles();
+    if (FlightMode_Mode != FM_RUNNING_MANUAL) {
+        imuAngles = IMUInput_GetAngles();
+        imuRates = IMUInput_GetRates();
+    }
 
     switch (FlightMode_Mode) {
 
@@ -345,7 +404,7 @@ void FlightMode_OnTick(uint32_t now) {
             float yaw_rate_demand = FlightMode_GetYawRateDemand();
             if (FlightMode_Mode == FM_RUNNING_AUTO) {
                 demand_yaw = FlightMode_NormalizeYaw(demand_yaw +
-                                                     (yaw_rate_demand * ((float) FM_CONTROL_INTERVAL_MS / 1000.0f)));
+                                                     (yaw_rate_demand * FM_CONTROL_DT_SECONDS));
             } else if (FlightMode_Mode == FM_RUNNING_MANUAL) {
                 demand_yaw = yaw_rate_demand;
             }
@@ -372,7 +431,27 @@ void FlightMode_OnTick(uint32_t now) {
                 bool integrate = demand_throttle > FM_CONTROLLED_FLIGHT_THROTTLE &&
                                  !FlightMode_PreviousMixerSaturated;
 
-                calculate_pid(integrate ? FM_INTEGRATE_ALLOWED : FM_INTEGRATE_DISABLED);
+                if (FlightMode_IsAngleUpdateDue(now)) {
+                    float pitch_angle_error = demand_pitch - imuAngles.fPitch;
+                    float roll_angle_error = demand_roll - imuAngles.fRoll;
+                    float yaw_angle_error = FlightMode_GetWrappedYawError(imuAngles.fYaw, demand_yaw);
+
+                    demand_pitch_rate = FlightMode_ClampFloat(pitch_angle_error * FM_ANGLE_TO_RATE_GAIN,
+                                                              -FM_MAX_ROLL_PITCH_RATE,
+                                                              FM_MAX_ROLL_PITCH_RATE);
+                    demand_roll_rate = FlightMode_ClampFloat(roll_angle_error * FM_ANGLE_TO_RATE_GAIN,
+                                                             -FM_MAX_ROLL_PITCH_RATE,
+                                                             FM_MAX_ROLL_PITCH_RATE);
+                    demand_yaw_rate = yaw_rate_demand +
+                                      FlightMode_ClampFloat(-yaw_angle_error * FM_ANGLE_TO_RATE_GAIN,
+                                                            -FM_MAX_YAW_RATE,
+                                                            FM_MAX_YAW_RATE);
+                    demand_yaw_rate = FlightMode_ClampFloat(demand_yaw_rate,
+                                                            -FM_MAX_YAW_RATE,
+                                                            FM_MAX_YAW_RATE);
+                }
+
+                calculate_pid(integrate ? FM_INTEGRATE_ALLOWED : FM_INTEGRATE_DISABLED, FM_CONTROL_DT_SECONDS);
 
                 Mixer_CalculateMotorSpeeds(demand_throttle, pid_output_pitch, pid_output_roll, pid_output_yaw, &speeds);
                 esc_1 = speeds.motor_1;
