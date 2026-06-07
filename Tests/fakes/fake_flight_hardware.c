@@ -62,6 +62,23 @@ bool RCInput_IsSignalValid(uint32_t now) {
     return true;
 }
 
+bool RCInput_IsChannelValid(uint8_t RC_Channel, uint32_t now) {
+    (void) RC_Channel;
+    (void) now;
+    return true;
+}
+
+uint16_t RC_GetRawValue(uint16_t RC_Channel) {
+    if (RC_Channel >= RC_CHANNEL_COUNT) return 0;
+    return fake_rc_inputs[RC_Channel];
+}
+
+uint32_t RC_GetChannelAge(uint16_t RC_Channel, uint32_t now) {
+    (void) RC_Channel;
+    (void) now;
+    return 0;
+}
+
 IMU_ST_ANGLES_DATA IMUInput_GetAngles(void) {
     return fake_angles;
 }
