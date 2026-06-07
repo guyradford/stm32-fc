@@ -12,6 +12,9 @@
 
 #define FM_CONTROL_INTERVAL_MS 20
 
+// Keep motors idle at arming throttle, then preserve mixer authority once throttle is above the control threshold.
+#define FM_CONTROLLED_FLIGHT_THROTTLE 50
+#define FM_ARMED_IDLE_THROTTLE 50
 
 #define  FM_MANUAL_GAIN 2.0
 

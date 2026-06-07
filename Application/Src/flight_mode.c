@@ -20,6 +20,8 @@
 #define CONFIG_MAX_INPUT_RANGE (500-CONFIG_DEAD_BAND)
 #define FM_DEGREES_PER_ROTATION 360.0f
 #define FM_HALF_ROTATION_DEGREES 180.0f
+#define FM_INTEGRATE_ALLOWED true
+#define FM_INTEGRATE_DISABLED false
 
 
 #define FM_STOPPED 0
@@ -67,6 +69,7 @@ float yawAnglePerInput = (float) CONFIG_MAX_YAW_ANGLE_PER_SECOND / CONFIG_MAX_IN
 float pid_i_mem_roll, pid_output_roll, pid_last_roll_d_error;
 float pid_i_mem_pitch, pid_output_pitch, pid_last_pitch_d_error;
 float pid_i_mem_yaw, pid_output_yaw, pid_last_yaw_d_error;
+bool FlightMode_PreviousMixerSaturated = false;
 
 IMU_ST_ANGLES_DATA imuAngles;
 uint32_t FlightMode_NextUpdate = 0;
@@ -120,6 +123,8 @@ static bool FlightMode_IsUpdateDue(uint32_t now) {
 
 static void FlightMode_FailsafeStop(void) {
     FlightMode_Mode = FM_STOPPED;
+    FlightMode_ResetPidState();
+    FlightMode_PreviousMixerSaturated = false;
     input_throttle = 0;
     input_yaw = 0;
     demand_throttle = 0;
@@ -134,12 +139,26 @@ static void FlightMode_FailsafeStop(void) {
     LED_SetMode(LED_MODE_ESTOP);
 }
 
-void calculate_pid(void) {
+static void FlightMode_EStop(void) {
+    FlightMode_Mode = FM_STOPPED;
+    FlightMode_ResetPidState();
+    FlightMode_PreviousMixerSaturated = false;
+    input_throttle = 0;
+    input_yaw = 0;
+    demand_throttle = 0;
+    demand_pitch = 0;
+    demand_roll = 0;
+    demand_yaw = 0;
+    Output_SetMotorSpeeds(0, 0, 0, 0);
+    LED_SetMode(LED_MODE_ESTOP);
+}
+
+void calculate_pid(bool integrate) {
     //Roll calculations
     float pid_error_temp;
 
     pid_error_temp = imuAngles.fRoll - demand_roll;
-    pid_i_mem_roll += pid_i_gain_roll * pid_error_temp;
+    if (integrate) pid_i_mem_roll += pid_i_gain_roll * pid_error_temp;
     if (pid_i_mem_roll > pid_max_roll) pid_i_mem_roll = pid_max_roll;
     else if (pid_i_mem_roll < pid_max_roll * -1) pid_i_mem_roll = pid_max_roll * -1;
 
@@ -152,7 +171,7 @@ void calculate_pid(void) {
 
     //Pitch calculations
     pid_error_temp = imuAngles.fPitch - demand_pitch;
-    pid_i_mem_pitch += pid_i_gain_pitch * pid_error_temp;
+    if (integrate) pid_i_mem_pitch += pid_i_gain_pitch * pid_error_temp;
     if (pid_i_mem_pitch > pid_max_pitch)pid_i_mem_pitch = pid_max_pitch;
     else if (pid_i_mem_pitch < pid_max_pitch * -1)pid_i_mem_pitch = pid_max_pitch * -1;
 
@@ -165,7 +184,7 @@ void calculate_pid(void) {
 
     //Yaw calculations
     pid_error_temp = FlightMode_GetWrappedYawError(imuAngles.fYaw, demand_yaw);
-    pid_i_mem_yaw += pid_i_gain_yaw * pid_error_temp;
+    if (integrate) pid_i_mem_yaw += pid_i_gain_yaw * pid_error_temp;
     if (pid_i_mem_yaw > pid_max_yaw)pid_i_mem_yaw = pid_max_yaw;
     else if (pid_i_mem_yaw < pid_max_yaw * -1)pid_i_mem_yaw = pid_max_yaw * -1;
 
@@ -249,8 +268,7 @@ void FlightMode_OnTick(uint32_t now) {
     }
 
     if (RCInput_GetInputValue(RC_ESTOP) < 500){
-        Output_SetMotorSpeeds(0, 0, 0, 0);
-        LED_SetMode(LED_MODE_ESTOP);
+        FlightMode_EStop();
         printf("ESTOP!!\r\n");
         return;
     }
@@ -264,6 +282,8 @@ void FlightMode_OnTick(uint32_t now) {
     switch (FlightMode_Mode) {
 
         case FM_STOPPED:
+            FlightMode_ResetPidState();
+            FlightMode_PreviousMixerSaturated = false;
             Output_SetMotorSpeeds(0, 0, 0, 0);
 
             if (FlightMode_RunningMode == FM_RUNNING_AUTO){
@@ -295,6 +315,7 @@ void FlightMode_OnTick(uint32_t now) {
                     demand_yaw = 0;
                 }
                 FlightMode_ResetPidState();
+                FlightMode_PreviousMixerSaturated = false;
             }
             break;
         case FM_RUNNING_MANUAL:
@@ -303,6 +324,8 @@ void FlightMode_OnTick(uint32_t now) {
 
             if (input_throttle < CONFIG_DEAD_BAND && input_yaw > 250) {
                 FlightMode_Mode = FM_PREPARING_TO_STOP;
+                FlightMode_ResetPidState();
+                FlightMode_PreviousMixerSaturated = false;
                 LED_SetMode(LED_MODE_PREPARING_TO_RUN);
                 demand_pitch = 0;
                 demand_roll = 0;
@@ -342,17 +365,21 @@ void FlightMode_OnTick(uint32_t now) {
                 esc_2 = speeds.motor_2;
                 esc_3 = speeds.motor_3;
                 esc_4 = speeds.motor_4;
+                FlightMode_PreviousMixerSaturated = speeds.saturated;
 
             }else { // FM_RUNNING_AUTO
                 MixerMotorSpeeds speeds;
+                bool integrate = demand_throttle > FM_CONTROLLED_FLIGHT_THROTTLE &&
+                                 !FlightMode_PreviousMixerSaturated;
 
-                calculate_pid();
+                calculate_pid(integrate ? FM_INTEGRATE_ALLOWED : FM_INTEGRATE_DISABLED);
 
                 Mixer_CalculateMotorSpeeds(demand_throttle, pid_output_pitch, pid_output_roll, pid_output_yaw, &speeds);
                 esc_1 = speeds.motor_1;
                 esc_2 = speeds.motor_2;
                 esc_3 = speeds.motor_3;
                 esc_4 = speeds.motor_4;
+                FlightMode_PreviousMixerSaturated = speeds.saturated;
             }
 
             Output_SetMotorSpeeds(esc_1, esc_2, esc_3, esc_4);
@@ -362,6 +389,8 @@ void FlightMode_OnTick(uint32_t now) {
         case FM_PREPARING_TO_STOP:
             if (input_throttle < CONFIG_DEAD_BAND && (input_yaw > -50 && input_yaw < 50)) {
                 FlightMode_Mode = FM_STOPPED;
+                FlightMode_ResetPidState();
+                FlightMode_PreviousMixerSaturated = false;
                 LED_SetMode(LED_MODE_STOPPED_AUTO);
             }
             break;
