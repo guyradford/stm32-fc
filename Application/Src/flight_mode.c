@@ -90,6 +90,22 @@ static bool FlightMode_IsUpdateDue(uint32_t now) {
     return true;
 }
 
+static void FlightMode_FailsafeStop(void) {
+    FlightMode_Mode = FM_STOPPED;
+    input_throttle = 0;
+    input_yaw = 0;
+    demand_throttle = 0;
+    demand_pitch = 0;
+    demand_roll = 0;
+    demand_yaw = 0;
+    esc_1 = 0;
+    esc_2 = 0;
+    esc_3 = 0;
+    esc_4 = 0;
+    Output_SetMotorSpeeds(0, 0, 0, 0);
+    LED_SetMode(LED_MODE_ESTOP);
+}
+
 void calculate_pid(void) {
     //Roll calculations
     float pid_error_temp;
@@ -197,6 +213,12 @@ float FlightMode_GetPIDYaw(void) {
 }
 
 void FlightMode_OnTick(uint32_t now) {
+
+    if (!RCInput_IsSignalValid(now)) {
+        FlightMode_FailsafeStop();
+        printf("RC FAILSAFE!!\r\n");
+        return;
+    }
 
     if (RCInput_GetInputValue(RC_ESTOP) < 500){
         Output_SetMotorSpeeds(0, 0, 0, 0);

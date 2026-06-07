@@ -80,6 +80,24 @@ static void test_centered_channels_clamp_to_normalized_output_range(void) {
     TEST_ASSERT_EQUAL_UINT16(1000, RCInput_GetInputValue(RC_YAW));
 }
 
+static void test_signal_is_invalid_when_any_channel_is_marked_invalid(void) {
+    FakeRCReceiver_SetChannelValid(RC_CH_4, false);
+
+    TEST_ASSERT_FALSE(RCInput_IsSignalValid(50));
+}
+
+static void test_signal_is_invalid_when_any_channel_is_stale(void) {
+    FakeRCReceiver_SetChannelLastUpdate(RC_CH_3, 10);
+
+    TEST_ASSERT_FALSE(RCInput_IsSignalValid(10 + RC_SIGNAL_TIMEOUT_MS + 1));
+}
+
+static void test_signal_is_invalid_when_any_channel_pulse_is_out_of_range(void) {
+    FakeRCReceiver_SetChannelValue(RC_CH_6, RC_SIGNAL_MAX_PULSE_US + 1);
+
+    TEST_ASSERT_FALSE(RCInput_IsSignalValid(50));
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_configured_calibration_marks_rc_input_calibrated);
@@ -90,5 +108,8 @@ int main(void) {
     RUN_TEST(test_centered_pitch_and_roll_channels_use_their_configured_centers);
     RUN_TEST(test_centered_aux_channels_use_their_configured_centers);
     RUN_TEST(test_centered_channels_clamp_to_normalized_output_range);
+    RUN_TEST(test_signal_is_invalid_when_any_channel_is_marked_invalid);
+    RUN_TEST(test_signal_is_invalid_when_any_channel_is_stale);
+    RUN_TEST(test_signal_is_invalid_when_any_channel_pulse_is_out_of_range);
     return UNITY_END();
 }

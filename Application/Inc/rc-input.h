@@ -33,6 +33,7 @@ typedef struct {
 
 
 uint16_t RCInput_GetInputValue(uint8_t RC_Channel);
+bool RCInput_IsSignalValid(uint32_t now);
 
 void RCInput_Init(void);
 
