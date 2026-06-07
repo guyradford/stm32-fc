@@ -185,6 +185,17 @@ static void FlightMode_EStop(void) {
     LED_SetMode(LED_MODE_ESTOP);
 }
 
+static void FlightMode_PrintRcFailsafeDetails(uint32_t now) {
+    for (uint8_t rcChannel = 0; rcChannel < RC_CHANNEL_COUNT; rcChannel++) {
+        if (!RCInput_IsChannelValid(rcChannel, now)) {
+            printf("RC FAILSAFE CH%u Raw:%u Age:%lu\r\n",
+                   (unsigned int) (rcChannel + 1),
+                   RC_GetRawValue(rcChannel),
+                   (unsigned long) RC_GetChannelAge(rcChannel, now));
+        }
+    }
+}
+
 void calculate_pid(bool integrate, float dt) {
     //Roll rate calculations
     float pid_error_temp;
@@ -319,7 +330,7 @@ void FlightMode_OnTick(uint32_t now) {
 
     if (!RCInput_IsSignalValid(now)) {
         FlightMode_FailsafeStop();
-        printf("RC FAILSAFE!!\r\n");
+        FlightMode_PrintRcFailsafeDetails(now);
         return;
     }
 

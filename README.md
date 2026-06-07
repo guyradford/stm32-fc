@@ -28,6 +28,21 @@ The FC has two modes:
 1. Setup/Calibration - Used to program the ESC's
 2. Normal Running mode
 
+## Programming / Flashing
+
+The flight controller target must be powered from the quadcopter before flashing
+firmware with ST-LINK/OpenOCD. If the QC is not powered, OpenOCD may report a
+low target voltage, for example around `1.2V`, and fail with `target voltage may
+be too low for reliable debugging`.
+
+Before powering the QC for programming:
+
+* Remove propellers.
+* Keep the throttle low and the transmitter in a safe state.
+* Connect ST-LINK `GND`, `SWDIO`, `SWCLK`, and `NRST` as usual.
+* Ensure ST-LINK target voltage sense / `VTref` sees the target `3.3V` rail.
+* Verify OpenOCD reports a target voltage close to `3.3V` before programming.
+
 ## Setup and Calibration Mode
 
 To Enter Setup and Calibration mode, press and hold the "User Button" whilst turning on the power. If this switch is pressed at startup the software will enter Setup mode.

@@ -81,7 +81,7 @@
 #define IMU_CALIBRATION_YAW -52.1528358
 
 #define IMU_INPUT_PITCH_SIGN -1.0f
-#define IMU_INPUT_ROLL_SIGN  -1.0f
+#define IMU_INPUT_ROLL_SIGN   1.0f
 #define IMU_INPUT_YAW_SIGN    1.0f
 
 #define IMU_FILTER_PREVIOUS (float)0.0
