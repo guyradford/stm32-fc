@@ -21,6 +21,32 @@ IMU_ST_SENSOR_DATA stMagnRawData;
 int32_t s32PressureVal = 0, s32TemperatureVal = 0, s32AltitudeVal = 0;
 
 uint32_t imuGetTimer = 0;
+static IMU_ST_STATUS imuStatus = {0};
+
+static bool IMU_IsCalibrationComplete(bno055_calibration_state_t calibration) {
+    return calibration.sys == 3 &&
+           calibration.gyro == 3 &&
+           calibration.mag == 3 &&
+           calibration.accel == 3;
+}
+
+static void IMU_UpdateStatus(void) {
+    if (!imuStatus.initialized) {
+        imuStatus.fusionRunning = false;
+        imuStatus.calibrated = false;
+        return;
+    }
+
+    bno055_calibration_state_t calibration = bno055_getCalibrationState();
+    imuStatus.systemStatus = bno055_getSystemStatus();
+    imuStatus.systemError = bno055_getSystemError();
+    imuStatus.calibrationSys = calibration.sys;
+    imuStatus.calibrationGyro = calibration.gyro;
+    imuStatus.calibrationMag = calibration.mag;
+    imuStatus.calibrationAccel = calibration.accel;
+    imuStatus.fusionRunning = imuStatus.systemStatus == BNO055_SYSTEM_STATUS_FUSION_ALGO_RUNNING;
+    imuStatus.calibrated = IMU_IsCalibrationComplete(calibration);
+}
 
 bool IMU_Init(void) {
 
@@ -37,7 +63,26 @@ bool IMU_Init(void) {
 ////    } else {
 ////        printf("Pressure sensor NULL\r\n");
 ////    }
-//    return false;
+    imuStatus.initialized = false;
+    imuStatus.fusionRunning = false;
+    imuStatus.calibrated = false;
+    imuStatus.systemStatus = BNO055_SYSTEM_STATUS_IDLE;
+    imuStatus.systemError = BNO055_SYSTEM_ERROR_NO_ERROR;
+    imuStatus.calibrationSys = 0;
+    imuStatus.calibrationGyro = 0;
+    imuStatus.calibrationMag = 0;
+    imuStatus.calibrationAccel = 0;
+
+    if (!bno055_setup()) {
+        return false;
+    }
+
+    bno055_setOperationModeNDOF();
+    bno055_delay(10);
+
+    imuStatus.initialized = true;
+    IMU_UpdateStatus();
+    return imuStatus.fusionRunning && imuStatus.systemError == BNO055_SYSTEM_ERROR_NO_ERROR;
 }
 
 void IMU_OnTick(uint32_t now) {
@@ -48,6 +93,19 @@ void IMU_OnTick(uint32_t now) {
 
     // imuDataGet(&stAngles, &stGyroRawData, &stAccelRawData, &stMagnRawData);
     //pressSensorDataGet(&s32TemperatureVal, &s32PressureVal, &s32AltitudeVal);
+}
+
+bool IMU_IsReady(void) {
+    IMU_UpdateStatus();
+    return imuStatus.initialized &&
+           imuStatus.fusionRunning &&
+           imuStatus.systemError == BNO055_SYSTEM_ERROR_NO_ERROR &&
+           imuStatus.calibrated;
+}
+
+IMU_ST_STATUS IMU_GetStatus(void) {
+    IMU_UpdateStatus();
+    return imuStatus;
 }
 
 
@@ -69,13 +127,8 @@ void UpdateIMUData() {
 IMU_ST_ANGLES_DATA IMU_GetAngles(void) {
 //    imuDataGet(&stAngles, &stGyroRawData, &stAccelRawData, &stMagnRawData);
 
-    uint8_t tmp = bno055_getSystemStatus();
-    if (tmp != BNO055_SYSTEM_STATUS_FUSION_ALGO_RUNNING){
-        stAngles.fYaw = (float) 0;
-        stAngles.fRoll = (float) 0;
-        stAngles.fPitch = (float) 0;
-        printf("BMO055 status: %u\r\n", tmp);
-    } else{
+    IMU_UpdateStatus();
+    if (imuStatus.fusionRunning && imuStatus.systemError == BNO055_SYSTEM_ERROR_NO_ERROR) {
         bno055_vector_t v = bno055_getVectorEuler();
         // printf("Heading: %.2f Roll: %.2f Pitch: %.2f\r\n", v.x, v.y, v.z);
         stAngles.fYaw = (float) v.x;
