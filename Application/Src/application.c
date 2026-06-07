@@ -65,7 +65,7 @@ void Application_OnTick(uint32_t now){
             HMI_OnTick(now);
             IMUInput_Calibrate();
             RCInput_Calibrate();
-            if (RCInput_IsCalibrated() & IMUInput_IsCalibrated()){
+            if (RCInput_IsCalibrated() && IMUInput_IsCalibrated()){
                 applicationMode = APPLICATION_MODE_RUNNING;
                 LED_SetMode(LED_MODE_GOOD);
             }

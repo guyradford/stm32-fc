@@ -19,6 +19,7 @@
 #define HMI_FLIGHT_MODE 12
 #define HMI_PID_VALUES 13
 #define HMI_LOOP_COUNTER 14
+#define HMI_IMU_STATUS 15
 
 
 #include <stdio.h>
@@ -49,6 +50,7 @@ void MenuMenu(void) {
     printf(OUTPUT_BLANK_LINE);
     printf("h - Home.\r\n");
     printf("i - Raw IMU Values.\r\n");
+    printf("s - BNO055 Status.\r\n");
     printf("a - Raw Accelerometer Data.\r\n");
     printf("m - Raw Magnetometer Data.\r\n");
     printf("g - Raw Gyroscope  Data.\r\n");
@@ -74,6 +76,7 @@ void HMIMain_Handle(uint8_t character) {
 
     IMU_ST_ANGLES_DATA stAngles;
     IMU_ST_SENSOR_DATA stData;
+    IMU_ST_STATUS imuStatus;
 
     switch (character) {
         case 'h':
@@ -84,6 +87,9 @@ void HMIMain_Handle(uint8_t character) {
         switch (character) {
             case 'i':
                 hmiMenu_Display = HMI_IMU;
+                break;
+            case 's':
+                hmiMenu_Display = HMI_IMU_STATUS;
                 break;
             case 'r':
                 hmiMenu_Display = HMI_RECEIVER;
@@ -136,6 +142,19 @@ void HMIMain_Handle(uint8_t character) {
             stAngles = IMU_GetAngles();
             printf("Roll: %3.2f     Pitch: %3.2f     Yaw: %3.2f \r\n", stAngles.fRoll, stAngles.fPitch, stAngles.fYaw);
         }
+            break;
+        case HMI_IMU_STATUS:
+            imuStatus = IMU_GetStatus();
+            printf("BNO055 Init: %u Fusion: %u Ready: %u Status: %u Error: %u Cal S/G/M/A: %u/%u/%u/%u\r\n",
+                   imuStatus.initialized,
+                   imuStatus.fusionRunning,
+                   IMU_IsReady(),
+                   imuStatus.systemStatus,
+                   imuStatus.systemError,
+                   imuStatus.calibrationSys,
+                   imuStatus.calibrationGyro,
+                   imuStatus.calibrationMag,
+                   imuStatus.calibrationAccel);
             break;
         case HMI_ACCELEROMETER: {
             stData = IMU_GetRawAccelerometer();

@@ -22,10 +22,25 @@ typedef struct imu_st_sensor_data_tag
     int16_t s16Z;
 }IMU_ST_SENSOR_DATA;
 
+typedef struct imu_st_status_tag
+{
+    bool initialized;
+    bool fusionRunning;
+    bool calibrated;
+    uint8_t systemStatus;
+    uint8_t systemError;
+    uint8_t calibrationSys;
+    uint8_t calibrationGyro;
+    uint8_t calibrationMag;
+    uint8_t calibrationAccel;
+} IMU_ST_STATUS;
+
 bool IMU_Init(void);
 
 void IMU_OnTick(uint32_t now);
 
+bool IMU_IsReady(void);
+IMU_ST_STATUS IMU_GetStatus(void);
 IMU_ST_ANGLES_DATA IMU_GetAngles(void);
 
 //float IMU_GetPitch(void);

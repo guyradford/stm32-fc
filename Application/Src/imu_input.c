@@ -19,12 +19,22 @@ IMU_ST_ANGLES_DATA stRawAngles, stCalibratedAngles;
 
 void IMUInput_Calibrate(void) {
     if (IMU_CALIBRATION_CONFIG) {
+        if (!IMU_IsReady()) {
+            IMUInput_Mode = IMU_INPUT_MODE_CALIBRATING;
+            return;
+        }
+
         IMUInput_Calibration_Pitch = IMU_CALIBRATION_PITCH;
         IMUInput_Calibration_Roll = IMU_CALIBRATION_ROLL;
         IMUInput_Calibration_Yaw = 0;
 
         IMUInput_Mode = IMU_INPUT_MODE_RUNNING;
     } else {
+        if (!IMU_IsReady()) {
+            IMUInput_Mode = IMU_INPUT_MODE_CALIBRATING;
+            return;
+        }
+
         stRawAngles = IMU_GetAngles();
         IMUInput_Calibration_Pitch = (IMUInput_Calibration_Pitch + stRawAngles.fPitch) / 2;
         IMUInput_Calibration_Roll = (IMUInput_Calibration_Roll + stRawAngles.fRoll) / 2;

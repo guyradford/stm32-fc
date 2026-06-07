@@ -31,6 +31,7 @@
 #include "bno055_stm32.h"
 #include "hmi_output_buffer.h"
 #include "config.h"
+#include "imu.h"
 
 /* USER CODE END Includes */
 
@@ -141,13 +142,9 @@ int main(void)
     HAL_UART_Receive_IT(&huart2, UART2_rxBuffer, 1);
 #endif
 
-    // Initialise IMU
-//    if (!IMU_Init()) {
-//        Application_SetMode(APPLICATION_MODE_ERROR);
-//    }
     bno055_assignI2C(&hi2c1);
     HAL_Delay(1000);
-    bno055_setup();
+    bool imuInitOk = IMU_Init();
 
 //    bno055_axis_map_t axis = {
 //            .x = BNO055_AXIS_X,
@@ -159,8 +156,6 @@ int main(void)
 //    };
 //
 //    bno055_setAxisMap(axis);
-
-    bno055_setOperationModeNDOF();
 
     // Start Timers for RC receiver input capture
     HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1); // RC Channel 1
@@ -180,6 +175,9 @@ int main(void)
 
     bool setupMode = !HAL_GPIO_ReadPin(SETUP_BUTTON_GPIO_Port, SETUP_BUTTON_Pin);
     Application_Init(setupMode);
+    if (!imuInitOk) {
+        Application_SetMode(APPLICATION_MODE_ERROR);
+    }
 
     uint32_t loopCounter = 0;
     uint32_t previousLoopCountr = 0;
