@@ -120,6 +120,12 @@ static void FlightMode_ResetPidState(void) {
     demand_yaw_rate = 0;
 }
 
+static void FlightMode_ResetPidIntegralState(void) {
+    pid_i_mem_roll = 0;
+    pid_i_mem_pitch = 0;
+    pid_i_mem_yaw = 0;
+}
+
 static bool FlightMode_IsUpdateDue(uint32_t now) {
     if (FlightMode_NextUpdate == 0) {
         FlightMode_NextUpdate = now + FM_CONTROL_INTERVAL_MS;
@@ -423,6 +429,17 @@ void FlightMode_OnTick(uint32_t now) {
             demand_throttle = input_throttle;
             if (demand_throttle > 800) demand_throttle = 800; // this allows some headroom for the PID controllers
 
+            if (demand_throttle <= FM_CONTROLLED_FLIGHT_THROTTLE) {
+                FlightMode_ResetPidState();
+                FlightMode_PreviousMixerSaturated = false;
+                esc_1 = 0;
+                esc_2 = 0;
+                esc_3 = 0;
+                esc_4 = 0;
+                Output_SetMotorSpeeds(0, 0, 0, 0);
+                break;
+            }
+
             if (FlightMode_Mode == FM_RUNNING_MANUAL){
                 MixerMotorSpeeds speeds;
 
@@ -441,6 +458,10 @@ void FlightMode_OnTick(uint32_t now) {
                 MixerMotorSpeeds speeds;
                 bool integrate = demand_throttle > FM_CONTROLLED_FLIGHT_THROTTLE &&
                                  !FlightMode_PreviousMixerSaturated;
+
+                if (!integrate) {
+                    FlightMode_ResetPidIntegralState();
+                }
 
                 if (FlightMode_IsAngleUpdateDue(now)) {
                     float pitch_angle_error = demand_pitch - imuAngles.fPitch;

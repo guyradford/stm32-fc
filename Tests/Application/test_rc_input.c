@@ -64,6 +64,14 @@ static void test_centered_pitch_and_roll_channels_use_their_configured_centers(v
     TEST_ASSERT_EQUAL_UINT16(500, RCInput_GetInputValue(RC_ROLL));
 }
 
+static void test_reversed_roll_channel_maps_configured_bounds_to_opposite_sides(void) {
+    FakeRCReceiver_SetChannelValue(RC_ROLL, 1104);
+    TEST_ASSERT_EQUAL_UINT16(915, RCInput_GetInputValue(RC_ROLL));
+
+    FakeRCReceiver_SetChannelValue(RC_ROLL, 1935);
+    TEST_ASSERT_EQUAL_UINT16(84, RCInput_GetInputValue(RC_ROLL));
+}
+
 static void test_centered_aux_channels_use_their_configured_centers(void) {
     FakeRCReceiver_SetChannelValue(RC_CH_5, 1400);
     TEST_ASSERT_EQUAL_UINT16(500, RCInput_GetInputValue(RC_CH_5));
@@ -131,6 +139,7 @@ int main(void) {
     RUN_TEST(test_reversed_zeroed_throttle_clamps_out_of_range_values);
     RUN_TEST(test_centered_yaw_channel_uses_center_correction_without_scaling);
     RUN_TEST(test_centered_pitch_and_roll_channels_use_their_configured_centers);
+    RUN_TEST(test_reversed_roll_channel_maps_configured_bounds_to_opposite_sides);
     RUN_TEST(test_centered_aux_channels_use_their_configured_centers);
     RUN_TEST(test_invalid_centered_channel_pulses_return_midpoint);
     RUN_TEST(test_signal_is_invalid_when_any_channel_is_marked_invalid);
