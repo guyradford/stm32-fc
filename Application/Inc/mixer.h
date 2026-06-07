@@ -5,6 +5,7 @@
 #ifndef STM32_FC_MIXER_H
 #define STM32_FC_MIXER_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #define MIXER_TREND_DOWN (-1)
@@ -18,6 +19,7 @@ typedef struct {
     uint16_t motor_2;
     uint16_t motor_3;
     uint16_t motor_4;
+    bool saturated;
 } MixerMotorSpeeds;
 
 typedef struct {

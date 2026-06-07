@@ -10,9 +10,15 @@
 #define MIXER_MAX_MOTOR_SPEED 1000
 #define MIXER_BENCH_CORRECTION 100.0f
 
-static uint16_t Mixer_ClampMotorSpeed(float speed) {
-    if (speed < MIXER_MIN_MOTOR_SPEED) return MIXER_MIN_MOTOR_SPEED;
-    if (speed > MIXER_MAX_MOTOR_SPEED) return MIXER_MAX_MOTOR_SPEED;
+static uint16_t Mixer_ClampMotorSpeed(float speed, uint16_t min_speed, bool *saturated) {
+    if (speed < (float) min_speed) {
+        if (saturated != NULL) *saturated = true;
+        return min_speed;
+    }
+    if (speed > MIXER_MAX_MOTOR_SPEED) {
+        if (saturated != NULL) *saturated = true;
+        return MIXER_MAX_MOTOR_SPEED;
+    }
     return (uint16_t) speed;
 }
 
@@ -58,10 +64,12 @@ void Mixer_CalculateMotorSpeeds(uint16_t throttle,
     Mixer_CalculateMotorCorrections(pitch_correction, roll_correction, yaw_correction,
                                     &motor_1, &motor_2, &motor_3, &motor_4);
 
-    speeds->motor_1 = Mixer_ClampMotorSpeed((float) throttle + motor_1);
-    speeds->motor_2 = Mixer_ClampMotorSpeed((float) throttle + motor_2);
-    speeds->motor_3 = Mixer_ClampMotorSpeed((float) throttle + motor_3);
-    speeds->motor_4 = Mixer_ClampMotorSpeed((float) throttle + motor_4);
+    speeds->saturated = false;
+    uint16_t min_speed = throttle > FM_CONTROLLED_FLIGHT_THROTTLE ? FM_ARMED_IDLE_THROTTLE : MIXER_MIN_MOTOR_SPEED;
+    speeds->motor_1 = Mixer_ClampMotorSpeed((float) throttle + motor_1, min_speed, &speeds->saturated);
+    speeds->motor_2 = Mixer_ClampMotorSpeed((float) throttle + motor_2, min_speed, &speeds->saturated);
+    speeds->motor_3 = Mixer_ClampMotorSpeed((float) throttle + motor_3, min_speed, &speeds->saturated);
+    speeds->motor_4 = Mixer_ClampMotorSpeed((float) throttle + motor_4, min_speed, &speeds->saturated);
 }
 
 static void Mixer_FillBenchVerificationStep(MixerBenchVerificationStep *step,
