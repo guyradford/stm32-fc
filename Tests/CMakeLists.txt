@@ -31,6 +31,15 @@ target_include_directories(fake_rc_receiver PUBLIC
     ../HardwareLayer/Inc
 )
 
+add_library(fake_flight_hardware STATIC
+    fakes/fake_flight_hardware.c
+)
+target_include_directories(fake_flight_hardware PUBLIC
+    fakes
+    ../Application/Inc
+    ../HardwareLayer/Inc
+)
+
 add_executable(test_output
     Application/test_output.c
     ../Application/Src/output.c
@@ -81,3 +90,23 @@ target_link_libraries(test_mixer PRIVATE
 )
 
 add_test(NAME mixer COMMAND test_mixer)
+
+add_executable(test_flight_mode
+    Application/test_flight_mode.c
+    ../Application/Src/flight_mode.c
+    ../Application/Src/mixer.c
+    ../Application/Src/output.c
+)
+target_include_directories(test_flight_mode PRIVATE
+    ../Application/Inc
+    ../HardwareLayer/Inc
+    fakes
+    vendor/unity
+)
+target_link_libraries(test_flight_mode PRIVATE
+    unity
+    fake_esc_output
+    fake_flight_hardware
+)
+
+add_test(NAME flight_mode COMMAND test_flight_mode)

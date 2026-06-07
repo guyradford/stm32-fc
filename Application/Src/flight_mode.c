@@ -18,6 +18,8 @@
 #define CONFIG_MAX_YAW_ANGLE_PER_SECOND 200.0
 #define CONFIG_DEAD_BAND 50
 #define CONFIG_MAX_INPUT_RANGE (500-CONFIG_DEAD_BAND)
+#define FM_DEGREES_PER_ROTATION 360.0f
+#define FM_HALF_ROTATION_DEGREES 180.0f
 
 
 #define FM_STOPPED 0
@@ -68,6 +70,38 @@ float pid_i_mem_yaw, pid_output_yaw, pid_last_yaw_d_error;
 
 IMU_ST_ANGLES_DATA imuAngles;
 uint32_t FlightMode_NextUpdate = 0;
+
+static float FlightMode_NormalizeYaw(float yaw) {
+    while (yaw < 0.0f) yaw += FM_DEGREES_PER_ROTATION;
+    while (yaw >= FM_DEGREES_PER_ROTATION) yaw -= FM_DEGREES_PER_ROTATION;
+    return yaw;
+}
+
+static float FlightMode_GetWrappedYawError(float currentYaw, float targetYaw) {
+    float error = FlightMode_NormalizeYaw(currentYaw) - FlightMode_NormalizeYaw(targetYaw);
+    if (error > FM_HALF_ROTATION_DEGREES) error -= FM_DEGREES_PER_ROTATION;
+    else if (error < -FM_HALF_ROTATION_DEGREES) error += FM_DEGREES_PER_ROTATION;
+    return error;
+}
+
+static float FlightMode_GetYawRateDemand(void) {
+    if (input_throttle <= CONFIG_DEAD_BAND) return 0.0f;
+    if (input_yaw < -CONFIG_DEAD_BAND) return (float) (input_yaw + CONFIG_DEAD_BAND) * yawAnglePerInput;
+    if (input_yaw > CONFIG_DEAD_BAND) return (float) (input_yaw - CONFIG_DEAD_BAND) * yawAnglePerInput;
+    return 0.0f;
+}
+
+static void FlightMode_ResetPidState(void) {
+    pid_i_mem_roll = 0;
+    pid_output_roll = 0;
+    pid_last_roll_d_error = 0;
+    pid_i_mem_pitch = 0;
+    pid_output_pitch = 0;
+    pid_last_pitch_d_error = 0;
+    pid_i_mem_yaw = 0;
+    pid_output_yaw = 0;
+    pid_last_yaw_d_error = 0;
+}
 
 static bool FlightMode_IsUpdateDue(uint32_t now) {
     if (FlightMode_NextUpdate == 0) {
@@ -130,7 +164,7 @@ void calculate_pid(void) {
     pid_last_pitch_d_error = pid_error_temp;
 
     //Yaw calculations
-    pid_error_temp = imuAngles.fYaw - demand_yaw;
+    pid_error_temp = FlightMode_GetWrappedYawError(imuAngles.fYaw, demand_yaw);
     pid_i_mem_yaw += pid_i_gain_yaw * pid_error_temp;
     if (pid_i_mem_yaw > pid_max_yaw)pid_i_mem_yaw = pid_max_yaw;
     else if (pid_i_mem_yaw < pid_max_yaw * -1)pid_i_mem_yaw = pid_max_yaw * -1;
@@ -253,17 +287,14 @@ void FlightMode_OnTick(uint32_t now) {
                     LED_SetMode(LED_MODE_RUNNING_MANUAL);
                 }
 
-//                    IMUInput_YawCalibrationYaw();
-//                demand_yaw = imuAngles.fYaw;
-                demand_yaw = 0;
-                // reset controller
-                //Reset the PID controllers for a bumpless start.
-//                    pid_i_mem_roll = 0;
-//                    pid_last_roll_d_error = 0;
-//                    pid_i_mem_pitch = 0;
-//                    pid_last_pitch_d_error = 0;
-//                    pid_i_mem_yaw = 0;
-//                    pid_last_yaw_d_error = 0;
+                demand_pitch = 0;
+                demand_roll = 0;
+                if (FlightMode_RunningMode == FM_RUNNING_AUTO) {
+                    demand_yaw = FlightMode_NormalizeYaw(imuAngles.fYaw);
+                } else {
+                    demand_yaw = 0;
+                }
+                FlightMode_ResetPidState();
             }
             break;
         case FM_RUNNING_MANUAL:
@@ -288,17 +319,12 @@ void FlightMode_OnTick(uint32_t now) {
             if (input_roll < -CONFIG_DEAD_BAND) demand_roll = (input_roll + CONFIG_DEAD_BAND) * anglePerInput;
             if (input_roll > CONFIG_DEAD_BAND) demand_roll = (input_roll - CONFIG_DEAD_BAND) * anglePerInput;
 
-
-            // Calculate demand yaw between -180 to +180, but only when throttle is active
-            if (input_throttle > CONFIG_DEAD_BAND) {
-                if (input_yaw < -CONFIG_DEAD_BAND) {
-                    demand_yaw = (input_yaw + CONFIG_DEAD_BAND) * (yawAnglePerInput);
-                    //if (demand_yaw < -180.0) demand_yaw += 360.0;
-                }
-                if (input_yaw > CONFIG_DEAD_BAND) {
-                    demand_yaw = (input_yaw - CONFIG_DEAD_BAND) * (yawAnglePerInput);
-                    //if (demand_yaw > 180.0) demand_yaw -= 360.0;
-                }
+            float yaw_rate_demand = FlightMode_GetYawRateDemand();
+            if (FlightMode_Mode == FM_RUNNING_AUTO) {
+                demand_yaw = FlightMode_NormalizeYaw(demand_yaw +
+                                                     (yaw_rate_demand * ((float) FM_CONTROL_INTERVAL_MS / 1000.0f)));
+            } else if (FlightMode_Mode == FM_RUNNING_MANUAL) {
+                demand_yaw = yaw_rate_demand;
             }
 
             demand_throttle = input_throttle;
