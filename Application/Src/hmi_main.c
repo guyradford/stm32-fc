@@ -20,6 +20,7 @@
 #define HMI_PID_VALUES 13
 #define HMI_LOOP_COUNTER 14
 #define HMI_IMU_STATUS 15
+#define HMI_BENCH_VERIFICATION 16
 
 
 #include <stdio.h>
@@ -35,6 +36,7 @@
 #include "rc-input.h"
 #include "flight_mode.h"
 #include "output.h"
+#include "mixer.h"
 
 uint16_t hmiMenu_Display = HMI_MENU;
 
@@ -62,6 +64,7 @@ void MenuMenu(void) {
     printf("v - Corrected RC Input Values.\r\n");
     printf("f - Flight Mode Output.\r\n");
     printf("p - PID Output.\r\n");
+    printf("b - Prop-off Bench Verification.\r\n");
     printf("t - Tune PID Controllers.\r\n");
 
 
@@ -122,6 +125,9 @@ void HMIMain_Handle(uint8_t character) {
                 break;
             case 'p':
                 hmiMenu_Display = HMI_PID_VALUES;
+                break;
+            case 'b':
+                hmiMenu_Display = HMI_BENCH_VERIFICATION;
                 break;
             case 'l':
                 hmiMenu_Display = HMI_LOOP_COUNTER;
@@ -242,6 +248,27 @@ void HMIMain_Handle(uint8_t character) {
         case HMI_PID_VALUES:
             printf("Mode: %2d, Yaw: % 8.3f, Pitch: % 8.3f, Roll: % 8.3f\r\n", FlightMode_GetMode(),
                    FlightMode_GetPIDYaw(), FlightMode_GetPIDPitch(), FlightMode_GetPIDRoll());
+            break;
+        case HMI_BENCH_VERIFICATION:
+            printf("PROPS OFF ONLY - expected AUTO correction trends.\r\n");
+            printf("M1 front-right, M2 back-right, M3 back-left, M4 front-left.\r\n");
+            printf("Current M1:%-5d M2:%-5d M3:%-5d M4:%-5d\r\n",
+                   EscOutput_GetMotorSpeed(MOTOR_1),
+                   EscOutput_GetMotorSpeed(MOTOR_2),
+                   EscOutput_GetMotorSpeed(MOTOR_3),
+                   EscOutput_GetMotorSpeed(MOTOR_4));
+            for (uint8_t i = 0; i < MIXER_BENCH_VERIFICATION_STEP_COUNT; i++) {
+                MixerBenchVerificationStep step;
+                Mixer_GetBenchVerificationStep(i, &step);
+                printf("%-15s IMU %s %-8s M1:%-4s M2:%-4s M3:%-4s M4:%-4s\r\n",
+                       step.tilt_name,
+                       step.imu_axis_name,
+                       step.imu_expected_sign,
+                       Mixer_GetTrendString(step.motor_1_trend),
+                       Mixer_GetTrendString(step.motor_2_trend),
+                       Mixer_GetTrendString(step.motor_3_trend),
+                       Mixer_GetTrendString(step.motor_4_trend));
+            }
             break;
         case HMI_LOOP_COUNTER:
             printf("Loop Count: %u", 0);
