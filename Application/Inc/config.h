@@ -4,13 +4,19 @@
 
 #define FM_PID_P_GAIN 1.3  //Gain setting for the pitch and roll P-controller (default = 1.3).
 #define FM_PID_I_GAIN 0.005 //Gain setting for the pitch and roll I-controller (default = 0.04).
-#define FM_PID_D_GAIN 20   //Gain setting for the pitch and roll D-controller (default = 18.0).
+#define FM_PID_D_GAIN 0.02 //Gain setting for the pitch and roll rate D-controller.
 
 #define FM_PID_P_INCREMENTS 0.1
 #define FM_PID_I_INCREMENTS 0.01
-#define FM_PID_D_INCREMENTS 1.0
+#define FM_PID_D_INCREMENTS 0.01
 
-#define FM_CONTROL_INTERVAL_MS 20
+#define FM_RATE_CONTROL_INTERVAL_MS 10  // 100 Hz gyro-rate inner loop.
+#define FM_ANGLE_CONTROL_INTERVAL_MS 20 // 50 Hz angle outer loop.
+#define FM_CONTROL_INTERVAL_MS FM_RATE_CONTROL_INTERVAL_MS
+#define FM_CONTROL_DT_SECONDS ((float) FM_RATE_CONTROL_INTERVAL_MS / 1000.0f)
+#define FM_ANGLE_TO_RATE_GAIN 4.0f
+#define FM_MAX_ROLL_PITCH_RATE 180.0f
+#define FM_MAX_YAW_RATE 200.0f
 
 // Keep motors idle at arming throttle, then preserve mixer authority once throttle is above the control threshold.
 #define FM_CONTROLLED_FLIGHT_THROTTLE 50

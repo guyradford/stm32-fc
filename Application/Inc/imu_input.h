@@ -19,6 +19,8 @@ bool IMUInput_IsCalibrated();
 
 IMU_ST_ANGLES_DATA IMUInput_GetAngles(void);
 IMU_ST_ANGLES_DATA IMUInput_GetLastAngles(void);
+IMU_ST_RATES_DATA IMUInput_GetRates(void);
+IMU_ST_RATES_DATA IMUInput_GetLastRates(void);
 void IMUInput_Calibrate(void);
 
 

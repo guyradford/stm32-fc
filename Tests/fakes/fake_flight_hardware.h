@@ -7,6 +7,7 @@
 void FakeFlightHardware_Reset(void);
 void FakeFlightHardware_SetRcInput(uint8_t channel, uint16_t value);
 void FakeFlightHardware_SetAngles(float yaw, float pitch, float roll);
+void FakeFlightHardware_SetRates(float yaw, float pitch, float roll);
 const char *FakeFlightHardware_GetLedMode(void);
 
 #endif

@@ -16,6 +16,7 @@ float IMUInput_Calibration_Roll = IMU_CALIBRATION_ROLL;
 float IMUInput_Calibration_Yaw = 0;
 
 IMU_ST_ANGLES_DATA stRawAngles, stCalibratedAngles;
+IMU_ST_RATES_DATA stRawRates, stSignedRates;
 
 void IMUInput_Calibrate(void) {
     if (IMU_CALIBRATION_CONFIG) {
@@ -80,4 +81,16 @@ IMU_ST_ANGLES_DATA IMUInput_GetAngles(void) {
 
 IMU_ST_ANGLES_DATA IMUInput_GetLastAngles(void) {
     return stCalibratedAngles;
+}
+
+IMU_ST_RATES_DATA IMUInput_GetRates(void) {
+    stRawRates = IMU_GetRates();
+    stSignedRates.fPitch = stRawRates.fPitch * IMU_INPUT_PITCH_SIGN;
+    stSignedRates.fRoll = stRawRates.fRoll * IMU_INPUT_ROLL_SIGN;
+    stSignedRates.fYaw = stRawRates.fYaw * IMU_INPUT_YAW_SIGN;
+    return stSignedRates;
+}
+
+IMU_ST_RATES_DATA IMUInput_GetLastRates(void) {
+    return stSignedRates;
 }

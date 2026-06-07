@@ -1,5 +1,7 @@
 #include "unity.h"
 
+#include <stdbool.h>
+
 #include "esc_output.h"
 #include "fake_esc_output.h"
 #include "fake_flight_hardware.h"
@@ -36,9 +38,15 @@ extern float pid_i_mem_yaw;
 extern float pid_output_yaw;
 extern float pid_last_yaw_d_error;
 extern IMU_ST_ANGLES_DATA imuAngles;
+extern IMU_ST_RATES_DATA imuRates;
 extern uint32_t FlightMode_NextUpdate;
+extern uint32_t FlightMode_NextAngleUpdate;
+extern float demand_pitch_rate;
+extern float demand_roll_rate;
+extern float demand_yaw_rate;
+extern bool FlightMode_PreviousMixerSaturated;
 
-void calculate_pid(void);
+void calculate_pid(bool integrate, float dt);
 
 static void reset_flight_mode_state(void) {
     FlightMode_Mode = TEST_FM_STOPPED;
@@ -67,7 +75,15 @@ static void reset_flight_mode_state(void) {
     imuAngles.fYaw = 0.0f;
     imuAngles.fPitch = 0.0f;
     imuAngles.fRoll = 0.0f;
+    imuRates.fYaw = 0.0f;
+    imuRates.fPitch = 0.0f;
+    imuRates.fRoll = 0.0f;
     FlightMode_NextUpdate = 0;
+    FlightMode_NextAngleUpdate = 0;
+    demand_pitch_rate = 0.0f;
+    demand_roll_rate = 0.0f;
+    demand_yaw_rate = 0.0f;
+    FlightMode_PreviousMixerSaturated = false;
     Output_SetMotorSpeeds(0, 0, 0, 0);
     FakeEscOutput_Reset();
     FakeFlightHardware_Reset();
@@ -122,17 +138,20 @@ static void test_centered_yaw_holds_arming_heading_without_motor_bias(void) {
 }
 
 static void test_yaw_error_uses_shortest_path_across_zero_degrees(void) {
-    demand_yaw = 359.0f;
-    imuAngles.fYaw = 1.0f;
-    calculate_pid();
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 2.0f, FlightMode_GetPIDYaw());
+    arm_auto_at_heading(359.0f);
+    set_throttle_and_centered_sticks(300);
+    FakeFlightHardware_SetAngles(1.0f, 0.0f, 0.0f);
+    FlightMode_OnTick(40);
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, -8.0f, FlightMode_GetYawRateSetpoint());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 8.0f, FlightMode_GetPIDYaw());
 
-    pid_i_mem_yaw = 0.0f;
-    pid_last_yaw_d_error = 0.0f;
-    demand_yaw = 1.0f;
-    imuAngles.fYaw = 359.0f;
-    calculate_pid();
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, -2.0f, FlightMode_GetPIDYaw());
+    reset_flight_mode_state();
+    arm_auto_at_heading(1.0f);
+    set_throttle_and_centered_sticks(300);
+    FakeFlightHardware_SetAngles(359.0f, 0.0f, 0.0f);
+    FlightMode_OnTick(40);
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 8.0f, FlightMode_GetYawRateSetpoint());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, -8.0f, FlightMode_GetPIDYaw());
 }
 
 static void test_yaw_stick_integrates_wrapped_heading_setpoint(void) {
@@ -143,12 +162,13 @@ static void test_yaw_stick_integrates_wrapped_heading_setpoint(void) {
 
     FlightMode_OnTick(40);
 
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 1.0f, FlightMode_GetYaw());
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, -2.0f, FlightMode_GetPIDYaw());
-    TEST_ASSERT_EQUAL_UINT16(302, EscOutput_GetMotorSpeed(MOTOR_1));
-    TEST_ASSERT_EQUAL_UINT16(298, EscOutput_GetMotorSpeed(MOTOR_2));
-    TEST_ASSERT_EQUAL_UINT16(302, EscOutput_GetMotorSpeed(MOTOR_3));
-    TEST_ASSERT_EQUAL_UINT16(298, EscOutput_GetMotorSpeed(MOTOR_4));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, FlightMode_GetYaw());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 104.0f, FlightMode_GetYawRateSetpoint());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, -104.0f, FlightMode_GetPIDYaw());
+    TEST_ASSERT_EQUAL_UINT16(404, EscOutput_GetMotorSpeed(MOTOR_1));
+    TEST_ASSERT_EQUAL_UINT16(196, EscOutput_GetMotorSpeed(MOTOR_2));
+    TEST_ASSERT_EQUAL_UINT16(404, EscOutput_GetMotorSpeed(MOTOR_3));
+    TEST_ASSERT_EQUAL_UINT16(196, EscOutput_GetMotorSpeed(MOTOR_4));
 }
 
 int main(void) {

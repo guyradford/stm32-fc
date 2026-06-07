@@ -36,6 +36,18 @@ float FlightMode_GetPitch(void);
 
 float FlightMode_GetRoll(void);
 
+float FlightMode_GetPitchRate(void);
+
+float FlightMode_GetRollRate(void);
+
+float FlightMode_GetYawRate(void);
+
+float FlightMode_GetPitchRateSetpoint(void);
+
+float FlightMode_GetRollRateSetpoint(void);
+
+float FlightMode_GetYawRateSetpoint(void);
+
 float FlightMode_GetPIDPitch(void);
 
 float FlightMode_GetPIDRoll(void);
