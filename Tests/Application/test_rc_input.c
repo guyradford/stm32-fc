@@ -92,6 +92,13 @@ static void test_signal_is_invalid_when_any_channel_is_stale(void) {
     TEST_ASSERT_FALSE(RCInput_IsSignalValid(10 + RC_SIGNAL_TIMEOUT_MS + 1));
 }
 
+static void test_signal_allows_channel_update_one_tick_after_sample_time(void) {
+    FakeRCReceiver_SetChannelLastUpdate(RC_CH_4, 51);
+
+    TEST_ASSERT_TRUE(RCInput_IsSignalValid(50));
+    TEST_ASSERT_EQUAL_UINT32(0, RC_GetChannelAge(RC_CH_4, 50));
+}
+
 static void test_signal_is_invalid_when_any_channel_pulse_is_out_of_range(void) {
     FakeRCReceiver_SetChannelValue(RC_CH_6, RC_SIGNAL_MAX_PULSE_US + 1);
 
@@ -128,6 +135,7 @@ int main(void) {
     RUN_TEST(test_invalid_centered_channel_pulses_return_midpoint);
     RUN_TEST(test_signal_is_invalid_when_any_channel_is_marked_invalid);
     RUN_TEST(test_signal_is_invalid_when_any_channel_is_stale);
+    RUN_TEST(test_signal_allows_channel_update_one_tick_after_sample_time);
     RUN_TEST(test_signal_is_invalid_when_any_channel_pulse_is_out_of_range);
     RUN_TEST(test_invalid_throttle_returns_idle_even_when_raw_value_is_zero);
     RUN_TEST(test_invalid_centered_control_returns_midpoint);

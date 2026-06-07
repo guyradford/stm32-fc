@@ -30,7 +30,7 @@ Change the IMU sign first when the automatic correction is backwards for the phy
 
 ```c
 #define IMU_INPUT_PITCH_SIGN -1.0f
-#define IMU_INPUT_ROLL_SIGN  -1.0f
+#define IMU_INPUT_ROLL_SIGN   1.0f
 #define IMU_INPUT_YAW_SIGN    1.0f
 ```
 

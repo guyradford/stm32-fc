@@ -53,5 +53,6 @@ bool RC_IsChannelValid(uint16_t RC_Channel, uint32_t now) {
 
 uint32_t RC_GetChannelAge(uint16_t RC_Channel, uint32_t now) {
     if (RC_Channel >= RC_CHANNEL_COUNT) return UINT32_MAX;
+    if (fake_channel_last_update[RC_Channel] > now) return 0;
     return now - fake_channel_last_update[RC_Channel];
 }
