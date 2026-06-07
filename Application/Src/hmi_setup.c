@@ -20,7 +20,7 @@
 #include "imu.h"
 #include "output.h"
 
-uint16_t hmiSetup_Display = HMI_ESC_PROGRAMMING;
+uint16_t hmiSetup_Display = HMI_NONE;
 uint8_t hmiSetup_Motor = 0;
 uint16_t hmiSetup_CalibrationCounter = 0;
 

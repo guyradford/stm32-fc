@@ -72,12 +72,12 @@ static void test_centered_aux_channels_use_their_configured_centers(void) {
     TEST_ASSERT_EQUAL_UINT16(500, RCInput_GetInputValue(RC_CH_6));
 }
 
-static void test_centered_channels_clamp_to_normalized_output_range(void) {
+static void test_invalid_centered_channel_pulses_return_midpoint(void) {
     FakeRCReceiver_SetChannelValue(RC_YAW, 400);
-    TEST_ASSERT_EQUAL_UINT16(0, RCInput_GetInputValue(RC_YAW));
+    TEST_ASSERT_EQUAL_UINT16(500, RCInput_GetInputValue(RC_YAW));
 
     FakeRCReceiver_SetChannelValue(RC_YAW, 2600);
-    TEST_ASSERT_EQUAL_UINT16(1000, RCInput_GetInputValue(RC_YAW));
+    TEST_ASSERT_EQUAL_UINT16(500, RCInput_GetInputValue(RC_YAW));
 }
 
 static void test_signal_is_invalid_when_any_channel_is_marked_invalid(void) {
@@ -98,6 +98,24 @@ static void test_signal_is_invalid_when_any_channel_pulse_is_out_of_range(void) 
     TEST_ASSERT_FALSE(RCInput_IsSignalValid(50));
 }
 
+static void test_invalid_throttle_returns_idle_even_when_raw_value_is_zero(void) {
+    FakeRCReceiver_SetChannel(RC_THROTTLE, 0, false);
+
+    TEST_ASSERT_EQUAL_UINT16(0, RCInput_GetInputValue(RC_THROTTLE));
+}
+
+static void test_invalid_centered_control_returns_midpoint(void) {
+    FakeRCReceiver_SetChannel(RC_YAW, 0, false);
+
+    TEST_ASSERT_EQUAL_UINT16(500, RCInput_GetInputValue(RC_YAW));
+}
+
+static void test_invalid_estop_returns_stop_side(void) {
+    FakeRCReceiver_SetChannel(RC_ESTOP, 0, false);
+
+    TEST_ASSERT_EQUAL_UINT16(0, RCInput_GetInputValue(RC_ESTOP));
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_configured_calibration_marks_rc_input_calibrated);
@@ -107,9 +125,12 @@ int main(void) {
     RUN_TEST(test_centered_yaw_channel_uses_center_correction_without_scaling);
     RUN_TEST(test_centered_pitch_and_roll_channels_use_their_configured_centers);
     RUN_TEST(test_centered_aux_channels_use_their_configured_centers);
-    RUN_TEST(test_centered_channels_clamp_to_normalized_output_range);
+    RUN_TEST(test_invalid_centered_channel_pulses_return_midpoint);
     RUN_TEST(test_signal_is_invalid_when_any_channel_is_marked_invalid);
     RUN_TEST(test_signal_is_invalid_when_any_channel_is_stale);
     RUN_TEST(test_signal_is_invalid_when_any_channel_pulse_is_out_of_range);
+    RUN_TEST(test_invalid_throttle_returns_idle_even_when_raw_value_is_zero);
+    RUN_TEST(test_invalid_centered_control_returns_midpoint);
+    RUN_TEST(test_invalid_estop_returns_stop_side);
     return UNITY_END();
 }

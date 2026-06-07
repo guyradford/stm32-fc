@@ -4,6 +4,7 @@
 #define __RC_H__
 #include "main.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 #define RC_CHANNEL_COUNT 6
 

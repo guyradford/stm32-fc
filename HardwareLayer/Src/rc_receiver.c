@@ -17,6 +17,14 @@ rc_receiver_definition values[RC_CHANNEL_COUNT] = {
         {0, 0, 0, TIM_CHANNEL_2, RC_CH_6_GPIO_Port, RC_CH_6_Pin, false}
 };
 
+static bool RC_IsChannelIndexValid(uint16_t RC_Channel) {
+    return RC_Channel < RC_CHANNEL_COUNT;
+}
+
+static bool RC_IsRawValueValid(uint16_t value) {
+    return value >= RC_SIGNAL_MIN_PULSE_US && value <= RC_SIGNAL_MAX_PULSE_US;
+}
+
 
 void RC_TimerCallback(TIM_HandleTypeDef *htim) {
 
@@ -53,6 +61,7 @@ void RC_TimerCallback(TIM_HandleTypeDef *htim) {
 }
 
 void Edge_Trigger(TIM_HandleTypeDef *htim, uint16_t RC_Channel) {
+    if (!RC_IsChannelIndexValid(RC_Channel)) return;
 
     if (HAL_GPIO_ReadPin(values[RC_Channel].GPIO_Port, values[RC_Channel].GPIO_Pin)) {
         values[RC_Channel].start_timer = HAL_TIM_ReadCapturedValue(htim, values[RC_Channel].HAL_TIM_channel);
@@ -64,18 +73,13 @@ void Edge_Trigger(TIM_HandleTypeDef *htim, uint16_t RC_Channel) {
         }
         values[RC_Channel].duration = values[RC_Channel].start_timer;
         values[RC_Channel].last_update_ms = HAL_GetTick();
-        RC_ChannelValues[RC_Channel] = values[RC_Channel].duration;
-
-        if (values[RC_Channel].duration < RC_SIGNAL_MIN_PULSE_US ||
-            values[RC_Channel].duration > RC_SIGNAL_MAX_PULSE_US) {
-            values[RC_Channel].valid = false;
-        } else {
-            values[RC_Channel].valid = true;
-        }
+        values[RC_Channel].valid = RC_IsRawValueValid((uint16_t) values[RC_Channel].duration);
+        RC_ChannelValues[RC_Channel] = values[RC_Channel].valid ? (uint16_t) values[RC_Channel].duration : 0;
     }
 }
 
 uint16_t RC_GetRawValue(uint16_t RC_Channel) {
+    if (!RC_IsChannelIndexValid(RC_Channel)) return 0;
     return RC_ChannelValues[RC_Channel];
 }
 

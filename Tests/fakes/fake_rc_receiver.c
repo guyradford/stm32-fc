@@ -16,15 +16,23 @@ void FakeRCReceiver_Reset(void) {
 }
 
 void FakeRCReceiver_SetChannelValue(uint8_t channel, uint16_t value) {
+    FakeRCReceiver_SetChannel(channel, value,
+                              value >= RC_SIGNAL_MIN_PULSE_US && value <= RC_SIGNAL_MAX_PULSE_US);
+}
+
+void FakeRCReceiver_SetChannel(uint8_t channel, uint16_t value, bool valid) {
+    if (channel >= RC_CHANNEL_COUNT) return;
     fake_channel_values[channel] = value;
-    fake_channel_valid[channel] = value >= RC_SIGNAL_MIN_PULSE_US && value <= RC_SIGNAL_MAX_PULSE_US;
+    fake_channel_valid[channel] = valid;
 }
 
 void FakeRCReceiver_SetChannelValid(uint8_t channel, bool valid) {
+    if (channel >= RC_CHANNEL_COUNT) return;
     fake_channel_valid[channel] = valid;
 }
 
 void FakeRCReceiver_SetChannelLastUpdate(uint8_t channel, uint32_t last_update_ms) {
+    if (channel >= RC_CHANNEL_COUNT) return;
     fake_channel_last_update[channel] = last_update_ms;
 }
 
@@ -33,6 +41,7 @@ uint16_t *RC_GetChannelValues(void) {
 }
 
 uint16_t RC_GetRawValue(uint16_t RC_Channel) {
+    if (RC_Channel >= RC_CHANNEL_COUNT) return 0;
     return fake_channel_values[RC_Channel];
 }
 
