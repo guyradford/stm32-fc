@@ -9,12 +9,12 @@ extern "C" {
 uint16_t RC_ChannelValues[RC_CHANNEL_COUNT] = {0};
 
 rc_receiver_definition values[RC_CHANNEL_COUNT] = {
-        {0, 0, TIM_CHANNEL_1, RC_CH_1_GPIO_Port, RC_CH_1_Pin},
-        {0, 0, TIM_CHANNEL_2, RC_CH_2_GPIO_Port, RC_CH_2_Pin},
-        {0, 0, TIM_CHANNEL_3, RC_CH_3_GPIO_Port, RC_CH_3_Pin},
-        {0, 0, TIM_CHANNEL_4, RC_CH_4_GPIO_Port, RC_CH_4_Pin},
-        {0, 0, TIM_CHANNEL_1, RC_CH_5_GPIO_Port, RC_CH_5_Pin},
-        {0, 0, TIM_CHANNEL_2, RC_CH_6_GPIO_Port, RC_CH_6_Pin}
+        {0, 0, 0, TIM_CHANNEL_1, RC_CH_1_GPIO_Port, RC_CH_1_Pin, false},
+        {0, 0, 0, TIM_CHANNEL_2, RC_CH_2_GPIO_Port, RC_CH_2_Pin, false},
+        {0, 0, 0, TIM_CHANNEL_3, RC_CH_3_GPIO_Port, RC_CH_3_Pin, false},
+        {0, 0, 0, TIM_CHANNEL_4, RC_CH_4_GPIO_Port, RC_CH_4_Pin, false},
+        {0, 0, 0, TIM_CHANNEL_1, RC_CH_5_GPIO_Port, RC_CH_5_Pin, false},
+        {0, 0, 0, TIM_CHANNEL_2, RC_CH_6_GPIO_Port, RC_CH_6_Pin, false}
 };
 
 
@@ -63,7 +63,15 @@ void Edge_Trigger(TIM_HandleTypeDef *htim, uint16_t RC_Channel) {
             values[RC_Channel].start_timer += 0xffff;
         }
         values[RC_Channel].duration = values[RC_Channel].start_timer;
-        RC_ChannelValues[RC_Channel] = values[RC_Channel].start_timer;
+        values[RC_Channel].last_update_ms = HAL_GetTick();
+        RC_ChannelValues[RC_Channel] = values[RC_Channel].duration;
+
+        if (values[RC_Channel].duration < RC_SIGNAL_MIN_PULSE_US ||
+            values[RC_Channel].duration > RC_SIGNAL_MAX_PULSE_US) {
+            values[RC_Channel].valid = false;
+        } else {
+            values[RC_Channel].valid = true;
+        }
     }
 }
 
@@ -73,6 +81,17 @@ uint16_t RC_GetRawValue(uint16_t RC_Channel) {
 
 uint16_t * RC_GetChannelValues(void){
     return RC_ChannelValues;
+}
+
+bool RC_IsChannelValid(uint16_t RC_Channel, uint32_t now) {
+    if (RC_Channel >= RC_CHANNEL_COUNT) return false;
+    if (!values[RC_Channel].valid) return false;
+    return RC_GetChannelAge(RC_Channel, now) <= RC_SIGNAL_TIMEOUT_MS;
+}
+
+uint32_t RC_GetChannelAge(uint16_t RC_Channel, uint32_t now) {
+    if (RC_Channel >= RC_CHANNEL_COUNT) return UINT32_MAX;
+    return now - values[RC_Channel].last_update_ms;
 }
 
 

@@ -150,6 +150,14 @@ bool RCInput_IsCalibrated() {
     return false;
 }
 
+bool RCInput_IsSignalValid(uint32_t now) {
+    for (uint8_t RC_Channel = 0; RC_Channel < 6; RC_Channel++) {
+        if (!RC_IsChannelValid(RC_Channel, now)) return false;
+    }
+
+    return true;
+}
+
 #ifdef STM32_FC_TEST
 void RCInput_TestReset(void) {
     RCInput_timer = 0;

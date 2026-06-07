@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include "main.h"
 #include "hmi_main.h"
 #include "hmi.h"
 //#include "Waveshare_10Dof-D.h"
@@ -160,6 +161,22 @@ void HMIMain_Handle(uint8_t character) {
                    RC_GetRawValue(RC_CH_3), RC_GetRawValue(RC_CH_4),
                    RC_GetRawValue(RC_CH_5), RC_GetRawValue(RC_CH_6)
             );
+            {
+                uint32_t now = HAL_GetTick();
+                printf("Age: %-5lu %-5lu %-5lu %-5lu %-5lu %-5lu  Valid: %c %c %c %c %c %c\r\n",
+                       (unsigned long) RC_GetChannelAge(RC_CH_1, now),
+                       (unsigned long) RC_GetChannelAge(RC_CH_2, now),
+                       (unsigned long) RC_GetChannelAge(RC_CH_3, now),
+                       (unsigned long) RC_GetChannelAge(RC_CH_4, now),
+                       (unsigned long) RC_GetChannelAge(RC_CH_5, now),
+                       (unsigned long) RC_GetChannelAge(RC_CH_6, now),
+                       RC_IsChannelValid(RC_CH_1, now) ? 'Y' : 'N',
+                       RC_IsChannelValid(RC_CH_2, now) ? 'Y' : 'N',
+                       RC_IsChannelValid(RC_CH_3, now) ? 'Y' : 'N',
+                       RC_IsChannelValid(RC_CH_4, now) ? 'Y' : 'N',
+                       RC_IsChannelValid(RC_CH_5, now) ? 'Y' : 'N',
+                       RC_IsChannelValid(RC_CH_6, now) ? 'Y' : 'N');
+            }
             break;
 
         case HMI_CORRECTED_RC_VALUES:
