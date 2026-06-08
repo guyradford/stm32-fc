@@ -12,6 +12,8 @@
 
 #define SETUP_MODE_THROTTLE_LOW_THRESHOLD 50
 #define SETUP_MODE_ESTOP_RUN_THRESHOLD 500
+#define SETUP_MODE_ESC_CALIBRATION_HIGH 1000
+#define SETUP_MODE_ESC_CALIBRATION_LOW 0
 
 uint32_t SetupMode_timer = 0;
 static bool SetupMode_safetyAccepted = false;
@@ -22,7 +24,9 @@ static void SetupMode_StopMotors(void) {
 
 static bool SetupMode_HasExplicitMotorOutputMode(void) {
     uint8_t hmiMode = HMISetup_GetMode();
-    return hmiMode == HMI_ESC_PROGRAMMING || hmiMode == HMI_ESC_SINGLE_MOTOR;
+    return hmiMode == HMI_ESC_PROGRAMMING ||
+           hmiMode == HMI_ESC_SINGLE_MOTOR ||
+           hmiMode == HMI_ESC_CALIBRATION;
 }
 
 static bool SetupMode_OutputIsAllowed(uint32_t now, uint16_t input_throttle, uint16_t input_estop) {
@@ -64,6 +68,26 @@ static void SetupMode_SetSingleMotorSpeed(uint8_t motor, uint16_t input_throttle
     }
 }
 
+static void SetupMode_RunEscCalibration(void) {
+    switch (HMISetup_GetEscCalibrationState()) {
+        case HMI_ESC_CALIBRATION_HIGH:
+            Output_SetMotorSpeeds(SETUP_MODE_ESC_CALIBRATION_HIGH,
+                                  SETUP_MODE_ESC_CALIBRATION_HIGH,
+                                  SETUP_MODE_ESC_CALIBRATION_HIGH,
+                                  SETUP_MODE_ESC_CALIBRATION_HIGH);
+            break;
+        case HMI_ESC_CALIBRATION_LOW:
+        case HMI_ESC_CALIBRATION_DONE:
+        case HMI_ESC_CALIBRATION_READY:
+        default:
+            Output_SetMotorSpeeds(SETUP_MODE_ESC_CALIBRATION_LOW,
+                                  SETUP_MODE_ESC_CALIBRATION_LOW,
+                                  SETUP_MODE_ESC_CALIBRATION_LOW,
+                                  SETUP_MODE_ESC_CALIBRATION_LOW);
+            break;
+    }
+}
+
 void SetupMode_OnTick(uint32_t now) {
     uint16_t input_throttle = RCInput_GetInputValue(RC_THROTTLE);
     uint16_t input_estop = RCInput_GetInputValue(RC_ESTOP);
@@ -79,6 +103,9 @@ void SetupMode_OnTick(uint32_t now) {
             break;
         case HMI_ESC_SINGLE_MOTOR:
             SetupMode_SetSingleMotorSpeed(HMISetup_GetMotor(), input_throttle);
+            break;
+        case HMI_ESC_CALIBRATION:
+            SetupMode_RunEscCalibration();
             break;
         default:
             SetupMode_StopMotors();

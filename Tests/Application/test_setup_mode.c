@@ -118,6 +118,48 @@ static void test_setup_mode_single_motor_outputs_only_selected_motor(void) {
     TEST_ASSERT_EQUAL_UINT16(0, EscOutput_GetMotorSpeed(MOTOR_4));
 }
 
+static void test_esc_calibration_ready_state_keeps_outputs_idle(void) {
+    FakeHMISetup_SetMode(HMI_ESC_CALIBRATION);
+    FakeHMISetup_SetEscCalibrationState(HMI_ESC_CALIBRATION_READY);
+    set_required_rc(THROTTLE_LOW_RAW, ESTOP_RUN_RAW);
+
+    SetupMode_OnTick(20);
+
+    assert_motor_speeds(0, 0, 0, 0);
+}
+
+static void test_esc_calibration_high_state_outputs_full_range_after_safety_latch(void) {
+    FakeHMISetup_SetMode(HMI_ESC_CALIBRATION);
+    FakeHMISetup_SetEscCalibrationState(HMI_ESC_CALIBRATION_HIGH);
+    set_required_rc(THROTTLE_LOW_RAW, ESTOP_RUN_RAW);
+
+    SetupMode_OnTick(20);
+
+    assert_motor_speeds(1000, 1000, 1000, 1000);
+}
+
+static void test_esc_calibration_low_state_outputs_idle_after_high_state(void) {
+    FakeHMISetup_SetMode(HMI_ESC_CALIBRATION);
+    FakeHMISetup_SetEscCalibrationState(HMI_ESC_CALIBRATION_HIGH);
+    set_required_rc(THROTTLE_LOW_RAW, ESTOP_RUN_RAW);
+    SetupMode_OnTick(20);
+
+    FakeHMISetup_SetEscCalibrationState(HMI_ESC_CALIBRATION_LOW);
+    SetupMode_OnTick(40);
+
+    assert_motor_speeds(0, 0, 0, 0);
+}
+
+static void test_esc_calibration_estop_forces_idle(void) {
+    FakeHMISetup_SetMode(HMI_ESC_CALIBRATION);
+    FakeHMISetup_SetEscCalibrationState(HMI_ESC_CALIBRATION_HIGH);
+    set_required_rc(THROTTLE_LOW_RAW, ESTOP_STOP_RAW);
+
+    SetupMode_OnTick(20);
+
+    assert_motor_speeds(0, 0, 0, 0);
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_setup_mode_keeps_outputs_idle_without_valid_required_rc);
@@ -126,5 +168,9 @@ int main(void) {
     RUN_TEST(test_setup_mode_allows_esc_output_after_low_throttle_and_run_switch);
     RUN_TEST(test_setup_mode_estop_resets_low_throttle_latch);
     RUN_TEST(test_setup_mode_single_motor_outputs_only_selected_motor);
+    RUN_TEST(test_esc_calibration_ready_state_keeps_outputs_idle);
+    RUN_TEST(test_esc_calibration_high_state_outputs_full_range_after_safety_latch);
+    RUN_TEST(test_esc_calibration_low_state_outputs_idle_after_high_state);
+    RUN_TEST(test_esc_calibration_estop_forces_idle);
     return UNITY_END();
 }
