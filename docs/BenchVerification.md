@@ -26,12 +26,24 @@ The HMI also prints current motor outputs so the live trend can be compared with
 
 ## Correction Rule
 
-Change the IMU sign first when the automatic correction is backwards for the physical tilt. The sign constants are in `Application/Inc/config.h`:
+Change the IMU angle sign first when the automatic correction is backwards for the physical tilt. Change the matching rate sign when fast movement makes the correction worse even though slow/static tilt trends look right. The sign constants are in `Application/Inc/config.h`:
 
 ```c
-#define IMU_INPUT_PITCH_SIGN -1.0f
-#define IMU_INPUT_ROLL_SIGN   1.0f
-#define IMU_INPUT_YAW_SIGN    1.0f
+#define IMU_INPUT_PITCH_ANGLE_SIGN -1.0f
+#define IMU_INPUT_ROLL_ANGLE_SIGN   1.0f
+#define IMU_INPUT_YAW_ANGLE_SIGN    1.0f
+
+#define IMU_INPUT_PITCH_RATE_SIGN  1.0f
+#define IMU_INPUT_ROLL_RATE_SIGN  -1.0f
+#define IMU_INPUT_YAW_RATE_SIGN    1.0f
+
+#define IMU_INPUT_PITCH_RATE_AXIS IMU_INPUT_RATE_AXIS_X
+#define IMU_INPUT_ROLL_RATE_AXIS  IMU_INPUT_RATE_AXIS_Y
+#define IMU_INPUT_YAW_RATE_AXIS   IMU_INPUT_RATE_AXIS_Z
 ```
+
+For right-side-down roll checks, the corrected roll angle should be negative, the corrected roll rate should briefly be negative while the right side is moving downward, and M1/M2 should increase.
+
+For nose-down pitch checks, the corrected pitch angle should be negative, the corrected pitch rate should briefly be negative while the nose is moving downward, and M1/M4 should increase.
 
 Change mixer signs only when the physical motor wiring, numbering, or frame layout differs from the documented layout above. The mixer constants are also in `Application/Inc/config.h`.

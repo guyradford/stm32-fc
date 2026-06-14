@@ -2,9 +2,10 @@
 
 
 
-#define FM_PID_P_GAIN 1.3  //Gain setting for the pitch and roll P-controller (default = 1.3).
-#define FM_PID_I_GAIN 0.005 //Gain setting for the pitch and roll I-controller (default = 0.04).
-#define FM_PID_D_GAIN 0.02 //Gain setting for the pitch and roll rate D-controller.
+#define FM_PID_P_GAIN 0.8  // Early hover pitch/roll rate P gain. Increase slowly after response is stable.
+#define FM_PID_I_GAIN 0.0  // Keep pitch/roll integral disabled until basic stabilization is proven.
+#define FM_PID_D_GAIN 0.005 // First-hop pitch/roll rate D gain.
+#define FM_PID_OUTPUT_LIMIT 180
 
 #define FM_PID_P_INCREMENTS 0.1
 #define FM_PID_I_INCREMENTS 0.01
@@ -14,9 +15,9 @@
 #define FM_ANGLE_CONTROL_INTERVAL_MS 20 // 50 Hz angle outer loop.
 #define FM_CONTROL_INTERVAL_MS FM_RATE_CONTROL_INTERVAL_MS
 #define FM_CONTROL_DT_SECONDS ((float) FM_RATE_CONTROL_INTERVAL_MS / 1000.0f)
-#define FM_ANGLE_TO_RATE_GAIN 4.0f
-#define FM_MAX_ROLL_PITCH_RATE 180.0f
-#define FM_MAX_YAW_RATE 200.0f
+#define FM_ANGLE_TO_RATE_GAIN 2.0f
+#define FM_MAX_ROLL_PITCH_RATE 90.0f
+#define FM_MAX_YAW_RATE 120.0f
 
 // Keep motors idle at arming throttle, then preserve mixer authority once throttle is above the control threshold.
 #define FM_CONTROLLED_FLIGHT_THROTTLE 50
@@ -80,9 +81,21 @@
 
 #define IMU_CALIBRATION_YAW -52.1528358
 
-#define IMU_INPUT_PITCH_SIGN -1.0f
-#define IMU_INPUT_ROLL_SIGN   1.0f
-#define IMU_INPUT_YAW_SIGN    1.0f
+#define IMU_INPUT_RATE_AXIS_X 0
+#define IMU_INPUT_RATE_AXIS_Y 1
+#define IMU_INPUT_RATE_AXIS_Z 2
+
+#define IMU_INPUT_PITCH_ANGLE_SIGN -1.0f
+#define IMU_INPUT_ROLL_ANGLE_SIGN   1.0f
+#define IMU_INPUT_YAW_ANGLE_SIGN    1.0f
+
+#define IMU_INPUT_PITCH_RATE_SIGN  1.0f
+#define IMU_INPUT_ROLL_RATE_SIGN  -1.0f
+#define IMU_INPUT_YAW_RATE_SIGN    1.0f
+
+#define IMU_INPUT_PITCH_RATE_AXIS IMU_INPUT_RATE_AXIS_X
+#define IMU_INPUT_ROLL_RATE_AXIS  IMU_INPUT_RATE_AXIS_Y
+#define IMU_INPUT_YAW_RATE_AXIS   IMU_INPUT_RATE_AXIS_Z
 
 #define IMU_FILTER_PREVIOUS (float)0.0
 #define IMU_FILTER_NEW (float)1.0

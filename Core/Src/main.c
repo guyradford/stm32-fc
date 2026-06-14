@@ -145,10 +145,8 @@ int main(void)
     bool setupMode = !HAL_GPIO_ReadPin(SETUP_BUTTON_GPIO_Port, SETUP_BUTTON_Pin);
     bool imuInitOk = true;
     bno055_assignI2C(&hi2c1);
-    if (!setupMode) {
-        HAL_Delay(1000);
-        imuInitOk = IMU_Init();
-    }
+    HAL_Delay(1000);
+    imuInitOk = IMU_Init();
 
 //    bno055_axis_map_t axis = {
 //            .x = BNO055_AXIS_X,
@@ -178,7 +176,7 @@ int main(void)
 
 
     Application_Init(setupMode);
-    if (!imuInitOk) {
+    if (!setupMode && !imuInitOk) {
         Application_SetMode(APPLICATION_MODE_ERROR);
     }
 

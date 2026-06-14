@@ -18,6 +18,19 @@ float IMUInput_Calibration_Yaw = 0;
 IMU_ST_ANGLES_DATA stRawAngles, stCalibratedAngles;
 IMU_ST_RATES_DATA stRawRates, stSignedRates;
 
+static float IMUInput_GetRawRateAxis(uint8_t axis) {
+    switch (axis) {
+        case IMU_INPUT_RATE_AXIS_X:
+            return stRawRates.fYaw;
+        case IMU_INPUT_RATE_AXIS_Y:
+            return stRawRates.fRoll;
+        case IMU_INPUT_RATE_AXIS_Z:
+            return stRawRates.fPitch;
+        default:
+            return 0.0f;
+    }
+}
+
 void IMUInput_Calibrate(void) {
     if (IMU_CALIBRATION_CONFIG) {
         if (!IMU_IsReady()) {
@@ -58,9 +71,9 @@ bool IMUInput_IsCalibrated() {
 IMU_ST_ANGLES_DATA IMUInput_GetAngles(void) {
     stRawAngles = IMU_GetAngles();
     // Apply board-orientation signs before calibration and filtering.
-    stRawAngles.fPitch *= IMU_INPUT_PITCH_SIGN;
-    stRawAngles.fRoll *= IMU_INPUT_ROLL_SIGN;
-    stRawAngles.fYaw *= IMU_INPUT_YAW_SIGN;
+    stRawAngles.fPitch *= IMU_INPUT_PITCH_ANGLE_SIGN;
+    stRawAngles.fRoll *= IMU_INPUT_ROLL_ANGLE_SIGN;
+    stRawAngles.fYaw *= IMU_INPUT_YAW_ANGLE_SIGN;
 
     if (firstRead) {
         stCalibratedAngles.fRoll = stRawAngles.fRoll - IMUInput_Calibration_Roll;
@@ -85,9 +98,9 @@ IMU_ST_ANGLES_DATA IMUInput_GetLastAngles(void) {
 
 IMU_ST_RATES_DATA IMUInput_GetRates(void) {
     stRawRates = IMU_GetRates();
-    stSignedRates.fPitch = stRawRates.fPitch * IMU_INPUT_PITCH_SIGN;
-    stSignedRates.fRoll = stRawRates.fRoll * IMU_INPUT_ROLL_SIGN;
-    stSignedRates.fYaw = stRawRates.fYaw * IMU_INPUT_YAW_SIGN;
+    stSignedRates.fPitch = IMUInput_GetRawRateAxis(IMU_INPUT_PITCH_RATE_AXIS) * IMU_INPUT_PITCH_RATE_SIGN;
+    stSignedRates.fRoll = IMUInput_GetRawRateAxis(IMU_INPUT_ROLL_RATE_AXIS) * IMU_INPUT_ROLL_RATE_SIGN;
+    stSignedRates.fYaw = IMUInput_GetRawRateAxis(IMU_INPUT_YAW_RATE_AXIS) * IMU_INPUT_YAW_RATE_SIGN;
     return stSignedRates;
 }
 
