@@ -60,6 +60,8 @@ The active HMI port is selected in `Application/Inc/config.h`:
 
 Use `HMI_UART_USART2` for the USB programming cable and `HMI_UART_USART1` for the wireless serial cable.
 
+The selected UART starts in the interactive HMI. From the HMI main menu, `n` enters Telemetry Mode. Telemetry Mode emits compact diagnostic sentences and accepts telemetry-only commands; see `docs/Telemetry.md`.
+
 
 ## LED
 

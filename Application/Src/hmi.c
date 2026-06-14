@@ -14,12 +14,12 @@
 #include <stdint.h>
 #include "hmi.h"
 #include "hmi_main.h"
-#include "uart_interface.h"
 #include "hmi_setup.h"
 #include "hmi_pid.h"
 
 uint16_t hmiMode = HMI_MODE_NONE;
 uint32_t hmiTimer = 0;
+bool hmiTelemetryRequested = false;
 
 
 void HMI_Init(bool setupMode) {
@@ -36,8 +36,10 @@ void HMI_OnTick(uint32_t now) {
     }
     hmiTimer += IMU_REQUEST_INTERVAL;
 
-    uint8_t character;
-    character = UARTInterface_GetNextFromRecvBuffer();
+    HMI_OnInput(0);
+}
+
+void HMI_OnInput(uint8_t character) {
     switch (hmiMode) {
         case HMI_MODE_MAIN:
             HMIMain_Handle(character);
@@ -56,4 +58,19 @@ void HMI_OnTick(uint32_t now) {
 
 void HMI_SetMode(uint16_t mode){
     hmiMode = mode;
+}
+
+void HMI_ShowMenu(void) {
+    hmiMode = HMI_MODE_MAIN;
+    HMIMain_Handle('h');
+}
+
+void HMI_RequestTelemetryMode(void) {
+    hmiTelemetryRequested = true;
+}
+
+bool HMI_ConsumeTelemetryRequest(void) {
+    bool requested = hmiTelemetryRequested;
+    hmiTelemetryRequested = false;
+    return requested;
 }

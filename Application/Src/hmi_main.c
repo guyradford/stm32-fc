@@ -66,6 +66,7 @@ void MenuMenu(void) {
     printf("p - PID Output.\r\n");
     printf("b - Prop-off Bench Verification.\r\n");
     printf("t - Tune PID Controllers.\r\n");
+    printf("n - Telemetry Mode.\r\n");
 
 
     printf(OUTPUT_BLANK_LINE);
@@ -134,6 +135,9 @@ void HMIMain_Handle(uint8_t character) {
                 break;
             case 't':
                 HMI_SetMode(HMI_MODE_PID);
+                break;
+            case 'n':
+                HMI_RequestTelemetryMode();
                 break;
         }
     }
