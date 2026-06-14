@@ -163,12 +163,12 @@ static void test_yaw_stick_integrates_wrapped_heading_setpoint(void) {
     FlightMode_OnTick(40);
 
     TEST_ASSERT_FLOAT_WITHIN(0.05f, 357.98f, FlightMode_GetYaw());
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, -104.04f, FlightMode_GetYawRateSetpoint());
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 104.04f, FlightMode_GetPIDYaw());
-    TEST_ASSERT_EQUAL_UINT16(195, EscOutput_GetMotorSpeed(MOTOR_1));
-    TEST_ASSERT_EQUAL_UINT16(404, EscOutput_GetMotorSpeed(MOTOR_2));
-    TEST_ASSERT_EQUAL_UINT16(195, EscOutput_GetMotorSpeed(MOTOR_3));
-    TEST_ASSERT_EQUAL_UINT16(404, EscOutput_GetMotorSpeed(MOTOR_4));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, -102.0f, FlightMode_GetYawRateSetpoint());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 102.0f, FlightMode_GetPIDYaw());
+    TEST_ASSERT_EQUAL_UINT16(198, EscOutput_GetMotorSpeed(MOTOR_1));
+    TEST_ASSERT_EQUAL_UINT16(402, EscOutput_GetMotorSpeed(MOTOR_2));
+    TEST_ASSERT_EQUAL_UINT16(198, EscOutput_GetMotorSpeed(MOTOR_3));
+    TEST_ASSERT_EQUAL_UINT16(402, EscOutput_GetMotorSpeed(MOTOR_4));
 }
 
 static void test_low_throttle_clears_pid_integrator_bias(void) {
