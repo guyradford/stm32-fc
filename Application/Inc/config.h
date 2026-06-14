@@ -18,6 +18,7 @@
 #define FM_ANGLE_TO_RATE_GAIN 2.0f
 #define FM_MAX_ROLL_PITCH_RATE 90.0f
 #define FM_MAX_YAW_RATE 120.0f
+#define FM_YAW_INPUT_SIGN -1.0f
 
 // Keep motors idle at arming throttle, then preserve mixer authority once throttle is above the control threshold.
 #define FM_CONTROLLED_FLIGHT_THROTTLE 50

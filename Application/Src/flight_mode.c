@@ -102,8 +102,8 @@ static float FlightMode_GetWrappedYawError(float currentYaw, float targetYaw) {
 
 static float FlightMode_GetYawRateDemand(void) {
     if (input_throttle <= CONFIG_DEAD_BAND) return 0.0f;
-    if (input_yaw < -CONFIG_DEAD_BAND) return (float) (input_yaw + CONFIG_DEAD_BAND) * yawAnglePerInput;
-    if (input_yaw > CONFIG_DEAD_BAND) return (float) (input_yaw - CONFIG_DEAD_BAND) * yawAnglePerInput;
+    if (input_yaw < -CONFIG_DEAD_BAND) return (float) (input_yaw + CONFIG_DEAD_BAND) * yawAnglePerInput * FM_YAW_INPUT_SIGN;
+    if (input_yaw > CONFIG_DEAD_BAND) return (float) (input_yaw - CONFIG_DEAD_BAND) * yawAnglePerInput * FM_YAW_INPUT_SIGN;
     return 0.0f;
 }
 

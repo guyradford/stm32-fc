@@ -112,6 +112,7 @@ Current flight-tuning/IMU context:
   - Roll rate sign `-1.0f`
   - Yaw rate sign `1.0f`
 - Current first-hover tuning is deliberately conservative: pitch/roll P `0.8`, I `0.0`, D `0.005`, PID output limit `180`, angle-to-rate gain `2.0`, max roll/pitch rate `90 dps`, max yaw rate `120 dps`.
+- First stable prop-on hop happened after yaw low-throttle rebasing; yaw hold is behaving. The remaining pilot-command issue was reversed yaw stick input, so `FM_YAW_INPUT_SIGN` is currently `-1.0f`. This intentionally affects yaw stick demand only, not IMU yaw sign or yaw-left/yaw-right arming gates.
 - Bench expectation with props off:
   - Nose down: corrected pitch negative; M1/M4 increase; fast nose-down should not drive M1/M3.
   - Right side down: corrected roll negative; M1/M2 increase.
