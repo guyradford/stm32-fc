@@ -71,8 +71,8 @@ def _apply_rc(state: DashboardState, frame: TelemetryFrame, now: float) -> None:
 
     state.rc.throttle = _to_int(throttle)
     state.rc.yaw = _to_int(yaw) - 500
-    state.rc.pitch = _to_int(pitch) - 500
-    state.rc.roll = _to_int(roll) - 500
+    state.rc.pitch = 500 - _to_int(pitch)
+    state.rc.roll = 500 - _to_int(roll)
     state.rc.estop_safe = _to_int(estop) >= 500
     state.rc.channel_6 = _to_int(aux)
     state.rc.channel_valid = [rc_valid] * 6

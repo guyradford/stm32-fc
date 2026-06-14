@@ -82,6 +82,11 @@ void HMIMain_Handle(uint8_t character) {
     IMU_ST_SENSOR_DATA stData;
     IMU_ST_STATUS imuStatus;
 
+    if (character == 'n') {
+        HMI_RequestTelemetryMode();
+        return;
+    }
+
     switch (character) {
         case 'h':
             hmiMenu_Display = HMI_MENU;
@@ -135,9 +140,6 @@ void HMIMain_Handle(uint8_t character) {
                 break;
             case 't':
                 HMI_SetMode(HMI_MODE_PID);
-                break;
-            case 'n':
-                HMI_RequestTelemetryMode();
                 break;
         }
     }

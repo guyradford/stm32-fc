@@ -34,6 +34,7 @@ class HMIDashboardApp:
         self.port = tk.StringVar()
         self.baud = tk.StringVar(value="115200")
         self.connect_text = tk.StringVar(value="Connect")
+        self._rx_subject_counts: dict[str, int] = {}
         configure_styles(root)
 
         reset_live_state(self.state)
@@ -82,16 +83,22 @@ class HMIDashboardApp:
         main.rowconfigure(0, weight=3, minsize=310)
         main.rowconfigure(1, weight=2, minsize=270)
 
-        self.flight = FlightStatusPanel(main)
-        self.flight.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=(0, 8))
+        left = ttk.Frame(main, style="Top.TFrame")
+        left.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=(0, 8))
+        left.columnconfigure(0, weight=1)
+        left.rowconfigure(0, weight=1)
+        left.rowconfigure(1, weight=0)
+
+        self.flight = FlightStatusPanel(left)
+        self.flight.grid(row=0, column=0, sticky="nsew", pady=(0, 8))
+        self.pid = PIDPanel(left)
+        self.pid.grid(row=1, column=0, sticky="ew")
         self.imu = IMUPanel(main)
         self.imu.grid(row=0, column=1, sticky="nsew", padx=8, pady=(0, 8))
         self.motors = MotorMap(main)
         self.motors.grid(row=0, column=2, rowspan=2, sticky="nsew", padx=(8, 0), pady=(0, 8))
         self.rc = RCPanel(main)
         self.rc.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=(0, 8), pady=(8, 8))
-        self.pid = PIDPanel(main)
-        self.pid.grid(row=2, column=0, columnspan=3, sticky="ew", pady=(0, 0))
 
     def _build_log(self) -> None:
         frame = ttk.Frame(self.root, style="Panel.TFrame", padding=10)
@@ -100,7 +107,7 @@ class HMIDashboardApp:
         ttk.Label(frame, text="EVENT LOG", style="PanelTitle.TLabel").grid(row=0, column=0, sticky="w")
         self.log = scrolledtext.ScrolledText(
             frame,
-            height=3,
+            height=8,
             bg=PANEL_DARK,
             fg=TEXT,
             insertbackground=TEXT,
@@ -198,6 +205,10 @@ class HMIDashboardApp:
                 if event.frame.subject in ("RC", "IMU", "MOT", "STAT"):
                     try:
                         apply_frame(self.state, event.frame)
+                        subject_count = self._rx_subject_counts.get(event.frame.subject, 0) + 1
+                        self._rx_subject_counts[event.frame.subject] = subject_count
+                        if subject_count <= 2 or subject_count % 20 == 0:
+                            self.state.add_log("RX %s %s" % (event.frame.subject, ",".join(event.frame.fields)))
                     except ValueError as exc:
                         self.state.add_log("MAP ERROR %s: %s" % (event.frame.subject, exc))
                 elif event.frame.subject in ("ACK", "ERR"):

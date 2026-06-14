@@ -13,15 +13,24 @@ void EscOutput_SetSpeed(uint16_t motor_1, uint16_t motor_2, uint16_t motor_3, ui
 }
 
 uint16_t EscOutput_GetMotorSpeed(uint8_t motor){
+    uint32_t ccr = 0;
     switch (motor) {
         case MOTOR_1:
-            return TIM2->CCR1;
+            ccr = TIM2->CCR1;
+            break;
         case MOTOR_2:
-            return TIM2->CCR2;
+            ccr = TIM2->CCR2;
+            break;
         case MOTOR_3:
-            return TIM2->CCR3;
+            ccr = TIM2->CCR3;
+            break;
         case MOTOR_4:
-            return TIM2->CCR4;
+            ccr = TIM2->CCR4;
+            break;
+        default:
+            return 0;
     }
 
+    if (ccr <= 1000U) return 0;
+    return (uint16_t) (ccr - 1000U);
 }

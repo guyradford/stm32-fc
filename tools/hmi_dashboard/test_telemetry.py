@@ -3,8 +3,15 @@ from __future__ import annotations
 import unittest
 
 from dashboard_state import DashboardState
+from serial_client import TelemetrySerialClient
 from telemetry_mapper import apply_frame, mark_stale, reset_live_state
 from telemetry_protocol import TelemetryError, format_sentence, format_stop, parse_sentence
+
+
+LIVE_RC_LINE = "$RC,239514,0,500,500,500,0,500,0*29"
+LIVE_IMU_LINE = "$IMU,239514,0,0,0,0,0,0,0*69"
+LIVE_MOT_LINE = "$MOT,239514,1001,1002,1003,1004*76"
+DEMAND_MOT_LINE = format_sentence("MOT,239514,1,2,3,4")
 
 
 class TelemetryProtocolTests(unittest.TestCase):
@@ -33,6 +40,11 @@ class TelemetryProtocolTests(unittest.TestCase):
 
         self.assertEqual("STAT", frame.subject)
 
+    def test_parses_live_fc_sample_lines(self) -> None:
+        self.assertEqual("RC", parse_sentence(LIVE_RC_LINE).subject)
+        self.assertEqual("IMU", parse_sentence(LIVE_IMU_LINE).subject)
+        self.assertEqual("MOT", parse_sentence(LIVE_MOT_LINE).subject)
+
 
 class TelemetryMapperTests(unittest.TestCase):
     def test_rc_mapping_centers_axes(self) -> None:
@@ -43,8 +55,8 @@ class TelemetryMapperTests(unittest.TestCase):
 
         self.assertEqual(250, state.rc.throttle)
         self.assertEqual(10, state.rc.yaw)
-        self.assertEqual(-10, state.rc.pitch)
-        self.assertEqual(250, state.rc.roll)
+        self.assertEqual(10, state.rc.pitch)
+        self.assertEqual(-250, state.rc.roll)
         self.assertTrue(state.rc.estop_safe)
         self.assertEqual(333, state.rc.channel_6)
         self.assertEqual([True] * 6, state.rc.channel_valid)
@@ -100,6 +112,57 @@ class TelemetryMapperTests(unittest.TestCase):
         self.assertEqual(1, state.motors.m1_front_right)
         self.assertTrue(state.motors.stale)
         self.assertFalse(state.status.telemetry_active)
+
+
+class FakeSerial:
+    def __init__(self) -> None:
+        self.is_open = True
+        self.writes: list[bytes] = []
+
+    def write(self, data: bytes) -> int:
+        self.writes.append(data)
+        return len(data)
+
+    def flush(self) -> None:
+        pass
+
+
+class TelemetrySerialClientTests(unittest.TestCase):
+    def test_handshake_does_not_send_home_when_telemetry_already_seen(self) -> None:
+        client = TelemetrySerialClient()
+        fake_serial = FakeSerial()
+        client._serial = fake_serial  # noqa: SLF001 - intentional white-box regression test
+
+        client._process_line(LIVE_RC_LINE.encode("ascii"))  # noqa: SLF001
+        client._stop_requested.set()  # noqa: SLF001
+        client._handshake_loop()  # noqa: SLF001
+
+        self.assertEqual([], fake_serial.writes)
+
+    def test_menu_detection_sends_telemetry_request(self) -> None:
+        client = TelemetrySerialClient()
+        fake_serial = FakeSerial()
+        client._serial = fake_serial  # noqa: SLF001
+
+        client._process_line(b"n - Telemetry Mode.")  # noqa: SLF001
+
+        self.assertEqual([b"n"], fake_serial.writes)
+
+    def test_live_samples_map_to_visible_dashboard_values(self) -> None:
+        state = DashboardState()
+        reset_live_state(state)
+
+        apply_frame(state, parse_sentence(LIVE_RC_LINE), 10.0)
+        apply_frame(state, parse_sentence(LIVE_IMU_LINE), 10.0)
+        apply_frame(state, parse_sentence(DEMAND_MOT_LINE), 10.0)
+
+        self.assertEqual(0, state.rc.throttle)
+        self.assertEqual(0, state.rc.pitch)
+        self.assertFalse(state.status.rc_valid)
+        self.assertFalse(state.status.imu_ready)
+        self.assertEqual(1, state.motors.m1_front_right)
+        self.assertEqual(4, state.motors.m4_front_left)
+        self.assertTrue(state.status.telemetry_active)
 
 
 if __name__ == "__main__":
