@@ -34,7 +34,15 @@ The STM32CubeIDE-generated `Debug/` directory also contains managed makefiles. I
 
 ## Test and Verification
 
-There is no host-side unit test suite in this repo at the moment.
+There is a host-side Unity/CMake test suite under `Tests/`. CI runs it on Ubuntu with:
+
+```powershell
+cmake -S Tests -B cmake-build-host-tests
+cmake --build cmake-build-host-tests
+ctest --test-dir cmake-build-host-tests --output-on-failure
+```
+
+On this Windows workstation, older local `cmake-build-host-tests*` directories may be configured for `nmake`/Visual Studio and may not run unless the matching native toolchain is available. If local host tests are blocked by missing `nmake`, check GitHub Actions logs for the authoritative CI failure.
 
 Before handing changes back, at minimum:
 
@@ -46,6 +54,12 @@ For firmware behavior changes, also verify on hardware where possible:
 
 - RC input capture still reports sane pulse widths for all six channels.
 - ESC outputs remain bounded and idle safely before arming.
+- Python dashboard tests pass when dashboard protocol/mapping changes are made:
+
+```powershell
+python -m unittest discover -s tools\hmi_dashboard -p "test_*.py"
+```
+
 - Setup/calibration mode is still entered only from the setup button at boot.
 - UART/HMI output still works without blocking the main loop.
 - IMU initialization and calibration complete before entering running mode.
@@ -80,6 +94,28 @@ Important runtime path:
 - `Application_OnTick()` drives setup, calibration, running, error, HMI, and LED behavior.
 - `FlightMode_OnTick()` handles arming/disarming, mode switching, RC demand conversion, PID calculations, and motor mixing.
 
+Current flight-tuning/IMU context:
+
+- The active recovery/tuning branch is `codex/recover-flight-tuning`.
+- `Application/Inc/config.h` is the main place for PID, mixer, RC, and IMU sign/axis constants.
+- IMU angle signs and gyro-rate signs are intentionally separate. Do not collapse them back to one sign constant.
+- Current IMU rate axis mapping was introduced because fast pitch movement was driving the yaw motor pair (`M1` + `M3`) instead of the pitch pair. The current mapping is:
+  - Pitch rate: raw BNO055 gyro X
+  - Roll rate: raw BNO055 gyro Y
+  - Yaw rate: raw BNO055 gyro Z
+- Current angle signs are:
+  - Pitch angle sign `-1.0f`
+  - Roll angle sign `1.0f`
+  - Yaw angle sign `1.0f`
+- Current rate signs are:
+  - Pitch rate sign `1.0f`
+  - Roll rate sign `-1.0f`
+  - Yaw rate sign `1.0f`
+- Current first-hover tuning is deliberately conservative: pitch/roll P `0.8`, I `0.0`, D `0.005`, PID output limit `180`, angle-to-rate gain `2.0`, max roll/pitch rate `90 dps`, max yaw rate `120 dps`.
+- Bench expectation with props off:
+  - Nose down: corrected pitch negative; M1/M4 increase; fast nose-down should not drive M1/M3.
+  - Right side down: corrected roll negative; M1/M2 increase.
+
 Hardware mappings from `docs/Interfaces.md`:
 
 - TIM2 CH1-CH4: ESC outputs on PA0, PA1, PB10, PB11.
@@ -96,6 +132,7 @@ Hardware mappings from `docs/Interfaces.md`:
 - Keep HAL-specific calls out of `Application/` unless there is already a local precedent.
 - Maintain the existing C style: small C modules with matching headers, `uint*_t` fixed-width types, module-prefixed functions such as `Application_OnTick`, `RCInput_Calibrate`, `Output_SetMotorSpeeds`.
 - Use the existing calibration constants in `Application/Inc/config.h` for PID, RC, and IMU tuning values.
+- When changing IMU orientation, check both slow/static angle correction and fast gyro-rate correction. A slow tilt can look right while the rate loop is mapped to the wrong axis.
 - Avoid blocking delays in the main loop or interrupt callbacks. The control path is tick/callback driven.
 - Keep interrupt callbacks short. Dispatch to existing module callbacks rather than doing heavy work in ISR context.
 - Be careful with shared state updated from callbacks and read from the main loop. If adding new shared values, consider `volatile` or a small accessor pattern.
@@ -109,6 +146,7 @@ Hardware mappings from `docs/Interfaces.md`:
 - Preserve e-stop behavior in `FlightMode_OnTick()` via RC channel 5 unless intentionally redesigning it.
 - Keep arming gated by low throttle and yaw-left behavior; keep disarming gated by low throttle and yaw-right behavior unless explicitly changing the control scheme.
 - After any motor-output change, verify initial outputs are zero/idle before the running state.
+- After any IMU sign, gyro-axis, PID, or mixer change, repeat props-off bench checks before any prop-on test. A flip usually indicates sign/axis/motor-order error, not just gain.
 
 ## Git Hygiene
 

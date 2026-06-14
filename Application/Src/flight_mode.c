@@ -22,6 +22,7 @@
 #define FM_HALF_ROTATION_DEGREES 180.0f
 #define FM_INTEGRATE_ALLOWED true
 #define FM_INTEGRATE_DISABLED false
+#define FM_SAFETY_LOG_INTERVAL_MS 1000U
 
 
 #define FM_STOPPED 0
@@ -35,17 +36,17 @@
 float pid_p_gain_roll = FM_PID_P_GAIN;               //Gain setting for the pitch and roll P-controller (default = 1.3).
 float pid_i_gain_roll = FM_PID_I_GAIN;              //Gain setting for the pitch and roll I-controller (default = 0.04).
 float pid_d_gain_roll = FM_PID_D_GAIN;              //Gain setting for the pitch and roll D-controller (default = 18.0).
-int pid_max_roll = 400;                    //Maximum output of the PID-controller (+/-).
+int pid_max_roll = FM_PID_OUTPUT_LIMIT;                    //Maximum output of the PID-controller (+/-).
 
 float pid_p_gain_pitch = FM_PID_P_GAIN;  //Gain setting for the pitch P-controller.
 float pid_i_gain_pitch = FM_PID_I_GAIN;  //Gain setting for the pitch I-controller.
 float pid_d_gain_pitch = FM_PID_D_GAIN;  //Gain setting for the pitch D-controller.
-int pid_max_pitch = 400;          //Maximum output of the PID-controller (+/-).
+int pid_max_pitch = FM_PID_OUTPUT_LIMIT;          //Maximum output of the PID-controller (+/-).
 
 float pid_p_gain_yaw = 1.0;                //Gain setting for the pitch P-controller (default = 4.0).
 float pid_i_gain_yaw = 0.0;               //Gain setting for the pitch I-controller (default = 0.02).
 float pid_d_gain_yaw = 0.0;                //Gain setting for the pitch D-controller (default = 0.0).
-int pid_max_yaw = 400;                     //Maximum output of the PID-controller (+/-).
+int pid_max_yaw = FM_PID_OUTPUT_LIMIT;                     //Maximum output of the PID-controller (+/-).
 
 
 uint8_t FlightMode_Mode = FM_STOPPED;
@@ -75,6 +76,7 @@ IMU_ST_ANGLES_DATA imuAngles;
 IMU_ST_RATES_DATA imuRates;
 uint32_t FlightMode_NextUpdate = 0;
 uint32_t FlightMode_NextAngleUpdate = 0;
+uint32_t FlightMode_NextSafetyLog = 0;
 float demand_pitch_rate = 0;
 float demand_roll_rate = 0;
 float demand_yaw_rate = 0;
@@ -154,6 +156,14 @@ static bool FlightMode_IsAngleUpdateDue(uint32_t now) {
         FlightMode_NextAngleUpdate = now + FM_ANGLE_CONTROL_INTERVAL_MS;
     }
     return true;
+}
+
+static bool FlightMode_IsSafetyLogDue(uint32_t now) {
+    if (FlightMode_NextSafetyLog == 0 || (int32_t) (now - FlightMode_NextSafetyLog) >= 0) {
+        FlightMode_NextSafetyLog = now + FM_SAFETY_LOG_INTERVAL_MS;
+        return true;
+    }
+    return false;
 }
 
 static void FlightMode_FailsafeStop(void) {
@@ -277,6 +287,8 @@ char *FlightMode_GetModeString(uint8_t fm) {
             return "MANU";
         case FM_PREPARING_TO_STOP:
             return "STPG";
+        default:
+            return "UNKN";
     }
 }
 
@@ -336,13 +348,17 @@ void FlightMode_OnTick(uint32_t now) {
 
     if (!RCInput_IsSignalValid(now)) {
         FlightMode_FailsafeStop();
-        FlightMode_PrintRcFailsafeDetails(now);
+        if (FlightMode_IsSafetyLogDue(now)) {
+            FlightMode_PrintRcFailsafeDetails(now);
+        }
         return;
     }
 
     if (RCInput_GetInputValue(RC_ESTOP) < 500){
         FlightMode_EStop();
-        printf("ESTOP!!\r\n");
+        if (FlightMode_IsSafetyLogDue(now)) {
+            printf("ESTOP!!\r\n");
+        }
         return;
     }
 

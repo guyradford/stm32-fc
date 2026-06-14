@@ -164,12 +164,24 @@ void HMISetup_Handle(uint8_t character) {
                 hmiSetup_Display = HMI_NONE;
                 break;
             }
-            if (hmiSetup_CalibrationCounter < 100){
-                printf(".");
-                hmiSetup_CalibrationCounter++;
-            }else{
-                printf("CALIBRATED\r\n");
+            if (IMU_IsReady()) {
+                printf("IMU CALIBRATED S/G/M/A %u/%u/%u/%u Status:%u Error:%u\r\n",
+                       imuStatus.calibrationSys,
+                       imuStatus.calibrationGyro,
+                       imuStatus.calibrationMag,
+                       imuStatus.calibrationAccel,
+                       imuStatus.systemStatus,
+                       imuStatus.systemError);
                 hmiSetup_Display = HMI_NONE;
+            } else {
+                printf("Calibrating IMU S/G/M/A %u/%u/%u/%u Fusion:%u Status:%u Error:%u\r\n",
+                       imuStatus.calibrationSys,
+                       imuStatus.calibrationGyro,
+                       imuStatus.calibrationMag,
+                       imuStatus.calibrationAccel,
+                       imuStatus.fusionRunning ? 1U : 0U,
+                       imuStatus.systemStatus,
+                       imuStatus.systemError);
             }
 
     }

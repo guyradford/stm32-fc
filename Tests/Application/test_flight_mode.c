@@ -142,16 +142,16 @@ static void test_yaw_error_uses_shortest_path_across_zero_degrees(void) {
     set_throttle_and_centered_sticks(300);
     FakeFlightHardware_SetAngles(1.0f, 0.0f, 0.0f);
     FlightMode_OnTick(40);
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, -8.0f, FlightMode_GetYawRateSetpoint());
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 8.0f, FlightMode_GetPIDYaw());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, -4.0f, FlightMode_GetYawRateSetpoint());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 4.0f, FlightMode_GetPIDYaw());
 
     reset_flight_mode_state();
     arm_auto_at_heading(1.0f);
     set_throttle_and_centered_sticks(300);
     FakeFlightHardware_SetAngles(359.0f, 0.0f, 0.0f);
     FlightMode_OnTick(40);
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 8.0f, FlightMode_GetYawRateSetpoint());
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, -8.0f, FlightMode_GetPIDYaw());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 4.0f, FlightMode_GetYawRateSetpoint());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, -4.0f, FlightMode_GetPIDYaw());
 }
 
 static void test_yaw_stick_integrates_wrapped_heading_setpoint(void) {
@@ -163,12 +163,12 @@ static void test_yaw_stick_integrates_wrapped_heading_setpoint(void) {
     FlightMode_OnTick(40);
 
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, FlightMode_GetYaw());
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 104.0f, FlightMode_GetYawRateSetpoint());
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, -104.0f, FlightMode_GetPIDYaw());
-    TEST_ASSERT_EQUAL_UINT16(404, EscOutput_GetMotorSpeed(MOTOR_1));
-    TEST_ASSERT_EQUAL_UINT16(196, EscOutput_GetMotorSpeed(MOTOR_2));
-    TEST_ASSERT_EQUAL_UINT16(404, EscOutput_GetMotorSpeed(MOTOR_3));
-    TEST_ASSERT_EQUAL_UINT16(196, EscOutput_GetMotorSpeed(MOTOR_4));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 102.0f, FlightMode_GetYawRateSetpoint());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, -102.0f, FlightMode_GetPIDYaw());
+    TEST_ASSERT_EQUAL_UINT16(402, EscOutput_GetMotorSpeed(MOTOR_1));
+    TEST_ASSERT_EQUAL_UINT16(198, EscOutput_GetMotorSpeed(MOTOR_2));
+    TEST_ASSERT_EQUAL_UINT16(402, EscOutput_GetMotorSpeed(MOTOR_3));
+    TEST_ASSERT_EQUAL_UINT16(198, EscOutput_GetMotorSpeed(MOTOR_4));
 }
 
 static void test_low_throttle_clears_pid_integrator_bias(void) {
