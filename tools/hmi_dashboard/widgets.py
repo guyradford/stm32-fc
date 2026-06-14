@@ -218,14 +218,14 @@ class RCPanel(Panel):
             self.channel_lights.append(light)
 
     def update_state(self, rc: RCState) -> None:
-        self.throttle.set(rc.throttle, motor_color(rc.throttle))
-        self.pitch.set(rc.pitch)
-        self.yaw.set(rc.yaw)
-        self.roll.set(rc.roll)
-        self.estop.set(rc.estop_safe)
+        self.throttle.set(rc.throttle, motor_color(rc.throttle, rc.stale), rc.stale)
+        self.pitch.set(rc.pitch, stale=rc.stale)
+        self.yaw.set(rc.yaw, stale=rc.stale)
+        self.roll.set(rc.roll, stale=rc.stale)
+        self.estop.set(rc.estop_safe and not rc.stale)
         self.ch6.configure(text="CH6 %d" % rc.channel_6)
         for light, valid in zip(self.channel_lights, rc.channel_valid):
-            light.set(valid)
+            light.set(valid and not rc.stale)
 
 
 class Compass(tk.Canvas):
@@ -282,12 +282,12 @@ class IMUPanel(Panel):
         self.cal.grid(row=0, column=3, padx=(8, 0))
 
     def update_state(self, imu: IMUState) -> None:
-        self.roll.set(imu.roll_deg, signed_color(imu.roll_deg, 45))
-        self.pitch.set(imu.pitch_deg, signed_color(imu.pitch_deg, 45))
+        self.roll.set(imu.roll_deg, signed_color(imu.roll_deg, 45), imu.stale)
+        self.pitch.set(imu.pitch_deg, signed_color(imu.pitch_deg, 45), imu.stale)
         self.compass.set_heading(imu.yaw_deg)
         self.rates.configure(text="Rates dps  Roll % 6.1f   Pitch % 6.1f   Yaw % 6.1f" % (imu.roll_rate_dps, imu.pitch_rate_dps, imu.yaw_rate_dps))
-        self.ready.set(imu.ready)
-        self.fusion.set(imu.fusion)
+        self.ready.set(imu.ready and not imu.stale)
+        self.fusion.set(imu.fusion and not imu.stale)
         self.error.set(imu.error)
         self.cal.configure(text="CAL S/G/M/A %d/%d/%d/%d" % (imu.cal_sys, imu.cal_gyro, imu.cal_mag, imu.cal_accel))
 

@@ -40,6 +40,16 @@ Re-enter Telemetry Mode.
 Send $STOP*HH with the correct checksum and confirm the HMI menu returns.
 ```
 
+## Python HMI Dashboard
+
+Run the parser/state tests:
+
+```powershell
+python -m unittest discover -s tools\hmi_dashboard -p "test_*.py"
+```
+
+With propellers removed, launch the dashboard, select the USB VCOM port at `115200`, and press Connect. Confirm the dashboard enters Telemetry Mode, updates from `$RC`, `$IMU`, and `$MOT`, marks stale data if the stream stops, and returns the firmware to HMI mode on Disconnect.
+
 ## Safety
 
 Changes that affect motors, arming, e-stop, setup/calibration mode, RC input, or IMU readings still need hardware verification with props removed. Run the relevant bench checks after host tests pass.

@@ -63,6 +63,12 @@ $MOT,<ms>,<m1>,<m2>,<m3>,<m4>*HH
 
 Motor demand in firmware-native `0..1000` units. Percent is a ground-station display concern.
 
+```text
+$STAT,<ms>,<app>,<flight>,<run>,<armed>,<rc>,<imu>,<failsafe>,<error>,<loopAge>*HH
+```
+
+Flight-controller status for ground-station display. This subject is reserved for the next firmware telemetry phase; the Python HMI already treats it as a first-class subject when received. `app`, `flight`, and `run` are short text enums. Boolean fields are `0` or `1`. `loopAge` is milliseconds.
+
 ## Default Stream
 
 Telemetry Mode starts with:
@@ -123,7 +129,6 @@ $STOP*HH
 These names are reserved for later phases:
 
 ```text
-$STAT  flight-controller state/status
 $PID   PID internals, setpoints, errors, outputs
 $RCX   extended corrected RC
 $RCRX  extended raw RC
