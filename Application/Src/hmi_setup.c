@@ -67,6 +67,7 @@ uint8_t HMISetup_GetEscCalibrationState(void) {
 
 void HMISetup_Handle(uint8_t character) {
     IMU_ST_SENSOR_DATA stAccelRawData;
+    IMU_ST_STATUS imuStatus;
 
     switch (character) {
         case 'h':
@@ -147,11 +148,22 @@ void HMISetup_Handle(uint8_t character) {
             );
             break;
         case HMI_ESC_SINGLE_MOTOR:
-            stAccelRawData = IMU_GetRawAccelerometer();
-            printf("Motor: %d, Speed %-5d, Accl: %2.3f\r\n", hmiSetup_Motor, EscOutput_GetMotorSpeed(hmiSetup_Motor),
-                   fmax(fabs(stAccelRawData.s16X) / 16384.0, fabs(stAccelRawData.s16Y) / 16384.0));
+            imuStatus = IMU_GetStatus();
+            if (imuStatus.initialized) {
+                stAccelRawData = IMU_GetRawAccelerometer();
+                printf("Motor: %d, Speed %-5d, Accl: %2.3f\r\n", hmiSetup_Motor, EscOutput_GetMotorSpeed(hmiSetup_Motor),
+                       fmax(fabs(stAccelRawData.s16X) / 16384.0, fabs(stAccelRawData.s16Y) / 16384.0));
+            } else {
+                printf("Motor: %d, Speed %-5d, IMU unavailable\r\n", hmiSetup_Motor, EscOutput_GetMotorSpeed(hmiSetup_Motor));
+            }
             break;
         case HMI_CALIBRATE_IMU:
+            imuStatus = IMU_GetStatus();
+            if (!imuStatus.initialized) {
+                printf("IMU unavailable\r\n");
+                hmiSetup_Display = HMI_NONE;
+                break;
+            }
             if (hmiSetup_CalibrationCounter < 100){
                 printf(".");
                 hmiSetup_CalibrationCounter++;

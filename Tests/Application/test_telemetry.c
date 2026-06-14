@@ -66,6 +66,14 @@ void test_req_known_subject_continues(void) {
     TEST_ASSERT_EQUAL(TELEMETRY_INPUT_CONTINUE, FeedSentence(sentence));
 }
 
+void test_req_imuc_subject_continues(void) {
+    char sentence[TELEMETRY_MAX_SENTENCE_LENGTH];
+    Telemetry_Start(1000);
+    Telemetry_FormatSentence("REQ,IMUC", sentence, sizeof(sentence));
+
+    TEST_ASSERT_EQUAL(TELEMETRY_INPUT_CONTINUE, FeedSentence(sentence));
+}
+
 uint16_t RCInput_GetInputValue(uint8_t RC_Channel) {
     (void) RC_Channel;
     return 500;
@@ -107,6 +115,18 @@ bool IMU_IsReady(void) {
     return true;
 }
 
+IMU_ST_STATUS IMU_GetStatus(void) {
+    IMU_ST_STATUS status = {0};
+    status.initialized = true;
+    status.fusionRunning = true;
+    status.calibrated = true;
+    status.calibrationSys = 3;
+    status.calibrationGyro = 3;
+    status.calibrationMag = 2;
+    status.calibrationAccel = 1;
+    return status;
+}
+
 IMU_ST_SENSOR_DATA IMU_GetRawAccelerometer(void) {
     IMU_ST_SENSOR_DATA data = {0};
     return data;
@@ -135,5 +155,6 @@ int main(void) {
     RUN_TEST(test_stop_command_with_valid_checksum_exits);
     RUN_TEST(test_stop_command_with_bad_checksum_does_not_exit);
     RUN_TEST(test_req_known_subject_continues);
+    RUN_TEST(test_req_imuc_subject_continues);
     return UNITY_END();
 }

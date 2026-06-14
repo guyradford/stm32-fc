@@ -22,7 +22,9 @@ void Application_Init(bool setupMode){
     }
     SerialLink_Init(setupMode);
     RCInput_Init();
-    IMUInput_Calibrate();
+    if (!setupMode) {
+        IMUInput_Calibrate();
+    }
     RCInput_Calibrate();
 }
 

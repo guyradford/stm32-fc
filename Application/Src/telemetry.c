@@ -11,13 +11,14 @@
 #include "rc_receiver.h"
 
 #define TELEMETRY_COMMAND_BUFFER_LENGTH 64
-#define TELEMETRY_SUBJECT_COUNT 5
+#define TELEMETRY_SUBJECT_COUNT 6
 #define TELEMETRY_MAX_RATE_HZ 50
 
 typedef enum {
     TELEMETRY_SUBJECT_RC = 0,
     TELEMETRY_SUBJECT_RCR,
     TELEMETRY_SUBJECT_IMU,
+    TELEMETRY_SUBJECT_IMUC,
     TELEMETRY_SUBJECT_IMUR,
     TELEMETRY_SUBJECT_MOT
 } TelemetrySubjectIndex;
@@ -33,6 +34,7 @@ static TelemetrySubscription subscriptions[TELEMETRY_SUBJECT_COUNT] = {
         {"RC", 100, 0, false},
         {"RCR", 0, 0, false},
         {"IMU", 100, 0, false},
+        {"IMUC", 1000, 0, false},
         {"IMUR", 0, 0, false},
         {"MOT", 200, 0, false}
 };
@@ -156,6 +158,20 @@ static void Telemetry_SendImur(uint32_t now) {
     Telemetry_SendPayload(payload);
 }
 
+static void Telemetry_SendImuc(uint32_t now) {
+    char payload[TELEMETRY_MAX_SENTENCE_LENGTH];
+    IMU_ST_STATUS status = IMU_GetStatus();
+
+    snprintf(payload, sizeof(payload), "IMUC,%lu,%u,%u,%u,%u,%u",
+             (unsigned long) now,
+             status.calibrationSys,
+             status.calibrationGyro,
+             status.calibrationMag,
+             status.calibrationAccel,
+             IMU_IsReady() ? 1U : 0U);
+    Telemetry_SendPayload(payload);
+}
+
 static void Telemetry_SendMot(uint32_t now) {
     char payload[TELEMETRY_MAX_SENTENCE_LENGTH];
     snprintf(payload, sizeof(payload), "MOT,%lu,%u,%u,%u,%u",
@@ -177,6 +193,9 @@ static void Telemetry_SendSubject(TelemetrySubjectIndex index, uint32_t now) {
             break;
         case TELEMETRY_SUBJECT_IMU:
             Telemetry_SendImu(now);
+            break;
+        case TELEMETRY_SUBJECT_IMUC:
+            Telemetry_SendImuc(now);
             break;
         case TELEMETRY_SUBJECT_IMUR:
             Telemetry_SendImur(now);
@@ -217,6 +236,10 @@ void Telemetry_Start(uint32_t now) {
     subscriptions[TELEMETRY_SUBJECT_IMU].period_ms = 100;
     subscriptions[TELEMETRY_SUBJECT_IMU].enabled = true;
     subscriptions[TELEMETRY_SUBJECT_IMU].next_due_ms = now;
+
+    subscriptions[TELEMETRY_SUBJECT_IMUC].period_ms = 1000;
+    subscriptions[TELEMETRY_SUBJECT_IMUC].enabled = true;
+    subscriptions[TELEMETRY_SUBJECT_IMUC].next_due_ms = now;
 
     subscriptions[TELEMETRY_SUBJECT_IMUR].enabled = false;
 
