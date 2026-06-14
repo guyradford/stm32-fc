@@ -19,6 +19,9 @@ static TelemetryInputResult FeedSentence(const char *sentence) {
     TelemetryInputResult result = TELEMETRY_INPUT_CONTINUE;
     for (size_t i = 0; sentence[i] != 0; i++) {
         result = Telemetry_OnInput((uint8_t) sentence[i], 1000);
+        if (result == TELEMETRY_INPUT_EXIT) {
+            return result;
+        }
     }
     return result;
 }
