@@ -53,5 +53,10 @@ dkms.conf
 
 /cmake-build-debug-stm32-arm/
 /cmake-build-host-tests/
+/cmake-build-host-tests-*/
 /.settings/
 .idea
+
+# Python local cache
+__pycache__/
+*.py[cod]
