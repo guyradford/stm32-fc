@@ -42,7 +42,17 @@ cmake --build cmake-build-host-tests
 ctest --test-dir cmake-build-host-tests --output-on-failure
 ```
 
-On this Windows workstation, older local `cmake-build-host-tests*` directories may be configured for `nmake`/Visual Studio and may not run unless the matching native toolchain is available. If local host tests are blocked by missing `nmake`, check GitHub Actions logs for the authoritative CI failure.
+On this Windows workstation, run host tests locally before pushing. A portable w64devkit toolchain is available at:
+
+```powershell
+$toolBin = "$env:USERPROFILE\.cache\codex-tools\w64devkit\2.8.0\w64devkit\bin"
+$env:PATH = "$toolBin;$env:PATH"
+cmake -S Tests -B cmake-build-host-tests-local -G Ninja -DCMAKE_C_COMPILER=gcc
+cmake --build cmake-build-host-tests-local
+ctest --test-dir cmake-build-host-tests-local --output-on-failure
+```
+
+Avoid naming Windows host-test executables with `setup` in the filename. Windows UAC installer detection can require elevation for names such as `test_setup_mode.exe`, which makes CTest report `BAD_COMMAND`/permission denied even when the test binary is otherwise valid.
 
 Before handing changes back, at minimum:
 
