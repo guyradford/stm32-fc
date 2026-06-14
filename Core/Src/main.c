@@ -142,9 +142,13 @@ int main(void)
     HAL_UART_Receive_IT(&huart2, UART2_rxBuffer, 1);
 #endif
 
+    bool setupMode = !HAL_GPIO_ReadPin(SETUP_BUTTON_GPIO_Port, SETUP_BUTTON_Pin);
+    bool imuInitOk = true;
     bno055_assignI2C(&hi2c1);
-    HAL_Delay(1000);
-    bool imuInitOk = IMU_Init();
+    if (!setupMode) {
+        HAL_Delay(1000);
+        imuInitOk = IMU_Init();
+    }
 
 //    bno055_axis_map_t axis = {
 //            .x = BNO055_AXIS_X,
@@ -173,7 +177,6 @@ int main(void)
     HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
 
 
-    bool setupMode = !HAL_GPIO_ReadPin(SETUP_BUTTON_GPIO_Port, SETUP_BUTTON_Pin);
     Application_Init(setupMode);
     if (!imuInitOk) {
         Application_SetMode(APPLICATION_MODE_ERROR);

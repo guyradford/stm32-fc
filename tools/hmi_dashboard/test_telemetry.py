@@ -10,6 +10,7 @@ from telemetry_protocol import TelemetryError, format_sentence, format_stop, par
 
 LIVE_RC_LINE = "$RC,239514,0,500,500,500,0,500,0*29"
 LIVE_IMU_LINE = "$IMU,239514,0,0,0,0,0,0,0*69"
+LIVE_IMUC_LINE = format_sentence("IMUC,239514,3,3,2,1,0")
 LIVE_MOT_LINE = "$MOT,239514,1001,1002,1003,1004*76"
 DEMAND_MOT_LINE = format_sentence("MOT,239514,1,2,3,4")
 
@@ -43,6 +44,7 @@ class TelemetryProtocolTests(unittest.TestCase):
     def test_parses_live_fc_sample_lines(self) -> None:
         self.assertEqual("RC", parse_sentence(LIVE_RC_LINE).subject)
         self.assertEqual("IMU", parse_sentence(LIVE_IMU_LINE).subject)
+        self.assertEqual("IMUC", parse_sentence(LIVE_IMUC_LINE).subject)
         self.assertEqual("MOT", parse_sentence(LIVE_MOT_LINE).subject)
 
 
@@ -74,6 +76,18 @@ class TelemetryMapperTests(unittest.TestCase):
         self.assertEqual(3.45, state.imu.roll_rate_dps)
         self.assertEqual(-6.78, state.imu.pitch_rate_dps)
         self.assertEqual(0.90, state.imu.yaw_rate_dps)
+        self.assertTrue(state.status.imu_ready)
+
+    def test_imuc_mapping_updates_calibration_status(self) -> None:
+        state = DashboardState()
+        reset_live_state(state)
+
+        apply_frame(state, parse_sentence(format_sentence("IMUC,1000,3,2,1,0,1")), 10.0)
+
+        self.assertEqual(3, state.imu.cal_sys)
+        self.assertEqual(2, state.imu.cal_gyro)
+        self.assertEqual(1, state.imu.cal_mag)
+        self.assertEqual(0, state.imu.cal_accel)
         self.assertTrue(state.status.imu_ready)
 
     def test_mot_mapping_preserves_native_units(self) -> None:
@@ -154,12 +168,15 @@ class TelemetrySerialClientTests(unittest.TestCase):
 
         apply_frame(state, parse_sentence(LIVE_RC_LINE), 10.0)
         apply_frame(state, parse_sentence(LIVE_IMU_LINE), 10.0)
+        apply_frame(state, parse_sentence(LIVE_IMUC_LINE), 10.0)
         apply_frame(state, parse_sentence(DEMAND_MOT_LINE), 10.0)
 
         self.assertEqual(0, state.rc.throttle)
         self.assertEqual(0, state.rc.pitch)
         self.assertFalse(state.status.rc_valid)
         self.assertFalse(state.status.imu_ready)
+        self.assertEqual(3, state.imu.cal_sys)
+        self.assertEqual(1, state.imu.cal_accel)
         self.assertEqual(1, state.motors.m1_front_right)
         self.assertEqual(4, state.motors.m4_front_left)
         self.assertTrue(state.status.telemetry_active)

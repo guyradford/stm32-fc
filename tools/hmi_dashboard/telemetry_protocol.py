@@ -18,6 +18,7 @@ EXPECTED_FIELDS = {
     "RC": 8,
     "RCR": 9,
     "IMU": 8,
+    "IMUC": 6,
     "IMUR": 10,
     "MOT": 5,
     "STAT": 10,

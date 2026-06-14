@@ -19,6 +19,8 @@ def apply_frame(state: DashboardState, frame: TelemetryFrame, received_at: float
         _apply_rc(state, frame, now)
     elif frame.subject == "IMU":
         _apply_imu(state, frame, now)
+    elif frame.subject == "IMUC":
+        _apply_imuc(state, frame, now)
     elif frame.subject == "MOT":
         _apply_mot(state, frame, now)
     elif frame.subject == "STAT":
@@ -96,6 +98,18 @@ def _apply_imu(state: DashboardState, frame: TelemetryFrame, now: float) -> None
     state.imu.stale = False
     state.status.imu_ready = imu_ready
     state.last_imu_s = now
+
+
+def _apply_imuc(state: DashboardState, frame: TelemetryFrame, now: float) -> None:
+    _ms, cal_sys, cal_gyro, cal_mag, cal_accel, ready = frame.fields
+    imu_ready = _to_bool(ready)
+
+    state.imu.cal_sys = _to_int(cal_sys)
+    state.imu.cal_gyro = _to_int(cal_gyro)
+    state.imu.cal_mag = _to_int(cal_mag)
+    state.imu.cal_accel = _to_int(cal_accel)
+    state.imu.ready = imu_ready
+    state.status.imu_ready = imu_ready
 
 
 def _apply_mot(state: DashboardState, frame: TelemetryFrame, now: float) -> None:

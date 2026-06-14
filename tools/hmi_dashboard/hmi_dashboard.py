@@ -202,7 +202,7 @@ class HMIDashboardApp:
                 break
 
             if event.kind == "frame" and event.frame is not None:
-                if event.frame.subject in ("RC", "IMU", "MOT", "STAT"):
+                if event.frame.subject in ("RC", "IMU", "IMUC", "MOT", "STAT"):
                     try:
                         apply_frame(self.state, event.frame)
                         subject_count = self._rx_subject_counts.get(event.frame.subject, 0) + 1

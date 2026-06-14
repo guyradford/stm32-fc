@@ -52,6 +52,12 @@ $IMU,<ms>,<roll>,<pitch>,<yaw>,<rollRate>,<pitchRate>,<yawRate>,<ready>*HH
 Corrected/filtered IMU state. Angles are centidegrees. Rates are centidegrees per second.
 
 ```text
+$IMUC,<ms>,<calSys>,<calGyro>,<calMag>,<calAccel>,<ready>*HH
+```
+
+BNO055 calibration status. Calibration values are `0..3`; `3` means fully calibrated for that component.
+
+```text
 $IMUR,<ms>,<ax>,<ay>,<az>,<gx>,<gy>,<gz>,<mx>,<my>,<mz>*HH
 ```
 
@@ -76,6 +82,7 @@ Telemetry Mode starts with:
 ```text
 $RC   10 Hz
 $IMU  10 Hz
+$IMUC 1 Hz
 $MOT  5 Hz
 ```
 

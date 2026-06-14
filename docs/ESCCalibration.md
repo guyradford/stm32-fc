@@ -21,20 +21,31 @@ high-output state, all ESC outputs are forced to idle.
 ## Procedure
 
 1. Remove all propellers.
-2. Power the transmitter and set throttle low.
-3. Hold the setup button while powering the flight controller.
-4. Open the serial HMI.
-5. Press `c` for ESC throttle calibration.
-6. Confirm e-stop is released and throttle is low.
-7. Press `x` to command maximum ESC output.
-8. Power the ESCs / quadcopter power rail and wait for the ESC high-throttle
-   confirmation beeps.
-9. Press `l` to command minimum ESC output and wait for the low-throttle
-   confirmation beeps.
-10. Press `d` to mark the calibration sequence done.
-11. Power off the ESCs / quadcopter power rail.
+2. Leave the ESCs / quadcopter power rail powered off.
+3. Power the transmitter.
+4. Set transmitter throttle low.
+5. Release the transmitter e-stop switch.
+6. Hold the flight-controller setup button.
+7. Power the flight controller.
+8. Release the setup button after the flight controller has booted.
+9. Open the serial HMI.
+10. Press `c` to enter ESC throttle calibration.
+11. Confirm the HMI shows ESC calibration state `0`.
+12. Confirm throttle is still low.
+13. Confirm e-stop is still released.
+14. Press `x`.
+15. Confirm the HMI shows ESC calibration state `1`.
+16. Power the ESCs / quadcopter power rail.
+17. Wait for the ESC high-throttle confirmation beeps.
+18. Press `l`.
+19. Confirm the HMI shows ESC calibration state `2`.
+20. Wait for the ESC low-throttle confirmation beeps.
+21. Press `d`.
+22. Confirm the HMI shows ESC calibration state `3`.
+23. Power off the ESCs / quadcopter power rail.
+24. Press `h` to return home and command idle outputs.
 
-Press `h` at any time to return home and command idle outputs.
+To abort calibration, press `h` to return home and command idle outputs.
 
 ## Notes
 
