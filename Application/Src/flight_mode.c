@@ -446,6 +446,11 @@ void FlightMode_OnTick(uint32_t now) {
             if (demand_throttle > 800) demand_throttle = 800; // this allows some headroom for the PID controllers
 
             if (demand_throttle <= FM_CONTROLLED_FLIGHT_THROTTLE) {
+                if (FlightMode_Mode == FM_RUNNING_AUTO) {
+                    demand_yaw = FlightMode_NormalizeYaw(imuAngles.fYaw);
+                } else {
+                    demand_yaw = 0;
+                }
                 FlightMode_ResetPidState();
                 FlightMode_PreviousMixerSaturated = false;
                 esc_1 = 0;
