@@ -29,10 +29,10 @@ static UART_HandleTypeDef *HMIOutput_GetUart(void) {
 #endif
 }
 
-void HMIOutput_AddToBuffer(char *string, int len) {
+bool HMIOutput_AddToBuffer(char *string, int len) {
     if (end + 1 == start || end + 1 == start + BUFFER_LENGTH) {
 //        HAL_UART_Transmit(&huart2, (uint8_t*)BUFFER_FULL, strlen(BUFFER_FULL), 1000);
-        return;
+        return false;
     }
 
     if (len < 0) len = 0;
@@ -42,6 +42,7 @@ void HMIOutput_AddToBuffer(char *string, int len) {
     buffer[end][len] = 0;
     if (++end == BUFFER_LENGTH) end = 0;
     HMIOutput_SendNext();
+    return true;
 }
 
 void HMIOutput_SendNext(void) {

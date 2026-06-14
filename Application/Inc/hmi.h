@@ -3,6 +3,7 @@
 //
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifndef STM32_FC_HMI_H
 #define STM32_FC_HMI_H
@@ -19,6 +20,10 @@
 
 void HMI_Init(bool setupMode);
 void HMI_OnTick(uint32_t now);
+void HMI_OnInput(uint8_t character);
 void HMI_SetMode(uint16_t mode);
+void HMI_ShowMenu(void);
+void HMI_RequestTelemetryMode(void);
+bool HMI_ConsumeTelemetryRequest(void);
 
 #endif //STM32_FC_HMI_H

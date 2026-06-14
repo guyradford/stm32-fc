@@ -6,7 +6,7 @@
 #include "application.h"
 #include "output.h"
 #include "led.h"
-#include "hmi.h"
+#include "serial_link.h"
 #include "setup_mode.h"
 #include "imu_input.h"
 #include "rc_receiver.h"
@@ -20,7 +20,7 @@ void Application_Init(bool setupMode){
         applicationMode = APPLICATION_MODE_SETUP;
         LED_SetMode(LED_MODE_SETUP);
     }
-    HMI_Init(setupMode);
+    SerialLink_Init(setupMode);
     RCInput_Init();
     IMUInput_Calibrate();
     RCInput_Calibrate();
@@ -57,12 +57,12 @@ void Application_OnTick(uint32_t now){
         case APPLICATION_MODE_SETUP:
             SetupMode_OnTick(now);
             LED_OnTick(now);
-            HMI_OnTick(now);
+            SerialLink_OnTick(now);
             break;
 
         case APPLICATION_MODE_CALIBRATING:
             LED_OnTick(now);
-            HMI_OnTick(now);
+            SerialLink_OnTick(now);
             IMUInput_Calibrate();
             RCInput_Calibrate();
             if (RCInput_IsCalibrated() && IMUInput_IsCalibrated()){
@@ -74,7 +74,7 @@ void Application_OnTick(uint32_t now){
         case APPLICATION_MODE_RUNNING:
             FlightMode_OnTick(now);
             LED_OnTick(now);
-            HMI_OnTick(now);
+            SerialLink_OnTick(now);
             break;
 
     }

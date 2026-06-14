@@ -5,7 +5,9 @@
 #ifndef STM32_FC_HMI_OUTPUT_BUFFER_H
 #define STM32_FC_HMI_OUTPUT_BUFFER_H
 
-void HMIOutput_AddToBuffer(char *string, int len);
+#include <stdbool.h>
+
+bool HMIOutput_AddToBuffer(char *string, int len);
 void HMIOutput_SendNext(void );
 void HMIOutput_OnSendComplete(void);
 

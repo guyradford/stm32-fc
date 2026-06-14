@@ -25,6 +25,21 @@ cmake -S . -B cmake-build-debug-stm32-arm -DCMAKE_BUILD_TYPE=Debug
 cmake --build cmake-build-debug-stm32-arm
 ```
 
+## Telemetry Mode
+
+After telemetry changes, run the host tests and firmware build, then verify the selected UART with the airframe safe:
+
+```text
+Enter the HMI main menu.
+Press n and confirm Telemetry Mode starts.
+Observe the default $RC, $IMU, and $MOT stream.
+Send $REQ,RCR*HH with the correct checksum and confirm one $RCR response.
+Send $SUB,IMUR,2*HH with the correct checksum and confirm $IMUR at about 2 Hz.
+Press h and confirm the HMI menu returns.
+Re-enter Telemetry Mode.
+Send $STOP*HH with the correct checksum and confirm the HMI menu returns.
+```
+
 ## Safety
 
 Changes that affect motors, arming, e-stop, setup/calibration mode, RC input, or IMU readings still need hardware verification with props removed. Run the relevant bench checks after host tests pass.

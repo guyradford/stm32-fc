@@ -141,3 +141,19 @@ target_link_libraries(test_setup_mode PRIVATE
 )
 
 add_test(NAME setup_mode COMMAND test_setup_mode)
+
+add_executable(test_telemetry
+    Application/test_telemetry.c
+    ../Application/Src/telemetry.c
+)
+target_include_directories(test_telemetry PRIVATE
+    fakes
+    ../Application/Inc
+    ../HardwareLayer/Inc
+    vendor/unity
+)
+target_link_libraries(test_telemetry PRIVATE
+    unity
+)
+
+add_test(NAME telemetry COMMAND test_telemetry)
