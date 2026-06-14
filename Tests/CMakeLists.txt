@@ -118,29 +118,29 @@ target_link_libraries(test_flight_mode PRIVATE
 
 add_test(NAME flight_mode COMMAND test_flight_mode)
 
-add_executable(test_setup_mode
+add_executable(test_config_mode
     Application/test_setup_mode.c
     ../Application/Src/setup_mode.c
     ../Application/Src/rc-input.c
     ../Application/Src/output.c
 )
-target_compile_definitions(test_setup_mode PRIVATE
+target_compile_definitions(test_config_mode PRIVATE
     STM32_FC_TEST
 )
-target_include_directories(test_setup_mode PRIVATE
+target_include_directories(test_config_mode PRIVATE
     fakes
     ../Application/Inc
     ../HardwareLayer/Inc
     vendor/unity
 )
-target_link_libraries(test_setup_mode PRIVATE
+target_link_libraries(test_config_mode PRIVATE
     unity
     fake_rc_receiver
     fake_hmi_setup
     fake_esc_output
 )
 
-add_test(NAME setup_mode COMMAND test_setup_mode)
+add_test(NAME config_mode COMMAND test_config_mode)
 
 add_executable(test_telemetry
     Application/test_telemetry.c
