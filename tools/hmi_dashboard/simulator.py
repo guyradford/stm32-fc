@@ -35,6 +35,7 @@ class DashboardSimulator:
         state.rc.estop_safe = int(elapsed) % 24 != 16
         state.rc.channel_6 = self._clamp_int(500 + 460 * math.sin(phase * 0.22), 0, 1000)
         state.rc.channel_valid = [state.status.rc_valid] * 6
+        state.rc.stale = False
 
         base = max(0, state.rc.throttle - 180)
         roll_mix = state.rc.roll * 0.22
@@ -58,6 +59,7 @@ class DashboardSimulator:
         state.imu.cal_gyro = 3
         state.imu.cal_mag = 2 + (int(elapsed) % 6 == 0)
         state.imu.cal_accel = 3
+        state.imu.stale = False
 
         state.pid.yaw_setpoint = state.rc.yaw / 100.0
         state.pid.pitch_setpoint = state.rc.pitch / 100.0

@@ -1,6 +1,16 @@
 # STM32-FC HMI Dashboard
 
-Phase 1 is a visual-only Tkinter dashboard prototype for the flight controller. It lives in the firmware repository because the layout is tied to the project motor order, RC channel meanings, and bench workflow.
+The Tkinter dashboard is a bench telemetry tool for the flight controller. It lives in the firmware repository because the layout is tied to the project motor order, RC channel meanings, and bench workflow.
+
+The dashboard starts in live-ready mode. It does not open the serial port until Connect is pressed.
+
+## Install
+
+Install the Python serial dependency:
+
+```powershell
+python -m pip install -r tools\hmi_dashboard\requirements.txt
+```
 
 ## Run
 
@@ -16,9 +26,13 @@ If `python` is not on PATH, use the Windows launcher:
 py -3 tools\hmi_dashboard\hmi_dashboard.py
 ```
 
-No serial device, firmware changes, telemetry sentences, or third-party Python packages are required for phase 1. The dashboard is driven by simulated data at about 10 Hz.
+Select the serial port, keep the baud rate at `115200` for the Nucleo USB VCOM, and press Connect. USART1 wireless telemetry normally uses `57600`.
 
-## Phase 1 Scope
+On connect, the dashboard sends `h`, then `n`, so the firmware can leave any current HMI screen and enter Telemetry Mode. On disconnect it sends `$STOP*HH`.
+
+Simulator mode is available from the Mode dropdown for UI work without hardware.
+
+## Live Telemetry Scope
 
 - Physical motor map with vertical bars:
   - M1 front-right
@@ -28,10 +42,21 @@ No serial device, firmware changes, telemetry sentences, or third-party Python p
 - RC panel with vertical throttle and pitch, horizontal yaw and roll, e-stop state, channel 6, and validity lights.
 - IMU panel with roll across the top, yaw compass in the middle, pitch on the side, rates, and health indicators.
 - Top safety/status strip and bottom event log.
+- First-class subjects: `$STAT`, `$RC`, `$IMU`, `$MOT`.
+- Log-only subjects: `$ACK`, `$ERR`, `$RCR`, `$IMUR`, `$PID`, and other unsupported valid telemetry frames.
+
+Until firmware emits `$STAT`, app mode, flight mode, run mode, armed state, and loop age remain `UNKNOWN` or stale in live mode.
 
 ## Deliberately Out Of Scope
 
-- Serial connection.
-- NMEA-style sentence parsing or formatting.
-- Firmware telemetry output.
+- Firmware `$STAT` emission.
+- Raw RC/IMU dashboard panels.
 - Any command that can arm, tune, calibrate, or affect motor output.
+
+## Tests
+
+Run the pure Python parser and state mapping tests:
+
+```powershell
+python -m unittest discover -s tools\hmi_dashboard -p "test_*.py"
+```

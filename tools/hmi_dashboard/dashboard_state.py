@@ -27,6 +27,7 @@ class RCState:
     estop_safe: bool = True
     channel_6: int = 0
     channel_valid: List[bool] = field(default_factory=lambda: [True] * 6)
+    stale: bool = False
 
 
 @dataclass
@@ -53,6 +54,7 @@ class IMUState:
     cal_gyro: int = 0
     cal_mag: int = 0
     cal_accel: int = 0
+    stale: bool = False
 
 
 @dataclass
@@ -73,6 +75,11 @@ class DashboardState:
     imu: IMUState = field(default_factory=IMUState)
     pid: PIDState = field(default_factory=PIDState)
     log_lines: List[str] = field(default_factory=list)
+    last_rx_s: float | None = None
+    last_rc_s: float | None = None
+    last_imu_s: float | None = None
+    last_mot_s: float | None = None
+    last_stat_s: float | None = None
 
     def add_log(self, line: str, limit: int = 200) -> None:
         self.log_lines.append(line)
