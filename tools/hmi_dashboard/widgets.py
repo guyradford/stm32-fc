@@ -19,6 +19,18 @@ ORANGE = "#e66a2c"
 RED = "#d64545"
 GREY = "#94a3b8"
 BLUE = "#2563eb"
+PANEL_WARN = "#fff7df"
+PANEL_BAD = "#fff0f0"
+
+HEALTH_NORMAL = "normal"
+HEALTH_WARN = "warn"
+HEALTH_BAD = "bad"
+
+HEALTH_COLORS = {
+    HEALTH_NORMAL: PANEL,
+    HEALTH_WARN: PANEL_WARN,
+    HEALTH_BAD: PANEL_BAD,
+}
 
 
 def motor_color(value: int, stale: bool = False) -> str:
@@ -44,14 +56,90 @@ def signed_color(value: float, limit: float) -> str:
     return ORANGE
 
 
+def rc_panel_health(rc: RCState) -> str:
+    if rc.stale or not rc.estop_safe or not all(rc.channel_valid):
+        return HEALTH_BAD
+    return HEALTH_NORMAL
+
+
+def imu_panel_health(imu: IMUState) -> str:
+    calibrated = imu.cal_sys == 3 and imu.cal_gyro == 3 and imu.cal_mag == 3 and imu.cal_accel == 3
+    if imu.stale or imu.error:
+        return HEALTH_BAD
+    if not imu.ready or not imu.fusion or not calibrated:
+        return HEALTH_WARN
+    return HEALTH_NORMAL
+
+
+def motor_panel_health(motors: MotorState) -> str:
+    if motors.stale:
+        return HEALTH_BAD
+    return HEALTH_NORMAL
+
+
+def flight_panel_health(status: StatusState) -> str:
+    failsafe = status.run_mode.upper() == "FAILSAFE"
+    if not status.connected or not status.telemetry_active or status.error or failsafe:
+        return HEALTH_BAD
+    if not status.armed:
+        return HEALTH_WARN
+    return HEALTH_NORMAL
+
+
 class Panel(ttk.Frame):
     def __init__(self, parent: tk.Widget, title: str) -> None:
         super().__init__(parent, style="Panel.TFrame", padding=10)
         self.columnconfigure(0, weight=1)
-        ttk.Label(self, text=title, style="PanelTitle.TLabel").grid(row=0, column=0, sticky="ew")
+        self.title = ttk.Label(self, text=title, style="PanelTitle.TLabel")
+        self.title.grid(row=0, column=0, sticky="ew")
         self.body = ttk.Frame(self, style="Content.TFrame")
         self.body.grid(row=1, column=0, sticky="nsew", pady=(8, 0))
         self.rowconfigure(1, weight=1)
+        self._health = HEALTH_NORMAL
+
+    def set_health(self, health: str) -> None:
+        if health not in HEALTH_COLORS:
+            health = HEALTH_NORMAL
+        self._health = health
+        self._apply_health_style(self)
+
+    def _apply_health_style(self, widget: tk.Widget) -> None:
+        if isinstance(widget, ttk.Frame):
+            base_style = _base_style(widget)
+            if base_style == "Panel.TFrame":
+                widget.configure(style="Panel.%s.TFrame" % self._health.title())
+            elif base_style == "Content.TFrame":
+                widget.configure(style="Content.%s.TFrame" % self._health.title())
+        elif isinstance(widget, ttk.Label):
+            style_name = _health_label_style(_base_style(widget), self._health)
+            if style_name is not None:
+                widget.configure(style=style_name)
+
+        for child in widget.winfo_children():
+            self._apply_health_style(child)
+
+
+def _base_style(widget: tk.Widget) -> str:
+    style_name = str(widget.cget("style"))
+    base_style = getattr(widget, "_base_health_style", None)
+    if base_style is None:
+        base_style = style_name
+        setattr(widget, "_base_health_style", base_style)
+    return base_style
+
+
+def _health_label_style(base_style: str, health: str) -> str | None:
+    health_styles = {
+        "PanelTitle.TLabel",
+        "Field.TLabel",
+        "Small.TLabel",
+        "Value.TLabel",
+        "Axis.TLabel",
+        "MotorName.TLabel",
+    }
+    if base_style not in health_styles:
+        return None
+    return "%s.%s.TLabel" % (base_style.removesuffix(".TLabel"), health.title())
 
 
 class StatusLight(ttk.Frame):
@@ -173,6 +261,7 @@ class MotorMap(Panel):
         return bar
 
     def update_state(self, motors: MotorState) -> None:
+        self.set_health(motor_panel_health(motors))
         self.m1.set(motors.m1_front_right, motor_color(motors.m1_front_right, motors.stale), motors.stale)
         self.m2.set(motors.m2_back_right, motor_color(motors.m2_back_right, motors.stale), motors.stale)
         self.m3.set(motors.m3_back_left, motor_color(motors.m3_back_left, motors.stale), motors.stale)
@@ -218,6 +307,7 @@ class RCPanel(Panel):
             self.channel_lights.append(light)
 
     def update_state(self, rc: RCState) -> None:
+        self.set_health(rc_panel_health(rc))
         self.throttle.set(rc.throttle, motor_color(rc.throttle, rc.stale), rc.stale)
         self.pitch.set(rc.pitch, stale=rc.stale)
         self.yaw.set(rc.yaw, stale=rc.stale)
@@ -282,6 +372,7 @@ class IMUPanel(Panel):
         self.cal.grid(row=0, column=3, padx=(8, 0))
 
     def update_state(self, imu: IMUState) -> None:
+        self.set_health(imu_panel_health(imu))
         self.roll.set(imu.roll_deg, signed_color(imu.roll_deg, 45), imu.stale)
         self.pitch.set(imu.pitch_deg, signed_color(imu.pitch_deg, 45), imu.stale)
         self.compass.set_heading(imu.yaw_deg)
@@ -325,6 +416,7 @@ class FlightStatusPanel(Panel):
         self.body.columnconfigure(1, weight=1)
 
     def update_state(self, status: StatusState) -> None:
+        self.set_health(flight_panel_health(status))
         self.labels["App Mode"].configure(text=status.app_mode)
         self.labels["Flight Mode"].configure(text=status.flight_mode)
         self.labels["Run Mode"].configure(text=status.run_mode)
@@ -354,6 +446,10 @@ def configure_styles(root: tk.Tk) -> None:
     style.configure("Status.TFrame", background=BG)
     style.configure("Panel.TFrame", background=PANEL, borderwidth=1, relief="solid")
     style.configure("Content.TFrame", background=PANEL, borderwidth=0, relief="flat")
+    for health, background in HEALTH_COLORS.items():
+        title = health.title()
+        style.configure("Panel.%s.TFrame" % title, background=background, borderwidth=1, relief="solid")
+        style.configure("Content.%s.TFrame" % title, background=background, borderwidth=0, relief="flat")
     style.configure("TLabel", background=BG, foreground=TEXT)
     style.configure("Title.TLabel", background=BG, foreground=TEXT, font=("Segoe UI", 15, "bold"))
     style.configure("Status.TLabel", background=BG, foreground=TEXT, font=("Segoe UI", 9, "bold"))
@@ -364,5 +460,13 @@ def configure_styles(root: tk.Tk) -> None:
     style.configure("Tile.TLabel", background=PANEL_DARK, foreground=TEXT, font=("Segoe UI", 10, "bold"), padding=(8, 5))
     style.configure("Axis.TLabel", background=PANEL, foreground=MUTED, font=("Segoe UI", 9, "bold"))
     style.configure("MotorName.TLabel", background=PANEL, foreground=TEXT, font=("Segoe UI", 12, "bold"), anchor="center")
+    for health, background in HEALTH_COLORS.items():
+        title = health.title()
+        style.configure("PanelTitle.%s.TLabel" % title, background=background, foreground=TEXT, font=("Segoe UI", 11, "bold"))
+        style.configure("Field.%s.TLabel" % title, background=background, foreground=MUTED, font=("Segoe UI", 8, "bold"))
+        style.configure("Small.%s.TLabel" % title, background=background, foreground=MUTED, font=("Segoe UI", 9))
+        style.configure("Value.%s.TLabel" % title, background=background, foreground=TEXT, font=("Segoe UI", 10, "bold"))
+        style.configure("Axis.%s.TLabel" % title, background=background, foreground=MUTED, font=("Segoe UI", 9, "bold"))
+        style.configure("MotorName.%s.TLabel" % title, background=background, foreground=TEXT, font=("Segoe UI", 12, "bold"), anchor="center")
     style.configure("TButton", background="#e5e7eb", foreground=TEXT)
     style.configure("TCombobox", fieldbackground=PANEL_DARK, background=PANEL_DARK, foreground=TEXT)
