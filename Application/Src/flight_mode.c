@@ -496,7 +496,7 @@ void FlightMode_OnTick(uint32_t now) {
                                                              -FM_MAX_ROLL_PITCH_RATE,
                                                              FM_MAX_ROLL_PITCH_RATE);
                     demand_yaw_rate = yaw_rate_demand +
-                                      FlightMode_ClampFloat(-yaw_angle_error * FM_ANGLE_TO_RATE_GAIN,
+                                      FlightMode_ClampFloat(-yaw_angle_error * FM_YAW_ANGLE_TO_RATE_GAIN,
                                                             -FM_MAX_YAW_RATE,
                                                             FM_MAX_YAW_RATE);
                     demand_yaw_rate = FlightMode_ClampFloat(demand_yaw_rate,
