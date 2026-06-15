@@ -37,6 +37,8 @@ void SetupMenu(void) {
     printf("h - Home.\r\n");
 //    printf("r - Calibrate Receiver Input.\r\n");
     printf("i - Calibrate IMU.\r\n");
+    printf("s - Save IMU calibration.\r\n");
+    printf("u - Clear saved IMU calibration.\r\n");
     printf("e - ESC output.\r\n");
     printf("c - ESC throttle calibration.\r\n");
     printf("1 - Motor 1 only.\r\n");
@@ -109,6 +111,12 @@ void HMISetup_Handle(uint8_t character) {
                 hmiSetup_Display = HMI_CALIBRATE_IMU;
                 hmiSetup_CalibrationCounter = 0;
 
+                break;
+            case 's':
+                hmiSetup_Display = HMI_SAVE_IMU_CALIBRATION;
+                break;
+            case 'u':
+                hmiSetup_Display = HMI_CLEAR_IMU_CALIBRATION;
                 break;
         }
     }
@@ -183,6 +191,36 @@ void HMISetup_Handle(uint8_t character) {
                        imuStatus.systemStatus,
                        imuStatus.systemError);
             }
+            break;
+
+        case HMI_SAVE_IMU_CALIBRATION:
+            imuStatus = IMU_GetStatus();
+            if (!imuStatus.initialized) {
+                printf("IMU unavailable\r\n");
+            } else if (IMU_SaveCalibration()) {
+                printf("Saved IMU calibration S/G/M/A %u/%u/%u/%u\r\n",
+                       imuStatus.calibrationSys,
+                       imuStatus.calibrationGyro,
+                       imuStatus.calibrationMag,
+                       imuStatus.calibrationAccel);
+            } else {
+                printf("IMU calibration not saved. Need full S/G/M/A 3/3/3/3. Current %u/%u/%u/%u\r\n",
+                       imuStatus.calibrationSys,
+                       imuStatus.calibrationGyro,
+                       imuStatus.calibrationMag,
+                       imuStatus.calibrationAccel);
+            }
+            hmiSetup_Display = HMI_NONE;
+            break;
+
+        case HMI_CLEAR_IMU_CALIBRATION:
+            if (IMU_ClearSavedCalibration()) {
+                printf("Cleared saved IMU calibration\r\n");
+            } else {
+                printf("Failed to clear saved IMU calibration\r\n");
+            }
+            hmiSetup_Display = HMI_NONE;
+            break;
 
     }
 

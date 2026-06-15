@@ -42,6 +42,9 @@ typedef struct imu_st_status_tag
 } IMU_ST_STATUS;
 
 bool IMU_Init(void);
+bool IMU_HasSavedCalibration(void);
+bool IMU_SaveCalibration(void);
+bool IMU_ClearSavedCalibration(void);
 
 void IMU_OnTick(uint32_t now);
 

@@ -9,6 +9,7 @@
 #include "main.h"
 #include "imu.h"
 #include "bno055.h"
+#include "imu_calibration_store.h"
 
 #define IMU_REQUEST_INTERVAL 10 // uS eg 20 times per second
 
@@ -23,6 +24,7 @@ int32_t s32PressureVal = 0, s32TemperatureVal = 0, s32AltitudeVal = 0;
 
 uint32_t imuGetTimer = 0;
 static IMU_ST_STATUS imuStatus = {0};
+static bool imuLoadedSavedCalibration = false;
 
 static bool IMU_IsCalibrationComplete(bno055_calibration_state_t calibration) {
     return calibration.sys == 3 &&
@@ -78,12 +80,37 @@ bool IMU_Init(void) {
         return false;
     }
 
+    bno055_calibration_data_t savedCalibration;
+    imuLoadedSavedCalibration = IMUCalibrationStore_Load(&savedCalibration);
+    if (imuLoadedSavedCalibration) {
+        bno055_setCalibrationData(savedCalibration);
+    }
+
     bno055_setOperationModeNDOF();
     bno055_delay(10);
 
     imuStatus.initialized = true;
     IMU_UpdateStatus();
     return imuStatus.fusionRunning && imuStatus.systemError == BNO055_SYSTEM_ERROR_NO_ERROR;
+}
+
+bool IMU_HasSavedCalibration(void) {
+    return imuLoadedSavedCalibration;
+}
+
+bool IMU_SaveCalibration(void) {
+    IMU_UpdateStatus();
+    if (!imuStatus.initialized || !imuStatus.calibrated) {
+        return false;
+    }
+
+    bno055_calibration_data_t calibration = bno055_getCalibrationData();
+    return IMUCalibrationStore_Save(&calibration);
+}
+
+bool IMU_ClearSavedCalibration(void) {
+    imuLoadedSavedCalibration = false;
+    return IMUCalibrationStore_Clear();
 }
 
 void IMU_OnTick(uint32_t now) {
