@@ -2,10 +2,19 @@ from __future__ import annotations
 
 import unittest
 
-from dashboard_state import DashboardState
+from dashboard_state import DashboardState, IMUState, MotorState, RCState, StatusState
 from serial_client import TelemetrySerialClient
 from telemetry_mapper import apply_frame, mark_stale, reset_live_state
 from telemetry_protocol import TelemetryError, format_sentence, format_stop, parse_sentence
+from widgets import (
+    HEALTH_BAD,
+    HEALTH_NORMAL,
+    HEALTH_WARN,
+    flight_panel_health,
+    imu_panel_health,
+    motor_panel_health,
+    rc_panel_health,
+)
 
 
 LIVE_RC_LINE = "$RC,239514,0,500,500,500,0,500,0*29"
@@ -126,6 +135,35 @@ class TelemetryMapperTests(unittest.TestCase):
         self.assertEqual(1, state.motors.m1_front_right)
         self.assertTrue(state.motors.stale)
         self.assertFalse(state.status.telemetry_active)
+
+
+class PanelHealthTests(unittest.TestCase):
+    def test_rc_panel_health_marks_stale_invalid_or_estop_unsafe_bad(self) -> None:
+        self.assertEqual(HEALTH_BAD, rc_panel_health(RCState(stale=True)))
+        self.assertEqual(HEALTH_BAD, rc_panel_health(RCState(channel_valid=[True, True, False, True, True, True])))
+        self.assertEqual(HEALTH_BAD, rc_panel_health(RCState(estop_safe=False)))
+        self.assertEqual(HEALTH_NORMAL, rc_panel_health(RCState()))
+
+    def test_imu_panel_health_marks_stale_error_calibrating_and_ready(self) -> None:
+        ready = IMUState(ready=True, fusion=True, cal_sys=3, cal_gyro=3, cal_mag=3, cal_accel=3)
+
+        self.assertEqual(HEALTH_BAD, imu_panel_health(IMUState(stale=True)))
+        self.assertEqual(HEALTH_BAD, imu_panel_health(IMUState(error=True)))
+        self.assertEqual(HEALTH_WARN, imu_panel_health(IMUState(ready=True, fusion=True, cal_sys=3, cal_gyro=3, cal_mag=2, cal_accel=3)))
+        self.assertEqual(HEALTH_NORMAL, imu_panel_health(ready))
+
+    def test_motor_panel_health_marks_stale_bad(self) -> None:
+        self.assertEqual(HEALTH_BAD, motor_panel_health(MotorState(stale=True)))
+        self.assertEqual(HEALTH_NORMAL, motor_panel_health(MotorState()))
+
+    def test_flight_panel_health_marks_bad_disarmed_and_healthy(self) -> None:
+        healthy = StatusState(connected=True, telemetry_active=True, armed=True, run_mode="ARMED")
+
+        self.assertEqual(HEALTH_BAD, flight_panel_health(StatusState(connected=False, telemetry_active=False)))
+        self.assertEqual(HEALTH_BAD, flight_panel_health(StatusState(connected=True, telemetry_active=True, error=True)))
+        self.assertEqual(HEALTH_BAD, flight_panel_health(StatusState(connected=True, telemetry_active=True, run_mode="FAILSAFE")))
+        self.assertEqual(HEALTH_WARN, flight_panel_health(StatusState(connected=True, telemetry_active=True, armed=False, run_mode="DISARMED")))
+        self.assertEqual(HEALTH_NORMAL, flight_panel_health(healthy))
 
 
 class FakeSerial:
