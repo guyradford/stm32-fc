@@ -34,5 +34,8 @@ void LED_OnTick(uint32_t now){
 }
 
 void LED_SetMode(char *newMode) {
+    if (led_mode != newMode) {
+        pointer = 0;
+    }
     led_mode = newMode;
 }

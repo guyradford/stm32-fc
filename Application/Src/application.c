@@ -9,11 +9,50 @@
 #include "serial_link.h"
 #include "setup_mode.h"
 #include "imu_input.h"
+#include "imu.h"
 #include "rc_receiver.h"
 #include "rc-input.h"
 
 
 uint8_t applicationMode = APPLICATION_MODE_CALIBRATING;
+
+static uint8_t Application_GetIMUCalibrationReadyCount(void) {
+    IMU_ST_STATUS status = IMU_GetStatus();
+    uint8_t readyCount = 0;
+
+    if (status.calibrationSys == 3) readyCount++;
+    if (status.calibrationGyro == 3) readyCount++;
+    if (status.calibrationMag == 3) readyCount++;
+    if (status.calibrationAccel == 3) readyCount++;
+
+    return readyCount;
+}
+
+static void Application_UpdateCalibrationLED(void) {
+    if (!IMUInput_IsCalibrated()) {
+        switch (Application_GetIMUCalibrationReadyCount()) {
+            case 0:
+                LED_SetMode(LED_MODE_IMU_CALIBRATION_0);
+                break;
+            case 1:
+                LED_SetMode(LED_MODE_IMU_CALIBRATION_1);
+                break;
+            case 2:
+                LED_SetMode(LED_MODE_IMU_CALIBRATION_2);
+                break;
+            case 3:
+                LED_SetMode(LED_MODE_IMU_CALIBRATION_3);
+                break;
+            default:
+                LED_SetMode(LED_MODE_IMU_CALIBRATION_4);
+                break;
+        }
+    } else if (!RCInput_IsCalibrated()) {
+        LED_SetMode(LED_MODE_RC_WAIT);
+    } else {
+        LED_SetMode(LED_MODE_GOOD);
+    }
+}
 
 void Application_Init(bool setupMode){
     if (setupMode) {
@@ -63,10 +102,11 @@ void Application_OnTick(uint32_t now){
             break;
 
         case APPLICATION_MODE_CALIBRATING:
-            LED_OnTick(now);
             SerialLink_OnTick(now);
             IMUInput_Calibrate();
             RCInput_Calibrate();
+            Application_UpdateCalibrationLED();
+            LED_OnTick(now);
             if (RCInput_IsCalibrated() && IMUInput_IsCalibrated()){
                 applicationMode = APPLICATION_MODE_RUNNING;
                 LED_SetMode(LED_MODE_GOOD);
