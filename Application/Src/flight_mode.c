@@ -43,9 +43,9 @@ float pid_i_gain_pitch = FM_PID_I_GAIN;  //Gain setting for the pitch I-controll
 float pid_d_gain_pitch = FM_PID_D_GAIN;  //Gain setting for the pitch D-controller.
 int pid_max_pitch = FM_PID_OUTPUT_LIMIT;          //Maximum output of the PID-controller (+/-).
 
-float pid_p_gain_yaw = 1.0;                //Gain setting for the pitch P-controller (default = 4.0).
-float pid_i_gain_yaw = 0.0;               //Gain setting for the pitch I-controller (default = 0.02).
-float pid_d_gain_yaw = 0.0;                //Gain setting for the pitch D-controller (default = 0.0).
+float pid_p_gain_yaw = FM_YAW_PID_P_GAIN;                //Gain setting for the yaw P-controller.
+float pid_i_gain_yaw = FM_YAW_PID_I_GAIN;               //Gain setting for the yaw I-controller.
+float pid_d_gain_yaw = FM_YAW_PID_D_GAIN;                //Gain setting for the yaw D-controller.
 int pid_max_yaw = FM_PID_OUTPUT_LIMIT;                     //Maximum output of the PID-controller (+/-).
 
 
@@ -105,6 +105,10 @@ static float FlightMode_GetYawRateDemand(void) {
     if (input_yaw < -CONFIG_DEAD_BAND) return (float) (input_yaw + CONFIG_DEAD_BAND) * yawAnglePerInput * FM_YAW_INPUT_SIGN;
     if (input_yaw > CONFIG_DEAD_BAND) return (float) (input_yaw - CONFIG_DEAD_BAND) * yawAnglePerInput * FM_YAW_INPUT_SIGN;
     return 0.0f;
+}
+
+static bool FlightMode_YawStickIsCentered(void) {
+    return input_yaw >= -CONFIG_DEAD_BAND && input_yaw <= CONFIG_DEAD_BAND;
 }
 
 static void FlightMode_ResetPidState(void) {
@@ -243,7 +247,11 @@ void calculate_pid(bool integrate, float dt) {
 
     //Yaw rate calculations
     pid_error_temp = imuRates.fYaw - demand_yaw_rate;
-    if (integrate) pid_i_mem_yaw += pid_i_gain_yaw * pid_error_temp * dt;
+    if (integrate && FlightMode_YawStickIsCentered()) {
+        pid_i_mem_yaw += pid_i_gain_yaw * pid_error_temp * dt;
+    } else {
+        pid_i_mem_yaw = 0;
+    }
     if (pid_i_mem_yaw > pid_max_yaw)pid_i_mem_yaw = pid_max_yaw;
     else if (pid_i_mem_yaw < pid_max_yaw * -1)pid_i_mem_yaw = pid_max_yaw * -1;
 

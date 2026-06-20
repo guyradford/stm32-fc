@@ -143,7 +143,7 @@ static void test_yaw_error_uses_shortest_path_across_zero_degrees(void) {
     FakeFlightHardware_SetAngles(1.0f, 0.0f, 0.0f);
     FlightMode_OnTick(40);
     TEST_ASSERT_FLOAT_WITHIN(0.001f, -4.0f, FlightMode_GetYawRateSetpoint());
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 4.0f, FlightMode_GetPIDYaw());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 4.006f, FlightMode_GetPIDYaw());
 
     reset_flight_mode_state();
     arm_auto_at_heading(1.0f);
@@ -151,7 +151,7 @@ static void test_yaw_error_uses_shortest_path_across_zero_degrees(void) {
     FakeFlightHardware_SetAngles(359.0f, 0.0f, 0.0f);
     FlightMode_OnTick(40);
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 4.0f, FlightMode_GetYawRateSetpoint());
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, -4.0f, FlightMode_GetPIDYaw());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, -4.006f, FlightMode_GetPIDYaw());
 }
 
 static void test_yaw_stick_integrates_wrapped_heading_setpoint(void) {
@@ -169,6 +169,23 @@ static void test_yaw_stick_integrates_wrapped_heading_setpoint(void) {
     TEST_ASSERT_EQUAL_UINT16(402, EscOutput_GetMotorSpeed(MOTOR_2));
     TEST_ASSERT_EQUAL_UINT16(198, EscOutput_GetMotorSpeed(MOTOR_3));
     TEST_ASSERT_EQUAL_UINT16(402, EscOutput_GetMotorSpeed(MOTOR_4));
+}
+
+static void test_centered_yaw_integral_trims_steady_rate_bias(void) {
+    input_yaw = 0;
+    imuRates.fYaw = 10.0f;
+    demand_yaw_rate = 0.0f;
+
+    calculate_pid(true, 1.0f);
+
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 1.5f, pid_i_mem_yaw);
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 11.5f, FlightMode_GetPIDYaw());
+
+    input_yaw = 100;
+    calculate_pid(true, 1.0f);
+
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, pid_i_mem_yaw);
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 10.0f, FlightMode_GetPIDYaw());
 }
 
 static void test_low_throttle_clears_pid_integrator_bias(void) {
@@ -243,6 +260,7 @@ int main(void) {
     RUN_TEST(test_centered_yaw_holds_arming_heading_without_motor_bias);
     RUN_TEST(test_yaw_error_uses_shortest_path_across_zero_degrees);
     RUN_TEST(test_yaw_stick_integrates_wrapped_heading_setpoint);
+    RUN_TEST(test_centered_yaw_integral_trims_steady_rate_bias);
     RUN_TEST(test_low_throttle_clears_pid_integrator_bias);
     RUN_TEST(test_low_throttle_rebases_auto_yaw_target_to_current_heading);
     RUN_TEST(test_full_roll_stick_has_authoritative_auto_level_response);

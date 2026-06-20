@@ -6,6 +6,9 @@
 #define FM_PID_I_GAIN 0.0  // Keep pitch/roll integral disabled until basic stabilization is proven.
 #define FM_PID_D_GAIN 0.005 // First-hop pitch/roll rate D gain.
 #define FM_PID_OUTPUT_LIMIT 180
+#define FM_YAW_PID_P_GAIN 1.0f
+#define FM_YAW_PID_I_GAIN 0.15f
+#define FM_YAW_PID_D_GAIN 0.0f
 
 #define FM_PID_P_INCREMENTS 0.1
 #define FM_PID_I_INCREMENTS 0.01
