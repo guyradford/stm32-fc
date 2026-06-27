@@ -173,6 +173,7 @@ static void test_yaw_stick_integrates_wrapped_heading_setpoint(void) {
 
 static void test_centered_yaw_integral_trims_steady_rate_bias(void) {
     input_yaw = 0;
+    demand_throttle = FM_YAW_INTEGRAL_MIN_THROTTLE;
     imuRates.fYaw = 10.0f;
     demand_yaw_rate = 0.0f;
 
@@ -182,6 +183,19 @@ static void test_centered_yaw_integral_trims_steady_rate_bias(void) {
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 11.5f, FlightMode_GetPIDYaw());
 
     input_yaw = 100;
+    calculate_pid(true, 1.0f);
+
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, pid_i_mem_yaw);
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 10.0f, FlightMode_GetPIDYaw());
+}
+
+static void test_low_throttle_blocks_yaw_integral_windup(void) {
+    input_yaw = 0;
+    demand_throttle = FM_YAW_INTEGRAL_MIN_THROTTLE - 1;
+    imuRates.fYaw = 10.0f;
+    demand_yaw_rate = 0.0f;
+    pid_i_mem_yaw = 25.0f;
+
     calculate_pid(true, 1.0f);
 
     TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, pid_i_mem_yaw);
@@ -261,6 +275,7 @@ int main(void) {
     RUN_TEST(test_yaw_error_uses_shortest_path_across_zero_degrees);
     RUN_TEST(test_yaw_stick_integrates_wrapped_heading_setpoint);
     RUN_TEST(test_centered_yaw_integral_trims_steady_rate_bias);
+    RUN_TEST(test_low_throttle_blocks_yaw_integral_windup);
     RUN_TEST(test_low_throttle_clears_pid_integrator_bias);
     RUN_TEST(test_low_throttle_rebases_auto_yaw_target_to_current_heading);
     RUN_TEST(test_full_roll_stick_has_authoritative_auto_level_response);

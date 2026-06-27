@@ -111,6 +111,12 @@ static bool FlightMode_YawStickIsCentered(void) {
     return input_yaw >= -CONFIG_DEAD_BAND && input_yaw <= CONFIG_DEAD_BAND;
 }
 
+static bool FlightMode_YawIntegralIsAllowed(bool integrate) {
+    return integrate &&
+           FlightMode_YawStickIsCentered() &&
+           demand_throttle >= FM_YAW_INTEGRAL_MIN_THROTTLE;
+}
+
 static void FlightMode_ResetPidState(void) {
     pid_i_mem_roll = 0;
     pid_output_roll = 0;
@@ -247,7 +253,7 @@ void calculate_pid(bool integrate, float dt) {
 
     //Yaw rate calculations
     pid_error_temp = imuRates.fYaw - demand_yaw_rate;
-    if (integrate && FlightMode_YawStickIsCentered()) {
+    if (FlightMode_YawIntegralIsAllowed(integrate)) {
         pid_i_mem_yaw += pid_i_gain_yaw * pid_error_temp * dt;
     } else {
         pid_i_mem_yaw = 0;
