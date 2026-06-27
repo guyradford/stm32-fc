@@ -132,7 +132,7 @@ class HMIDashboardApp:
     def _apply_state(self) -> None:
         self.status_strip.update_state(self.state.status)
         self.flight.update_state(self.state.status)
-        self.imu.update_state(self.state.imu)
+        self.imu.update_state(self.state.imu, self.state.pid)
         self.motors.update_state(self.state.motors)
         self.rc.update_state(self.state.rc)
         self.pid.update_state(self.state)
@@ -202,7 +202,7 @@ class HMIDashboardApp:
                 break
 
             if event.kind == "frame" and event.frame is not None:
-                if event.frame.subject in ("RC", "IMU", "IMUC", "MOT", "STAT"):
+                if event.frame.subject in ("RC", "IMU", "IMUC", "MOT", "STAT", "PID"):
                     try:
                         apply_frame(self.state, event.frame)
                         subject_count = self._rx_subject_counts.get(event.frame.subject, 0) + 1

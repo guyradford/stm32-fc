@@ -21,6 +21,7 @@ LIVE_RC_LINE = "$RC,239514,0,500,500,500,0,500,0*29"
 LIVE_IMU_LINE = "$IMU,239514,0,0,0,0,0,0,0*69"
 LIVE_IMUC_LINE = format_sentence("IMUC,239514,3,3,2,1,0")
 LIVE_MOT_LINE = "$MOT,239514,1001,1002,1003,1004*76"
+LIVE_PID_LINE = format_sentence("PID,239514,9000,-450,125,1000,-2000,3000,12,-34,56")
 DEMAND_MOT_LINE = format_sentence("MOT,239514,1,2,3,4")
 
 
@@ -50,11 +51,17 @@ class TelemetryProtocolTests(unittest.TestCase):
 
         self.assertEqual("STAT", frame.subject)
 
+    def test_pid_sentence_is_first_class(self) -> None:
+        frame = parse_sentence(format_sentence("PID,1000,1,2,3,4,5,6,7,8,9"))
+
+        self.assertEqual("PID", frame.subject)
+
     def test_parses_live_fc_sample_lines(self) -> None:
         self.assertEqual("RC", parse_sentence(LIVE_RC_LINE).subject)
         self.assertEqual("IMU", parse_sentence(LIVE_IMU_LINE).subject)
         self.assertEqual("IMUC", parse_sentence(LIVE_IMUC_LINE).subject)
         self.assertEqual("MOT", parse_sentence(LIVE_MOT_LINE).subject)
+        self.assertEqual("PID", parse_sentence(LIVE_PID_LINE).subject)
 
 
 class TelemetryMapperTests(unittest.TestCase):
@@ -125,15 +132,35 @@ class TelemetryMapperTests(unittest.TestCase):
         self.assertFalse(state.status.error)
         self.assertEqual(12, state.status.loop_age_ms)
 
+    def test_pid_mapping_converts_demands_rates_and_outputs(self) -> None:
+        state = DashboardState()
+        reset_live_state(state)
+
+        apply_frame(state, parse_sentence(LIVE_PID_LINE), 10.0)
+
+        self.assertEqual(90.0, state.pid.yaw_setpoint)
+        self.assertEqual(-4.5, state.pid.pitch_setpoint)
+        self.assertEqual(1.25, state.pid.roll_setpoint)
+        self.assertEqual(10.0, state.pid.yaw_rate_setpoint)
+        self.assertEqual(-20.0, state.pid.pitch_rate_setpoint)
+        self.assertEqual(30.0, state.pid.roll_rate_setpoint)
+        self.assertEqual(12.0, state.pid.yaw_output)
+        self.assertEqual(-34.0, state.pid.pitch_output)
+        self.assertEqual(56.0, state.pid.roll_output)
+        self.assertFalse(state.pid.stale)
+
     def test_stale_keeps_values_but_marks_panels(self) -> None:
         state = DashboardState()
         reset_live_state(state)
         apply_frame(state, parse_sentence(format_sentence("MOT,1000,1,2,3,4")), 10.0)
+        apply_frame(state, parse_sentence(LIVE_PID_LINE), 10.0)
 
         mark_stale(state, 12.0)
 
         self.assertEqual(1, state.motors.m1_front_right)
         self.assertTrue(state.motors.stale)
+        self.assertEqual(90.0, state.pid.yaw_setpoint)
+        self.assertTrue(state.pid.stale)
         self.assertFalse(state.status.telemetry_active)
 
 
@@ -208,6 +235,7 @@ class TelemetrySerialClientTests(unittest.TestCase):
         apply_frame(state, parse_sentence(LIVE_IMU_LINE), 10.0)
         apply_frame(state, parse_sentence(LIVE_IMUC_LINE), 10.0)
         apply_frame(state, parse_sentence(DEMAND_MOT_LINE), 10.0)
+        apply_frame(state, parse_sentence(LIVE_PID_LINE), 10.0)
 
         self.assertEqual(0, state.rc.throttle)
         self.assertEqual(0, state.rc.pitch)
@@ -217,6 +245,8 @@ class TelemetrySerialClientTests(unittest.TestCase):
         self.assertEqual(1, state.imu.cal_accel)
         self.assertEqual(1, state.motors.m1_front_right)
         self.assertEqual(4, state.motors.m4_front_left)
+        self.assertEqual(90.0, state.pid.yaw_setpoint)
+        self.assertFalse(state.pid.stale)
         self.assertTrue(state.status.telemetry_active)
 
 

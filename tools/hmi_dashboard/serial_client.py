@@ -6,8 +6,26 @@ import time
 from dataclasses import dataclass
 from typing import Literal
 
-import serial
-from serial.tools import list_ports
+try:
+    import serial
+    from serial.tools import list_ports
+except ModuleNotFoundError:
+    class _SerialShim:
+        EIGHTBITS = 8
+        PARITY_NONE = "N"
+        STOPBITS_ONE = 1
+
+        class SerialException(Exception):
+            pass
+
+        class SerialTimeoutException(SerialException):
+            pass
+
+        def Serial(self, *_args: object, **_kwargs: object) -> object:
+            raise self.SerialException("pyserial is not installed")
+
+    serial = _SerialShim()
+    list_ports = None
 
 from telemetry_protocol import TelemetryError, TelemetryFrame, format_stop, parse_sentence
 
@@ -23,6 +41,8 @@ class SerialEvent:
 
 
 def list_serial_ports() -> list[str]:
+    if list_ports is None:
+        return []
     return [port.device for port in list_ports.comports()]
 
 

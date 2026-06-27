@@ -15,7 +15,7 @@
 
 
 #define CONFIG_MAX_PITCH_ANGLE 45.0
-#define CONFIG_MAX_YAW_ANGLE_PER_SECOND 200.0
+#define CONFIG_MAX_YAW_ANGLE_PER_SECOND 160.0
 #define CONFIG_DEAD_BAND 50
 #define CONFIG_MAX_INPUT_RANGE (500-CONFIG_DEAD_BAND)
 #define FM_DEGREES_PER_ROTATION 360.0f
@@ -43,10 +43,10 @@ float pid_i_gain_pitch = FM_PID_I_GAIN;  //Gain setting for the pitch I-controll
 float pid_d_gain_pitch = FM_PID_D_GAIN;  //Gain setting for the pitch D-controller.
 int pid_max_pitch = FM_PID_OUTPUT_LIMIT;          //Maximum output of the PID-controller (+/-).
 
-float pid_p_gain_yaw = 1.0;                //Gain setting for the pitch P-controller (default = 4.0).
-float pid_i_gain_yaw = 0.0;               //Gain setting for the pitch I-controller (default = 0.02).
-float pid_d_gain_yaw = 0.0;                //Gain setting for the pitch D-controller (default = 0.0).
-int pid_max_yaw = FM_PID_OUTPUT_LIMIT;                     //Maximum output of the PID-controller (+/-).
+float pid_p_gain_yaw = FM_YAW_PID_P_GAIN;                //Gain setting for the yaw P-controller.
+float pid_i_gain_yaw = FM_YAW_PID_I_GAIN;               //Gain setting for the yaw I-controller.
+float pid_d_gain_yaw = FM_YAW_PID_D_GAIN;                //Gain setting for the yaw D-controller.
+int pid_max_yaw = FM_YAW_PID_OUTPUT_LIMIT;                 //Maximum output of the PID-controller (+/-).
 
 
 uint8_t FlightMode_Mode = FM_STOPPED;
@@ -65,7 +65,7 @@ float yaw_correction = 0;
 uint16_t esc_1, esc_2, esc_3, esc_4 = 0;
 
 float anglePerInput = (float) CONFIG_MAX_PITCH_ANGLE / CONFIG_MAX_INPUT_RANGE;
-float yawAnglePerInput = (float) CONFIG_MAX_YAW_ANGLE_PER_SECOND / CONFIG_MAX_INPUT_RANGE / 2;
+float yawAnglePerInput = (float) CONFIG_MAX_YAW_ANGLE_PER_SECOND / CONFIG_MAX_INPUT_RANGE;
 
 float pid_i_mem_roll, pid_output_roll, pid_last_roll_d_error;
 float pid_i_mem_pitch, pid_output_pitch, pid_last_pitch_d_error;
@@ -105,6 +105,16 @@ static float FlightMode_GetYawRateDemand(void) {
     if (input_yaw < -CONFIG_DEAD_BAND) return (float) (input_yaw + CONFIG_DEAD_BAND) * yawAnglePerInput * FM_YAW_INPUT_SIGN;
     if (input_yaw > CONFIG_DEAD_BAND) return (float) (input_yaw - CONFIG_DEAD_BAND) * yawAnglePerInput * FM_YAW_INPUT_SIGN;
     return 0.0f;
+}
+
+static bool FlightMode_YawStickIsCentered(void) {
+    return input_yaw >= -CONFIG_DEAD_BAND && input_yaw <= CONFIG_DEAD_BAND;
+}
+
+static bool FlightMode_YawIntegralIsAllowed(bool integrate) {
+    return integrate &&
+           FlightMode_YawStickIsCentered() &&
+           demand_throttle >= FM_YAW_INTEGRAL_MIN_THROTTLE;
 }
 
 static void FlightMode_ResetPidState(void) {
@@ -243,7 +253,11 @@ void calculate_pid(bool integrate, float dt) {
 
     //Yaw rate calculations
     pid_error_temp = imuRates.fYaw - demand_yaw_rate;
-    if (integrate) pid_i_mem_yaw += pid_i_gain_yaw * pid_error_temp * dt;
+    if (FlightMode_YawIntegralIsAllowed(integrate)) {
+        pid_i_mem_yaw += pid_i_gain_yaw * pid_error_temp * dt;
+    } else {
+        pid_i_mem_yaw = 0;
+    }
     if (pid_i_mem_yaw > pid_max_yaw)pid_i_mem_yaw = pid_max_yaw;
     else if (pid_i_mem_yaw < pid_max_yaw * -1)pid_i_mem_yaw = pid_max_yaw * -1;
 
@@ -496,7 +510,7 @@ void FlightMode_OnTick(uint32_t now) {
                                                              -FM_MAX_ROLL_PITCH_RATE,
                                                              FM_MAX_ROLL_PITCH_RATE);
                     demand_yaw_rate = yaw_rate_demand +
-                                      FlightMode_ClampFloat(-yaw_angle_error * FM_ANGLE_TO_RATE_GAIN,
+                                      FlightMode_ClampFloat(-yaw_angle_error * FM_YAW_ANGLE_TO_RATE_GAIN,
                                                             -FM_MAX_YAW_RATE,
                                                             FM_MAX_YAW_RATE);
                     demand_yaw_rate = FlightMode_ClampFloat(demand_yaw_rate,

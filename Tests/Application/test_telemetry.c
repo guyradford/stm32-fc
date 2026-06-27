@@ -74,6 +74,22 @@ void test_req_imuc_subject_continues(void) {
     TEST_ASSERT_EQUAL(TELEMETRY_INPUT_CONTINUE, FeedSentence(sentence));
 }
 
+void test_req_pid_subject_continues(void) {
+    char sentence[TELEMETRY_MAX_SENTENCE_LENGTH];
+    Telemetry_Start(1000);
+    Telemetry_FormatSentence("REQ,PID", sentence, sizeof(sentence));
+
+    TEST_ASSERT_EQUAL(TELEMETRY_INPUT_CONTINUE, FeedSentence(sentence));
+}
+
+void test_pid_payload_formats_demands_setpoints_and_outputs(void) {
+    char payload[TELEMETRY_MAX_SENTENCE_LENGTH];
+
+    TEST_ASSERT_TRUE(Telemetry_FormatPidPayload(1234, payload, sizeof(payload)));
+
+    TEST_ASSERT_EQUAL_STRING("PID,1234,1234,-567,50,120,340,-560,8,-9,9", payload);
+}
+
 uint16_t RCInput_GetInputValue(uint8_t RC_Channel) {
     (void) RC_Channel;
     return 500;
@@ -147,6 +163,42 @@ uint16_t EscOutput_GetMotorSpeed(uint8_t motor) {
     return 0;
 }
 
+float FlightMode_GetYaw(void) {
+    return 12.34f;
+}
+
+float FlightMode_GetPitch(void) {
+    return -5.67f;
+}
+
+float FlightMode_GetRoll(void) {
+    return 0.5f;
+}
+
+float FlightMode_GetYawRateSetpoint(void) {
+    return 1.2f;
+}
+
+float FlightMode_GetPitchRateSetpoint(void) {
+    return 3.4f;
+}
+
+float FlightMode_GetRollRateSetpoint(void) {
+    return -5.6f;
+}
+
+float FlightMode_GetPIDYaw(void) {
+    return 7.6f;
+}
+
+float FlightMode_GetPIDPitch(void) {
+    return -8.6f;
+}
+
+float FlightMode_GetPIDRoll(void) {
+    return 9.4f;
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_checksum_xors_payload_bytes);
@@ -156,5 +208,7 @@ int main(void) {
     RUN_TEST(test_stop_command_with_bad_checksum_does_not_exit);
     RUN_TEST(test_req_known_subject_continues);
     RUN_TEST(test_req_imuc_subject_continues);
+    RUN_TEST(test_req_pid_subject_continues);
+    RUN_TEST(test_pid_payload_formats_demands_setpoints_and_outputs);
     return UNITY_END();
 }

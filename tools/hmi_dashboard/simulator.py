@@ -61,12 +61,16 @@ class DashboardSimulator:
         state.imu.cal_accel = 3
         state.imu.stale = False
 
-        state.pid.yaw_setpoint = state.rc.yaw / 100.0
-        state.pid.pitch_setpoint = state.rc.pitch / 100.0
-        state.pid.roll_setpoint = state.rc.roll / 100.0
+        state.pid.yaw_setpoint = (state.imu.yaw_deg + state.rc.yaw * 0.04) % 360.0
+        state.pid.pitch_setpoint = state.rc.pitch * 0.09
+        state.pid.roll_setpoint = state.rc.roll * 0.09
+        state.pid.yaw_rate_setpoint = state.rc.yaw * 0.2
+        state.pid.pitch_rate_setpoint = (state.pid.pitch_setpoint - state.imu.pitch_deg) * 4.0
+        state.pid.roll_rate_setpoint = (state.pid.roll_setpoint - state.imu.roll_deg) * 4.0
         state.pid.yaw_output = 0.12 * state.rc.yaw
         state.pid.pitch_output = 0.14 * state.rc.pitch
         state.pid.roll_output = 0.14 * state.rc.roll
+        state.pid.stale = False
 
         log_second = int(elapsed)
         if log_second != self._last_log_second:

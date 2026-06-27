@@ -6,6 +6,11 @@
 #define FM_PID_I_GAIN 0.0  // Keep pitch/roll integral disabled until basic stabilization is proven.
 #define FM_PID_D_GAIN 0.005 // First-hop pitch/roll rate D gain.
 #define FM_PID_OUTPUT_LIMIT 180
+#define FM_YAW_PID_OUTPUT_LIMIT 240
+#define FM_YAW_PID_P_GAIN 1.8f
+#define FM_YAW_PID_I_GAIN 0.45f
+#define FM_YAW_PID_D_GAIN 0.0f
+#define FM_YAW_INTEGRAL_MIN_THROTTLE 250
 
 #define FM_PID_P_INCREMENTS 0.1
 #define FM_PID_I_INCREMENTS 0.01
@@ -15,9 +20,10 @@
 #define FM_ANGLE_CONTROL_INTERVAL_MS 20 // 50 Hz angle outer loop.
 #define FM_CONTROL_INTERVAL_MS FM_RATE_CONTROL_INTERVAL_MS
 #define FM_CONTROL_DT_SECONDS ((float) FM_RATE_CONTROL_INTERVAL_MS / 1000.0f)
-#define FM_ANGLE_TO_RATE_GAIN 2.0f
-#define FM_MAX_ROLL_PITCH_RATE 90.0f
-#define FM_MAX_YAW_RATE 120.0f
+#define FM_ANGLE_TO_RATE_GAIN 4.0f
+#define FM_YAW_ANGLE_TO_RATE_GAIN 3.0f
+#define FM_MAX_ROLL_PITCH_RATE 180.0f
+#define FM_MAX_YAW_RATE 160.0f
 #define FM_YAW_INPUT_SIGN -1.0f
 
 // Keep motors idle at arming throttle, then preserve mixer authority once throttle is above the control threshold.
@@ -88,11 +94,11 @@
 
 #define IMU_INPUT_PITCH_ANGLE_SIGN -1.0f
 #define IMU_INPUT_ROLL_ANGLE_SIGN   1.0f
-#define IMU_INPUT_YAW_ANGLE_SIGN    1.0f
+#define IMU_INPUT_YAW_ANGLE_SIGN   -1.0f
 
 #define IMU_INPUT_PITCH_RATE_SIGN  1.0f
 #define IMU_INPUT_ROLL_RATE_SIGN  -1.0f
-#define IMU_INPUT_YAW_RATE_SIGN    1.0f
+#define IMU_INPUT_YAW_RATE_SIGN   -1.0f
 
 #define IMU_INPUT_PITCH_RATE_AXIS IMU_INPUT_RATE_AXIS_X
 #define IMU_INPUT_ROLL_RATE_AXIS  IMU_INPUT_RATE_AXIS_Y

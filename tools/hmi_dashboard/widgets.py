@@ -4,7 +4,7 @@ import math
 import tkinter as tk
 from tkinter import ttk
 
-from dashboard_state import DashboardState, IMUState, MotorState, RCState, StatusState
+from dashboard_state import DashboardState, IMUState, MotorState, PIDState, RCState, StatusState
 
 
 BG = "#f3f4f6"
@@ -19,6 +19,7 @@ ORANGE = "#e66a2c"
 RED = "#d64545"
 GREY = "#94a3b8"
 BLUE = "#2563eb"
+PURPLE = "#7c3aed"
 PANEL_WARN = "#fff7df"
 PANEL_BAD = "#fff0f0"
 
@@ -185,6 +186,8 @@ class ValueBar(ttk.Frame):
         self._value = ttk.Label(self, text="0", style="Value.TLabel")
         self._value.grid(row=2, column=0, sticky="ew")
         self._current = 0.0
+        self._demand: float | None = None
+        self._demand_stale = True
         self._color = GREEN
         self._stale = False
         self.bind("<Configure>", lambda _event: self._draw())
@@ -194,6 +197,11 @@ class ValueBar(ttk.Frame):
         self._color = color or signed_color(self._current, max(abs(self.minimum), abs(self.maximum)))
         self._stale = stale
         self._value.configure(text=self.value_format.format(self._current))
+        self._draw()
+
+    def set_demand_marker(self, value: float | None, stale: bool = False) -> None:
+        self._demand = None if value is None else max(self.minimum, min(self.maximum, value))
+        self._demand_stale = stale
         self._draw()
 
     def _draw(self) -> None:
@@ -230,8 +238,36 @@ class ValueBar(ttk.Frame):
             ratio = (self._current - self.minimum) / span
             canvas.create_rectangle(pad + 1, pad + 1, pad + ratio * (width - 2 * pad), height - pad - 1, outline="", fill=fill)
 
+        self._draw_demand_marker(canvas, width, height, pad)
+
         if self._stale:
             canvas.create_rectangle(1, 1, width - 2, height - 2, outline=outline, width=2)
+
+    def _draw_demand_marker(self, canvas: tk.Canvas, width: int, height: int, pad: int) -> None:
+        if self._demand is None:
+            return
+
+        color = GREY if self._demand_stale else PURPLE
+        limit = max(abs(self.minimum), abs(self.maximum), 1)
+
+        if self.orientation == "vertical_center":
+            zero = height / 2
+            y = zero - (self._demand / limit) * ((height - 2 * pad) / 2)
+            canvas.create_polygon(width - pad + 1, y, width - 1, y - 6, width - 1, y + 6, fill=color, outline="")
+        elif self.orientation == "horizontal_center":
+            zero = width / 2
+            x = zero + (self._demand / limit) * ((width - 2 * pad) / 2)
+            canvas.create_polygon(x, pad - 1, x - 6, 1, x + 6, 1, fill=color, outline="")
+        elif self.orientation == "vertical":
+            span = max(1, self.maximum - self.minimum)
+            ratio = (self._demand - self.minimum) / span
+            y = height - pad - ratio * (height - 2 * pad)
+            canvas.create_polygon(width - pad + 1, y, width - 1, y - 6, width - 1, y + 6, fill=color, outline="")
+        else:
+            span = max(1, self.maximum - self.minimum)
+            ratio = (self._demand - self.minimum) / span
+            x = pad + ratio * (width - 2 * pad)
+            canvas.create_polygon(x, pad - 1, x - 6, 1, x + 6, 1, fill=color, outline="")
 
 
 class MotorMap(Panel):
@@ -322,9 +358,13 @@ class Compass(tk.Canvas):
     def __init__(self, parent: tk.Widget) -> None:
         super().__init__(parent, width=145, height=145, bg=PANEL_DARK, highlightthickness=1, highlightbackground=GRID)
         self._heading = 0.0
+        self._demand_heading: float | None = None
+        self._demand_stale = True
 
-    def set_heading(self, heading: float) -> None:
+    def set_heading(self, heading: float, demand_heading: float | None = None, demand_stale: bool = True) -> None:
         self._heading = heading % 360.0
+        self._demand_heading = None if demand_heading is None else demand_heading % 360.0
+        self._demand_stale = demand_stale
         self._draw()
 
     def _draw(self) -> None:
@@ -342,6 +382,12 @@ class Compass(tk.Canvas):
         left = (cx + math.cos(pointer_angle + 2.5) * 13, cy + math.sin(pointer_angle + 2.5) * 13)
         right = (cx + math.cos(pointer_angle - 2.5) * 13, cy + math.sin(pointer_angle - 2.5) * 13)
         self.create_polygon(tip, left, right, fill=BLUE, outline="")
+        if self._demand_heading is not None:
+            demand_angle = math.radians(self._demand_heading - 90)
+            demand_tip = (cx + math.cos(demand_angle) * (radius - 3), cy + math.sin(demand_angle) * (radius - 3))
+            demand_left = (cx + math.cos(demand_angle + 2.65) * 10, cy + math.sin(demand_angle + 2.65) * 10)
+            demand_right = (cx + math.cos(demand_angle - 2.65) * 10, cy + math.sin(demand_angle - 2.65) * 10)
+            self.create_polygon(demand_tip, demand_left, demand_right, fill=GREY if self._demand_stale else PURPLE, outline="")
         self.create_oval(cx - 5, cy - 5, cx + 5, cy + 5, fill=TEXT, outline="")
         self.create_text(cx, height - 16, text="YAW %.0f deg" % self._heading, fill=TEXT, font=("Segoe UI", 10, "bold"))
 
@@ -371,11 +417,13 @@ class IMUPanel(Panel):
         self.cal = ttk.Label(health, text="CAL S/G/M/A 0/0/0/0", style="Small.TLabel")
         self.cal.grid(row=0, column=3, padx=(8, 0))
 
-    def update_state(self, imu: IMUState) -> None:
+    def update_state(self, imu: IMUState, pid: PIDState) -> None:
         self.set_health(imu_panel_health(imu))
         self.roll.set(imu.roll_deg, signed_color(imu.roll_deg, 45), imu.stale)
+        self.roll.set_demand_marker(pid.roll_setpoint, pid.stale)
         self.pitch.set(imu.pitch_deg, signed_color(imu.pitch_deg, 45), imu.stale)
-        self.compass.set_heading(imu.yaw_deg)
+        self.pitch.set_demand_marker(pid.pitch_setpoint, pid.stale)
+        self.compass.set_heading(imu.yaw_deg, pid.yaw_setpoint, pid.stale)
         self.rates.configure(text="Rates dps  Roll % 6.1f   Pitch % 6.1f   Yaw % 6.1f" % (imu.roll_rate_dps, imu.pitch_rate_dps, imu.yaw_rate_dps))
         self.ready.set(imu.ready and not imu.stale)
         self.fusion.set(imu.fusion and not imu.stale)
@@ -432,8 +480,23 @@ class PIDPanel(Panel):
     def update_state(self, state: DashboardState) -> None:
         pid = state.pid
         self.text.configure(
-            text="Setpoint Y/P/R: % 5.1f / % 5.1f / % 5.1f     PID Out Y/P/R: % 6.1f / % 6.1f / % 6.1f"
-            % (pid.yaw_setpoint, pid.pitch_setpoint, pid.roll_setpoint, pid.yaw_output, pid.pitch_output, pid.roll_output)
+            text=(
+                "Demand Y/P/R: % 5.1f / % 5.1f / % 5.1f     "
+                "Rate SP Y/P/R: % 6.1f / % 6.1f / % 6.1f     "
+                "PID Out Y/P/R: % 6.1f / % 6.1f / % 6.1f%s"
+            )
+            % (
+                pid.yaw_setpoint,
+                pid.pitch_setpoint,
+                pid.roll_setpoint,
+                pid.yaw_rate_setpoint,
+                pid.pitch_rate_setpoint,
+                pid.roll_rate_setpoint,
+                pid.yaw_output,
+                pid.pitch_output,
+                pid.roll_output,
+                "     STALE" if pid.stale else "",
+            )
         )
 
 

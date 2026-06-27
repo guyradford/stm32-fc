@@ -9,9 +9,10 @@
 #include "output.h"
 #include "rc-input.h"
 #include "rc_receiver.h"
+#include "flight_mode.h"
 
 #define TELEMETRY_COMMAND_BUFFER_LENGTH 64
-#define TELEMETRY_SUBJECT_COUNT 6
+#define TELEMETRY_SUBJECT_COUNT 7
 #define TELEMETRY_MAX_RATE_HZ 50
 
 typedef enum {
@@ -20,7 +21,8 @@ typedef enum {
     TELEMETRY_SUBJECT_IMU,
     TELEMETRY_SUBJECT_IMUC,
     TELEMETRY_SUBJECT_IMUR,
-    TELEMETRY_SUBJECT_MOT
+    TELEMETRY_SUBJECT_MOT,
+    TELEMETRY_SUBJECT_PID
 } TelemetrySubjectIndex;
 
 typedef struct {
@@ -36,7 +38,8 @@ static TelemetrySubscription subscriptions[TELEMETRY_SUBJECT_COUNT] = {
         {"IMU", 100, 0, false},
         {"IMUC", 1000, 0, false},
         {"IMUR", 0, 0, false},
-        {"MOT", 200, 0, false}
+        {"MOT", 200, 0, false},
+        {"PID", 100, 0, false}
 };
 
 static char command_buffer[TELEMETRY_COMMAND_BUFFER_LENGTH];
@@ -183,6 +186,28 @@ static void Telemetry_SendMot(uint32_t now) {
     Telemetry_SendPayload(payload);
 }
 
+bool Telemetry_FormatPidPayload(uint32_t now, char *out, size_t out_size) {
+    int written = snprintf(out, out_size, "PID,%lu,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld",
+                           (unsigned long) now,
+                           (long) Telemetry_ScaleFloat(FlightMode_GetYaw(), 100.0f),
+                           (long) Telemetry_ScaleFloat(FlightMode_GetPitch(), 100.0f),
+                           (long) Telemetry_ScaleFloat(FlightMode_GetRoll(), 100.0f),
+                           (long) Telemetry_ScaleFloat(FlightMode_GetYawRateSetpoint(), 100.0f),
+                           (long) Telemetry_ScaleFloat(FlightMode_GetPitchRateSetpoint(), 100.0f),
+                           (long) Telemetry_ScaleFloat(FlightMode_GetRollRateSetpoint(), 100.0f),
+                           (long) Telemetry_ScaleFloat(FlightMode_GetPIDYaw(), 1.0f),
+                           (long) Telemetry_ScaleFloat(FlightMode_GetPIDPitch(), 1.0f),
+                           (long) Telemetry_ScaleFloat(FlightMode_GetPIDRoll(), 1.0f));
+    return written > 0 && (size_t) written < out_size;
+}
+
+static void Telemetry_SendPid(uint32_t now) {
+    char payload[TELEMETRY_MAX_SENTENCE_LENGTH];
+    if (Telemetry_FormatPidPayload(now, payload, sizeof(payload))) {
+        Telemetry_SendPayload(payload);
+    }
+}
+
 static void Telemetry_SendSubject(TelemetrySubjectIndex index, uint32_t now) {
     switch (index) {
         case TELEMETRY_SUBJECT_RC:
@@ -202,6 +227,9 @@ static void Telemetry_SendSubject(TelemetrySubjectIndex index, uint32_t now) {
             break;
         case TELEMETRY_SUBJECT_MOT:
             Telemetry_SendMot(now);
+            break;
+        case TELEMETRY_SUBJECT_PID:
+            Telemetry_SendPid(now);
             break;
     }
 }
@@ -246,6 +274,10 @@ void Telemetry_Start(uint32_t now) {
     subscriptions[TELEMETRY_SUBJECT_MOT].period_ms = 200;
     subscriptions[TELEMETRY_SUBJECT_MOT].enabled = true;
     subscriptions[TELEMETRY_SUBJECT_MOT].next_due_ms = now;
+
+    subscriptions[TELEMETRY_SUBJECT_PID].period_ms = 100;
+    subscriptions[TELEMETRY_SUBJECT_PID].enabled = true;
+    subscriptions[TELEMETRY_SUBJECT_PID].next_due_ms = now;
 
     command_length = 0;
     command_receiving = false;

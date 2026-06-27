@@ -40,10 +40,10 @@ Simulator mode is available from the Mode dropdown for UI work without hardware.
   - M3 back-left
   - M4 front-left
 - RC panel with vertical throttle and pitch, horizontal yaw and roll, e-stop state, channel 6, and validity lights.
-- IMU panel with roll across the top, yaw compass in the middle, pitch on the side, rates, and `$IMUC` calibration/health indicators.
+- IMU panel with roll across the top, yaw compass in the middle, pitch on the side, rates, `$IMUC` calibration/health indicators, and `$PID` demand markers overlaid on roll/pitch/yaw.
 - Top safety/status strip and bottom event log.
-- First-class subjects: `$STAT`, `$RC`, `$IMU`, `$IMUC`, `$MOT`.
-- Log-only subjects: `$ACK`, `$ERR`, `$RCR`, `$IMUR`, `$PID`, and other unsupported valid telemetry frames.
+- First-class subjects: `$STAT`, `$RC`, `$IMU`, `$IMUC`, `$MOT`, `$PID`.
+- Log-only subjects: `$ACK`, `$ERR`, `$RCR`, `$IMUR`, and other unsupported valid telemetry frames.
 
 Until firmware emits `$STAT`, app mode, flight mode, run mode, armed state, and loop age remain `UNKNOWN` or stale in live mode.
 

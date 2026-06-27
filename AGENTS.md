@@ -121,8 +121,10 @@ Current flight-tuning/IMU context:
   - Pitch rate sign `1.0f`
   - Roll rate sign `-1.0f`
   - Yaw rate sign `1.0f`
-- Current first-hover tuning is deliberately conservative: pitch/roll P `0.8`, I `0.0`, D `0.005`, PID output limit `180`, angle-to-rate gain `2.0`, max roll/pitch rate `90 dps`, max yaw rate `120 dps`.
+- Current first-hover tuning is deliberately conservative: pitch/roll P `0.8`, I `0.0`, D `0.005`, PID output limit `180`, pitch/roll angle-to-rate gain `4.0`, yaw angle-to-rate gain `2.0`, max roll/pitch rate `180 dps`, max yaw rate `120 dps`. Pitch/roll angle-to-rate gain and max roll/pitch rate were raised after the first stable flight because stick authority was too weak; yaw keeps its separate lower angle gain because yaw hold was behaving well.
+- Yaw rate PID is separate from pitch/roll: yaw P `1.0`, yaw I `0.15`, yaw D `0.0`. Yaw I is intentionally active only while the yaw stick is centered and throttle is at least `FM_YAW_INTEGRAL_MIN_THROTTLE` (`250`) so it can trim slow hands-off spin without winding up during commanded yaw or no-lift ground running.
 - First stable prop-on hop happened after yaw low-throttle rebasing; yaw hold is behaving. The remaining pilot-command issue was reversed yaw stick input, so `FM_YAW_INPUT_SIGN` is currently `-1.0f`. This intentionally affects yaw stick demand only, not IMU yaw sign or yaw-left/yaw-right arming gates.
+- Telemetry `$PID` is a first-class subject for demand-vs-IMU dashboard display. It streams demand yaw/pitch/roll, rate setpoints, and PID outputs; the Python HMI overlays demand markers on the IMU roll/pitch bars and yaw compass.
 - Bench expectation with props off:
   - Nose down: corrected pitch negative; M1/M4 increase; fast nose-down should not drive M1/M3.
   - Right side down: corrected roll negative; M1/M2 increase.

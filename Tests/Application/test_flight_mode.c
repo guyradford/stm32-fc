@@ -142,16 +142,16 @@ static void test_yaw_error_uses_shortest_path_across_zero_degrees(void) {
     set_throttle_and_centered_sticks(300);
     FakeFlightHardware_SetAngles(1.0f, 0.0f, 0.0f);
     FlightMode_OnTick(40);
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, -4.0f, FlightMode_GetYawRateSetpoint());
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 4.0f, FlightMode_GetPIDYaw());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, -6.0f, FlightMode_GetYawRateSetpoint());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 10.827f, FlightMode_GetPIDYaw());
 
     reset_flight_mode_state();
     arm_auto_at_heading(1.0f);
     set_throttle_and_centered_sticks(300);
     FakeFlightHardware_SetAngles(359.0f, 0.0f, 0.0f);
     FlightMode_OnTick(40);
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 4.0f, FlightMode_GetYawRateSetpoint());
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, -4.0f, FlightMode_GetPIDYaw());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 6.0f, FlightMode_GetYawRateSetpoint());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, -10.827f, FlightMode_GetPIDYaw());
 }
 
 static void test_yaw_stick_integrates_wrapped_heading_setpoint(void) {
@@ -162,13 +162,86 @@ static void test_yaw_stick_integrates_wrapped_heading_setpoint(void) {
 
     FlightMode_OnTick(40);
 
-    TEST_ASSERT_FLOAT_WITHIN(0.05f, 357.98f, FlightMode_GetYaw());
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, -102.0f, FlightMode_GetYawRateSetpoint());
-    TEST_ASSERT_FLOAT_WITHIN(0.001f, 102.0f, FlightMode_GetPIDYaw());
-    TEST_ASSERT_EQUAL_UINT16(198, EscOutput_GetMotorSpeed(MOTOR_1));
-    TEST_ASSERT_EQUAL_UINT16(402, EscOutput_GetMotorSpeed(MOTOR_2));
-    TEST_ASSERT_EQUAL_UINT16(198, EscOutput_GetMotorSpeed(MOTOR_3));
-    TEST_ASSERT_EQUAL_UINT16(402, EscOutput_GetMotorSpeed(MOTOR_4));
+    TEST_ASSERT_FLOAT_WITHIN(0.05f, 357.4f, FlightMode_GetYaw());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, -160.0f, FlightMode_GetYawRateSetpoint());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 240.0f, FlightMode_GetPIDYaw());
+    TEST_ASSERT_EQUAL_UINT16(60, EscOutput_GetMotorSpeed(MOTOR_1));
+    TEST_ASSERT_EQUAL_UINT16(540, EscOutput_GetMotorSpeed(MOTOR_2));
+    TEST_ASSERT_EQUAL_UINT16(60, EscOutput_GetMotorSpeed(MOTOR_3));
+    TEST_ASSERT_EQUAL_UINT16(540, EscOutput_GetMotorSpeed(MOTOR_4));
+}
+
+static void test_centered_yaw_integral_trims_steady_rate_bias(void) {
+    input_yaw = 0;
+    demand_throttle = FM_YAW_INTEGRAL_MIN_THROTTLE;
+    imuRates.fYaw = 10.0f;
+    demand_yaw_rate = 0.0f;
+
+    calculate_pid(true, 1.0f);
+
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 4.5f, pid_i_mem_yaw);
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 22.5f, FlightMode_GetPIDYaw());
+
+    input_yaw = 100;
+    calculate_pid(true, 1.0f);
+
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, pid_i_mem_yaw);
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 18.0f, FlightMode_GetPIDYaw());
+}
+
+static void test_low_throttle_blocks_yaw_integral_windup(void) {
+    input_yaw = 0;
+    demand_throttle = FM_YAW_INTEGRAL_MIN_THROTTLE - 1;
+    imuRates.fYaw = 10.0f;
+    demand_yaw_rate = 0.0f;
+    pid_i_mem_yaw = 25.0f;
+
+    calculate_pid(true, 1.0f);
+
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, pid_i_mem_yaw);
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 18.0f, FlightMode_GetPIDYaw());
+}
+
+static void test_positive_yaw_rate_bias_commands_cw_motor_pair(void) {
+    arm_auto_at_heading(0.0f);
+    set_throttle_and_centered_sticks(300);
+    FakeFlightHardware_SetAngles(0.0f, 0.0f, 0.0f);
+    FakeFlightHardware_SetRates(40.0f, 0.0f, 0.0f);
+
+    FlightMode_OnTick(40);
+
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 72.18f, FlightMode_GetPIDYaw());
+    TEST_ASSERT_EQUAL_UINT16(227, EscOutput_GetMotorSpeed(MOTOR_1));
+    TEST_ASSERT_EQUAL_UINT16(372, EscOutput_GetMotorSpeed(MOTOR_2));
+    TEST_ASSERT_EQUAL_UINT16(227, EscOutput_GetMotorSpeed(MOTOR_3));
+    TEST_ASSERT_EQUAL_UINT16(372, EscOutput_GetMotorSpeed(MOTOR_4));
+}
+
+static void test_negative_yaw_rate_bias_commands_ccw_motor_pair(void) {
+    arm_auto_at_heading(0.0f);
+    set_throttle_and_centered_sticks(300);
+    FakeFlightHardware_SetAngles(0.0f, 0.0f, 0.0f);
+    FakeFlightHardware_SetRates(-40.0f, 0.0f, 0.0f);
+
+    FlightMode_OnTick(40);
+
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, -72.18f, FlightMode_GetPIDYaw());
+    TEST_ASSERT_EQUAL_UINT16(372, EscOutput_GetMotorSpeed(MOTOR_1));
+    TEST_ASSERT_EQUAL_UINT16(227, EscOutput_GetMotorSpeed(MOTOR_2));
+    TEST_ASSERT_EQUAL_UINT16(372, EscOutput_GetMotorSpeed(MOTOR_3));
+    TEST_ASSERT_EQUAL_UINT16(227, EscOutput_GetMotorSpeed(MOTOR_4));
+}
+
+static void test_yaw_output_uses_dedicated_authoritative_limit(void) {
+    input_yaw = 0;
+    demand_throttle = FM_YAW_INTEGRAL_MIN_THROTTLE;
+    imuRates.fYaw = 1000.0f;
+    demand_yaw_rate = 0.0f;
+
+    calculate_pid(true, 1.0f);
+
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 240.0f, pid_i_mem_yaw);
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 240.0f, FlightMode_GetPIDYaw());
 }
 
 static void test_low_throttle_clears_pid_integrator_bias(void) {
@@ -205,6 +278,23 @@ static void test_low_throttle_rebases_auto_yaw_target_to_current_heading(void) {
     assert_all_motors_equal(300);
 }
 
+static void test_full_roll_stick_has_authoritative_auto_level_response(void) {
+    arm_auto_at_heading(0.0f);
+    set_throttle_and_centered_sticks(300);
+    FakeFlightHardware_SetRcInput(RC_ROLL, 1000);
+    FakeFlightHardware_SetAngles(0.0f, 0.0f, 0.0f);
+    FakeFlightHardware_SetRates(0.0f, 0.0f, 0.0f);
+
+    FlightMode_OnTick(40);
+
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 180.0f, FlightMode_GetRollRateSetpoint());
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, -180.0f, FlightMode_GetPIDRoll());
+    TEST_ASSERT_EQUAL_UINT16(480, EscOutput_GetMotorSpeed(MOTOR_1));
+    TEST_ASSERT_EQUAL_UINT16(480, EscOutput_GetMotorSpeed(MOTOR_2));
+    TEST_ASSERT_EQUAL_UINT16(120, EscOutput_GetMotorSpeed(MOTOR_3));
+    TEST_ASSERT_EQUAL_UINT16(120, EscOutput_GetMotorSpeed(MOTOR_4));
+}
+
 static void test_zero_throttle_ignores_auto_level_and_rc_correction(void) {
     arm_auto_at_heading(0.0f);
     set_throttle_and_centered_sticks(0);
@@ -226,8 +316,14 @@ int main(void) {
     RUN_TEST(test_centered_yaw_holds_arming_heading_without_motor_bias);
     RUN_TEST(test_yaw_error_uses_shortest_path_across_zero_degrees);
     RUN_TEST(test_yaw_stick_integrates_wrapped_heading_setpoint);
+    RUN_TEST(test_centered_yaw_integral_trims_steady_rate_bias);
+    RUN_TEST(test_low_throttle_blocks_yaw_integral_windup);
+    RUN_TEST(test_positive_yaw_rate_bias_commands_cw_motor_pair);
+    RUN_TEST(test_negative_yaw_rate_bias_commands_ccw_motor_pair);
+    RUN_TEST(test_yaw_output_uses_dedicated_authoritative_limit);
     RUN_TEST(test_low_throttle_clears_pid_integrator_bias);
     RUN_TEST(test_low_throttle_rebases_auto_yaw_target_to_current_heading);
+    RUN_TEST(test_full_roll_stick_has_authoritative_auto_level_response);
     RUN_TEST(test_zero_throttle_ignores_auto_level_and_rc_correction);
     return UNITY_END();
 }
