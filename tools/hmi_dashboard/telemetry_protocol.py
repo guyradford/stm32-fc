@@ -22,6 +22,7 @@ EXPECTED_FIELDS = {
     "IMUR": 10,
     "MOT": 5,
     "STAT": 10,
+    "PID": 10,
 }
 
 

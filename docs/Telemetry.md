@@ -70,6 +70,12 @@ $MOT,<ms>,<m1>,<m2>,<m3>,<m4>*HH
 Motor demand in firmware-native `0..1000` units. Percent is a ground-station display concern.
 
 ```text
+$PID,<ms>,<yawDemand>,<pitchDemand>,<rollDemand>,<yawRateSp>,<pitchRateSp>,<rollRateSp>,<yawOut>,<pitchOut>,<rollOut>*HH
+```
+
+Flight-control demand and PID summary. Demand angles are centidegrees. Rate setpoints are centidegrees per second. PID outputs are raw controller output units.
+
+```text
 $STAT,<ms>,<app>,<flight>,<run>,<armed>,<rc>,<imu>,<failsafe>,<error>,<loopAge>*HH
 ```
 
@@ -84,6 +90,7 @@ $RC   10 Hz
 $IMU  10 Hz
 $IMUC 1 Hz
 $MOT  5 Hz
+$PID  10 Hz
 ```
 
 Raw streams default off and are available by request or subscription:
@@ -136,7 +143,6 @@ $STOP*HH
 These names are reserved for later phases:
 
 ```text
-$PID   PID internals, setpoints, errors, outputs
 $RCX   extended corrected RC
 $RCRX  extended raw RC
 $IMUX  extended corrected IMU/status

@@ -62,9 +62,13 @@ class PIDState:
     yaw_setpoint: float = 0.0
     pitch_setpoint: float = 0.0
     roll_setpoint: float = 0.0
+    yaw_rate_setpoint: float = 0.0
+    pitch_rate_setpoint: float = 0.0
+    roll_rate_setpoint: float = 0.0
     yaw_output: float = 0.0
     pitch_output: float = 0.0
     roll_output: float = 0.0
+    stale: bool = True
 
 
 @dataclass
@@ -80,6 +84,7 @@ class DashboardState:
     last_imu_s: float | None = None
     last_mot_s: float | None = None
     last_stat_s: float | None = None
+    last_pid_s: float | None = None
 
     def add_log(self, line: str, limit: int = 200) -> None:
         self.log_lines.append(line)

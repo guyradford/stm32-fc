@@ -25,6 +25,8 @@ def apply_frame(state: DashboardState, frame: TelemetryFrame, received_at: float
         _apply_mot(state, frame, now)
     elif frame.subject == "STAT":
         _apply_stat(state, frame, now)
+    elif frame.subject == "PID":
+        _apply_pid(state, frame, now)
 
 
 def mark_stale(state: DashboardState, now: float | None = None) -> None:
@@ -33,6 +35,7 @@ def mark_stale(state: DashboardState, now: float | None = None) -> None:
     state.rc.stale = state.last_rc_s is None or current - state.last_rc_s > STALE_SECONDS
     state.imu.stale = state.last_imu_s is None or current - state.last_imu_s > STALE_SECONDS
     state.motors.stale = state.last_mot_s is None or current - state.last_mot_s > STALE_SECONDS
+    state.pid.stale = state.last_pid_s is None or current - state.last_pid_s > STALE_SECONDS
 
     if state.last_stat_s is None or current - state.last_stat_s > STALE_SECONDS:
         state.status.app_mode = "UNKNOWN"
@@ -58,6 +61,7 @@ def reset_live_state(state: DashboardState) -> None:
     state.last_imu_s = None
     state.last_mot_s = None
     state.last_stat_s = None
+    state.last_pid_s = None
     state.rc.stale = True
     state.rc.channel_valid = [False] * 6
     state.imu.stale = True
@@ -65,6 +69,7 @@ def reset_live_state(state: DashboardState) -> None:
     state.imu.fusion = False
     state.imu.error = False
     state.motors.stale = True
+    state.pid.stale = True
 
 
 def _apply_rc(state: DashboardState, frame: TelemetryFrame, now: float) -> None:
@@ -133,6 +138,33 @@ def _apply_stat(state: DashboardState, frame: TelemetryFrame, now: float) -> Non
     state.status.error = _to_bool(error)
     state.status.loop_age_ms = _to_int(loop_age)
     state.last_stat_s = now
+
+
+def _apply_pid(state: DashboardState, frame: TelemetryFrame, now: float) -> None:
+    (
+        _ms,
+        yaw_demand,
+        pitch_demand,
+        roll_demand,
+        yaw_rate_sp,
+        pitch_rate_sp,
+        roll_rate_sp,
+        yaw_out,
+        pitch_out,
+        roll_out,
+    ) = frame.fields
+
+    state.pid.yaw_setpoint = _to_int(yaw_demand) / 100.0
+    state.pid.pitch_setpoint = _to_int(pitch_demand) / 100.0
+    state.pid.roll_setpoint = _to_int(roll_demand) / 100.0
+    state.pid.yaw_rate_setpoint = _to_int(yaw_rate_sp) / 100.0
+    state.pid.pitch_rate_setpoint = _to_int(pitch_rate_sp) / 100.0
+    state.pid.roll_rate_setpoint = _to_int(roll_rate_sp) / 100.0
+    state.pid.yaw_output = float(_to_int(yaw_out))
+    state.pid.pitch_output = float(_to_int(pitch_out))
+    state.pid.roll_output = float(_to_int(roll_out))
+    state.pid.stale = False
+    state.last_pid_s = now
 
 
 def _to_int(text: str) -> int:

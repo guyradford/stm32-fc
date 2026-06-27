@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define TELEMETRY_MAX_SENTENCE_LENGTH 96
+#define TELEMETRY_MAX_SENTENCE_LENGTH 160
 
 typedef enum {
     TELEMETRY_INPUT_CONTINUE = 0,
@@ -14,6 +14,7 @@ typedef enum {
 
 uint8_t Telemetry_Checksum(const char *payload);
 bool Telemetry_FormatSentence(const char *payload, char *out, size_t out_size);
+bool Telemetry_FormatPidPayload(uint32_t now, char *out, size_t out_size);
 
 void Telemetry_Init(void);
 void Telemetry_Start(uint32_t now);
