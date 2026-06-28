@@ -7,6 +7,7 @@ from tkinter import messagebox, scrolledtext, ttk
 from dashboard_state import DashboardState
 from serial_client import TelemetrySerialClient, list_serial_ports
 from simulator import DashboardSimulator
+from telemetry_recorder import TelemetryRecorder
 from telemetry_mapper import apply_frame, mark_stale, reset_live_state
 from widgets import (
     BG,
@@ -34,6 +35,8 @@ class HMIDashboardApp:
         self.port = tk.StringVar()
         self.baud = tk.StringVar(value="115200")
         self.connect_text = tk.StringVar(value="Connect")
+        self.record_text = tk.StringVar(value="Record")
+        self.recorder = TelemetryRecorder()
         self._rx_subject_counts: dict[str, int] = {}
         configure_styles(root)
 
@@ -73,6 +76,8 @@ class HMIDashboardApp:
         ttk.Button(controls, text="Refresh", command=self._refresh_ports).grid(row=0, column=6, padx=(0, 8))
         self.connect_button = ttk.Button(controls, textvariable=self.connect_text, command=self._toggle_connection)
         self.connect_button.grid(row=0, column=7)
+        self.record_button = ttk.Button(controls, textvariable=self.record_text, command=self._toggle_recording, state="disabled")
+        self.record_button.grid(row=0, column=8, padx=(8, 0))
 
     def _build_dashboard(self) -> None:
         main = ttk.Frame(self.root, style="Top.TFrame", padding=10)
@@ -136,6 +141,7 @@ class HMIDashboardApp:
         self.motors.update_state(self.state.motors)
         self.rc.update_state(self.state.rc)
         self.pid.update_state(self.state)
+        self._sync_record_button()
         self._sync_log()
 
     def _sync_log(self) -> None:
@@ -167,6 +173,44 @@ class HMIDashboardApp:
             return
         self._connect()
 
+    def _toggle_recording(self) -> None:
+        if self.recorder.active:
+            self._stop_recording()
+            return
+        self._start_recording()
+
+    def _start_recording(self) -> None:
+        try:
+            path = self.recorder.start()
+        except OSError as exc:
+            self.state.add_log("RECORD ERROR %s" % exc)
+            return
+
+        self.record_text.set("Stop Recording")
+        self.state.add_log("Recording started %s" % path)
+
+    def _stop_recording(self) -> None:
+        try:
+            path = self.recorder.stop()
+        except OSError as exc:
+            self.state.add_log("RECORD ERROR %s" % exc)
+            return
+
+        self.record_text.set("Record")
+        if path is not None:
+            self.state.add_log("Recording stopped %s" % path)
+
+    def _sync_record_button(self) -> None:
+        if self.recorder.active:
+            self.record_button.configure(state="normal")
+            return
+
+        if self.mode.get() == "Live" and self.serial_client.connected:
+            self.record_button.configure(state="normal")
+        else:
+            self.record_button.configure(state="disabled")
+            self.record_text.set("Record")
+
     def _connect(self) -> None:
         if self.mode.get() != "Live":
             self.mode.set("Live")
@@ -187,12 +231,15 @@ class HMIDashboardApp:
         self.connect_text.set("Disconnect")
 
     def _disconnect(self) -> None:
+        if self.recorder.active:
+            self._stop_recording()
         try:
             self.serial_client.disconnect()
         except Exception as exc:
             self.state.add_log("DISCONNECT ERROR %s" % exc)
         reset_live_state(self.state)
         self.connect_text.set("Connect")
+        self._sync_record_button()
 
     def _drain_serial_events(self) -> None:
         while True:
@@ -202,6 +249,11 @@ class HMIDashboardApp:
                 break
 
             if event.kind == "frame" and event.frame is not None:
+                try:
+                    self.recorder.record(event.raw_sentence)
+                except OSError as exc:
+                    self.state.add_log("RECORD ERROR %s" % exc)
+                    self._stop_recording()
                 if event.frame.subject in ("RC", "IMU", "IMUC", "MOT", "STAT", "PID"):
                     try:
                         apply_frame(self.state, event.frame)

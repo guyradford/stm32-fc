@@ -12,6 +12,7 @@
 #include "imu_calibration_store.h"
 
 #define IMU_REQUEST_INTERVAL 10 // uS eg 20 times per second
+#define IMU_STATUS_UPDATE_INTERVAL_MS 100U
 
 
 //IMU_EN_SENSOR_TYPE enMotionSensorType, enPressureType;
@@ -25,6 +26,7 @@ int32_t s32PressureVal = 0, s32TemperatureVal = 0, s32AltitudeVal = 0;
 uint32_t imuGetTimer = 0;
 static IMU_ST_STATUS imuStatus = {0};
 static bool imuLoadedSavedCalibration = false;
+static uint32_t imuNextStatusUpdate = 0;
 
 static bool IMU_IsCalibrationComplete(bno055_calibration_state_t calibration) {
     return calibration.sys == 3 &&
@@ -51,6 +53,13 @@ static void IMU_UpdateStatus(void) {
     imuStatus.calibrated = IMU_IsCalibrationComplete(calibration);
 }
 
+static void IMU_UpdateStatusIfDue(uint32_t now) {
+    if (imuNextStatusUpdate == 0 || (int32_t) (now - imuNextStatusUpdate) >= 0) {
+        IMU_UpdateStatus();
+        imuNextStatusUpdate = now + IMU_STATUS_UPDATE_INTERVAL_MS;
+    }
+}
+
 bool IMU_Init(void) {
 
 //    HAL_Delay(1000);
@@ -75,6 +84,7 @@ bool IMU_Init(void) {
     imuStatus.calibrationGyro = 0;
     imuStatus.calibrationMag = 0;
     imuStatus.calibrationAccel = 0;
+    imuNextStatusUpdate = 0;
 
     if (!bno055_setup()) {
         return false;
@@ -124,7 +134,7 @@ void IMU_OnTick(uint32_t now) {
 }
 
 bool IMU_IsReady(void) {
-    IMU_UpdateStatus();
+    IMU_UpdateStatusIfDue(HAL_GetTick());
     return imuStatus.initialized &&
            imuStatus.fusionRunning &&
            imuStatus.systemError == BNO055_SYSTEM_ERROR_NO_ERROR &&
@@ -155,7 +165,7 @@ void UpdateIMUData() {
 IMU_ST_ANGLES_DATA IMU_GetAngles(void) {
 //    imuDataGet(&stAngles, &stGyroRawData, &stAccelRawData, &stMagnRawData);
 
-    IMU_UpdateStatus();
+    IMU_UpdateStatusIfDue(HAL_GetTick());
     if (imuStatus.fusionRunning && imuStatus.systemError == BNO055_SYSTEM_ERROR_NO_ERROR) {
         bno055_vector_t v = bno055_getVectorEuler();
         // printf("Heading: %.2f Roll: %.2f Pitch: %.2f\r\n", v.x, v.y, v.z);
@@ -168,7 +178,7 @@ IMU_ST_ANGLES_DATA IMU_GetAngles(void) {
 }
 
 IMU_ST_RATES_DATA IMU_GetRates(void) {
-    IMU_UpdateStatus();
+    IMU_UpdateStatusIfDue(HAL_GetTick());
     if (imuStatus.fusionRunning && imuStatus.systemError == BNO055_SYSTEM_ERROR_NO_ERROR) {
         bno055_vector_t v = bno055_getVectorGyroscope();
         // The BNO055 driver scales gyroscope readings to degrees per second.

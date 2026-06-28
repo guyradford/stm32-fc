@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from datetime import datetime
+from pathlib import Path
+from tempfile import TemporaryDirectory
 import unittest
 
 from dashboard_state import DashboardState, IMUState, MotorState, RCState, StatusState
 from serial_client import TelemetrySerialClient
 from telemetry_mapper import apply_frame, mark_stale, reset_live_state
 from telemetry_protocol import TelemetryError, format_sentence, format_stop, parse_sentence
+from telemetry_recorder import TelemetryRecorder
 from widgets import (
     HEALTH_BAD,
     HEALTH_NORMAL,
@@ -207,6 +211,16 @@ class FakeSerial:
 
 
 class TelemetrySerialClientTests(unittest.TestCase):
+    def test_frame_event_includes_raw_sentence_for_recording(self) -> None:
+        client = TelemetrySerialClient()
+
+        client._process_line(LIVE_RC_LINE.encode("ascii"))  # noqa: SLF001
+        event = client.events.get_nowait()
+
+        self.assertEqual("frame", event.kind)
+        self.assertEqual(parse_sentence(LIVE_RC_LINE), event.frame)
+        self.assertEqual(LIVE_RC_LINE + "\r\n", event.raw_sentence)
+
     def test_handshake_does_not_send_home_when_telemetry_already_seen(self) -> None:
         client = TelemetrySerialClient()
         fake_serial = FakeSerial()
@@ -248,6 +262,60 @@ class TelemetrySerialClientTests(unittest.TestCase):
         self.assertEqual(90.0, state.pid.yaw_setpoint)
         self.assertFalse(state.pid.stale)
         self.assertTrue(state.status.telemetry_active)
+
+
+class TelemetryRecorderTests(unittest.TestCase):
+    def test_start_uses_timestamped_filename(self) -> None:
+        with TemporaryDirectory() as tmp:
+            recorder = TelemetryRecorder(
+                Path(tmp),
+                clock=lambda: datetime(2026, 6, 28, 14, 35, 22),
+            )
+
+            path = recorder.start()
+            recorder.stop()
+
+            self.assertEqual(Path(tmp) / "telemetry_20260628_143522.log", path)
+
+    def test_record_writes_raw_telemetry_lines_unchanged(self) -> None:
+        with TemporaryDirectory() as tmp:
+            recorder = TelemetryRecorder(
+                Path(tmp),
+                clock=lambda: datetime(2026, 6, 28, 14, 35, 22),
+            )
+
+            path = recorder.start()
+            recorder.record(LIVE_RC_LINE + "\r\n")
+            recorder.record(format_sentence("MOT,1000,1,2,3,4"))
+            recorder.stop()
+
+            self.assertEqual(
+                (LIVE_RC_LINE + "\r\n" + format_sentence("MOT,1000,1,2,3,4")).encode("ascii"),
+                path.read_bytes(),
+            )
+
+    def test_record_ignores_non_telemetry_text(self) -> None:
+        with TemporaryDirectory() as tmp:
+            recorder = TelemetryRecorder(
+                Path(tmp),
+                clock=lambda: datetime(2026, 6, 28, 14, 35, 22),
+            )
+
+            path = recorder.start()
+            recorder.record("Telemetry Mode\r\n")
+            recorder.record(None)
+            recorder.stop()
+
+            self.assertEqual("", path.read_text(encoding="ascii"))
+
+    def test_disconnect_style_stop_closes_active_recording(self) -> None:
+        with TemporaryDirectory() as tmp:
+            recorder = TelemetryRecorder(Path(tmp))
+
+            recorder.start()
+            recorder.stop()
+
+            self.assertFalse(recorder.active)
 
 
 if __name__ == "__main__":

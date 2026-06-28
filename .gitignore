@@ -60,3 +60,6 @@ dkms.conf
 # Python local cache
 __pycache__/
 *.py[cod]
+
+# Local HMI telemetry captures
+/tools/hmi_dashboard/recordings/
