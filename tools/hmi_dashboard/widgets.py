@@ -476,6 +476,8 @@ class PIDPanel(Panel):
         super().__init__(parent, "PID / CONTROL SUMMARY")
         self.text = ttk.Label(self.body, text="", style="Value.TLabel")
         self.text.grid(row=0, column=0, sticky="ew")
+        self.ctl = ttk.Label(self.body, text="", style="Small.TLabel")
+        self.ctl.grid(row=1, column=0, sticky="ew", pady=(6, 0))
 
     def update_state(self, state: DashboardState) -> None:
         pid = state.pid
@@ -496,6 +498,34 @@ class PIDPanel(Panel):
                 pid.pitch_output,
                 pid.roll_output,
                 "     STALE" if pid.stale else "",
+            )
+        )
+        control = state.control
+        mode = "AUTO" if control.flags & 0x01 else "MANU" if control.flags & 0x02 else "MODE %d" % control.mode
+        flags = []
+        if control.flags & 0x04:
+            flags.append("slew")
+        if control.flags & 0x08:
+            flags.append("pidI")
+        if control.flags & 0x10:
+            flags.append("yawI")
+        if control.flags & 0x20:
+            flags.append("mixSat")
+        if control.flags & 0x40:
+            flags.append("lowThr")
+        if control.flags & 0x80:
+            flags.append("reset")
+        flag_text = ",".join(flags) if flags else "none"
+        self.ctl.configure(
+            text="CTL %s raw %d slew %d yawI %.0f flags 0x%02X [%s]%s"
+            % (
+                mode,
+                control.raw_throttle,
+                control.slewed_throttle,
+                control.yaw_integral,
+                control.flags,
+                flag_text,
+                " STALE" if control.stale else "",
             )
         )
 

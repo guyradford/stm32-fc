@@ -27,7 +27,7 @@ except ModuleNotFoundError:
     serial = _SerialShim()
     list_ports = None
 
-from telemetry_protocol import TelemetryError, TelemetryFrame, format_stop, parse_sentence
+from telemetry_protocol import TelemetryError, TelemetryFrame, format_stop, format_sub, parse_sentence
 
 
 SerialEventKind = Literal["frame", "log", "error", "closed"]
@@ -138,6 +138,10 @@ class TelemetrySerialClient:
     def request_telemetry(self) -> None:
         self.send_text("n")
         self.events.put(SerialEvent("log", "TX n"))
+
+    def subscribe(self, subject: str, rate_hz: int) -> None:
+        self.send_text(format_sub(subject, rate_hz))
+        self.events.put(SerialEvent("log", "TX SUB %s %d" % (subject, rate_hz)))
 
     def _read_loop(self) -> None:
         buffer = bytearray()

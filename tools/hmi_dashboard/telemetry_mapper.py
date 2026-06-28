@@ -27,6 +27,8 @@ def apply_frame(state: DashboardState, frame: TelemetryFrame, received_at: float
         _apply_stat(state, frame, now)
     elif frame.subject == "PID":
         _apply_pid(state, frame, now)
+    elif frame.subject == "CTL":
+        _apply_ctl(state, frame, now)
 
 
 def mark_stale(state: DashboardState, now: float | None = None) -> None:
@@ -36,6 +38,7 @@ def mark_stale(state: DashboardState, now: float | None = None) -> None:
     state.imu.stale = state.last_imu_s is None or current - state.last_imu_s > STALE_SECONDS
     state.motors.stale = state.last_mot_s is None or current - state.last_mot_s > STALE_SECONDS
     state.pid.stale = state.last_pid_s is None or current - state.last_pid_s > STALE_SECONDS
+    state.control.stale = state.last_ctl_s is None or current - state.last_ctl_s > STALE_SECONDS
 
     if state.last_stat_s is None or current - state.last_stat_s > STALE_SECONDS:
         state.status.app_mode = "UNKNOWN"
@@ -62,6 +65,7 @@ def reset_live_state(state: DashboardState) -> None:
     state.last_mot_s = None
     state.last_stat_s = None
     state.last_pid_s = None
+    state.last_ctl_s = None
     state.rc.stale = True
     state.rc.channel_valid = [False] * 6
     state.imu.stale = True
@@ -70,6 +74,7 @@ def reset_live_state(state: DashboardState) -> None:
     state.imu.error = False
     state.motors.stale = True
     state.pid.stale = True
+    state.control.stale = True
 
 
 def _apply_rc(state: DashboardState, frame: TelemetryFrame, now: float) -> None:
@@ -165,6 +170,19 @@ def _apply_pid(state: DashboardState, frame: TelemetryFrame, now: float) -> None
     state.pid.roll_output = float(_to_int(roll_out))
     state.pid.stale = False
     state.last_pid_s = now
+
+
+def _apply_ctl(state: DashboardState, frame: TelemetryFrame, now: float) -> None:
+    _ms, mode, run_mode, raw_throttle, slewed_throttle, flags, yaw_integral = frame.fields
+
+    state.control.mode = _to_int(mode)
+    state.control.run_mode = _to_int(run_mode)
+    state.control.raw_throttle = _to_int(raw_throttle)
+    state.control.slewed_throttle = _to_int(slewed_throttle)
+    state.control.flags = int(flags, 16)
+    state.control.yaw_integral = float(_to_int(yaw_integral))
+    state.control.stale = False
+    state.last_ctl_s = now
 
 
 def _to_int(text: str) -> int:

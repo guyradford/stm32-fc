@@ -73,6 +73,8 @@ float pid_i_mem_roll, pid_output_roll, pid_last_roll_d_error;
 float pid_i_mem_pitch, pid_output_pitch, pid_last_pitch_d_error;
 float pid_i_mem_yaw, pid_output_yaw, pid_last_yaw_d_error;
 bool FlightMode_PreviousMixerSaturated = false;
+static FlightModeControlDebug FlightMode_ControlDebugState = {0};
+static bool FlightMode_PidResetLatched = false;
 
 IMU_ST_ANGLES_DATA imuAngles;
 IMU_ST_RATES_DATA imuRates;
@@ -116,12 +118,29 @@ static bool FlightMode_YawStickIsCentered(void) {
 static bool FlightMode_YawIntegralIsAllowed(bool integrate) {
     return integrate &&
            FlightMode_YawStickIsCentered() &&
+           demand_throttle >= FM_YAW_HOLD_LOCK_THROTTLE &&
            demand_throttle >= FM_YAW_INTEGRAL_MIN_THROTTLE;
 }
 
 static void FlightMode_ResetThrottleSlewState(void) {
     FlightMode_SlewedThrottle = 0;
     FlightMode_SlewedThrottleValid = false;
+}
+
+static void FlightMode_ResetControlDebugForTick(void) {
+    FlightMode_ControlDebugState.mode = FlightMode_Mode;
+    FlightMode_ControlDebugState.runningMode = FlightMode_RunningMode;
+    FlightMode_ControlDebugState.rawThrottle = input_throttle;
+    FlightMode_ControlDebugState.slewedThrottle = demand_throttle;
+    FlightMode_ControlDebugState.flags = 0;
+}
+
+static void FlightMode_SetControlDebugFlag(uint8_t flag, bool enabled) {
+    if (enabled) {
+        FlightMode_ControlDebugState.flags |= flag;
+    } else {
+        FlightMode_ControlDebugState.flags &= (uint8_t) ~flag;
+    }
 }
 
 static uint16_t FlightMode_ApplyThrottleSlew(uint16_t throttle) {
@@ -161,6 +180,7 @@ static void FlightMode_ResetPidState(void) {
     demand_roll_rate = 0;
     demand_yaw_rate = 0;
     FlightMode_ResetThrottleSlewState();
+    FlightMode_PidResetLatched = true;
 }
 
 static void FlightMode_ResetPidIntegralState(void) {
@@ -389,6 +409,32 @@ float FlightMode_GetPIDYaw(void) {
     return pid_output_yaw;
 }
 
+void FlightMode_GetControlDebug(FlightModeControlDebug *debug, bool clearResetFlag) {
+    if (debug == NULL) return;
+
+    *debug = FlightMode_ControlDebugState;
+    debug->mode = FlightMode_Mode;
+    debug->runningMode = FlightMode_RunningMode;
+    debug->yawIntegral = pid_i_mem_yaw;
+
+    if (FlightMode_Mode == FM_RUNNING_AUTO) {
+        debug->flags |= FLIGHT_MODE_CTL_FLAG_RUNNING_AUTO;
+    } else if (FlightMode_Mode == FM_RUNNING_MANUAL) {
+        debug->flags |= FLIGHT_MODE_CTL_FLAG_RUNNING_MANUAL;
+    }
+
+    if (FlightMode_PreviousMixerSaturated) {
+        debug->flags |= FLIGHT_MODE_CTL_FLAG_MIXER_SATURATED;
+    }
+
+    if (FlightMode_PidResetLatched) {
+        debug->flags |= FLIGHT_MODE_CTL_FLAG_PID_RESET;
+        if (clearResetFlag) {
+            FlightMode_PidResetLatched = false;
+        }
+    }
+}
+
 void FlightMode_OnTick(uint32_t now) {
 
     if (!RCInput_IsSignalValid(now)) {
@@ -411,6 +457,7 @@ void FlightMode_OnTick(uint32_t now) {
 
     input_throttle = RCInput_GetInputValue(RC_THROTTLE);
     input_yaw = RCInput_GetInputValue(RC_YAW) - 500;
+    FlightMode_ResetControlDebugForTick();
     if (FlightMode_Mode != FM_RUNNING_MANUAL) {
         imuAngles = IMUInput_GetAngles();
         imuRates = IMUInput_GetRates();
@@ -489,8 +536,11 @@ void FlightMode_OnTick(uint32_t now) {
 
             demand_throttle = input_throttle;
             if (demand_throttle > 800) demand_throttle = 800; // this allows some headroom for the PID controllers
+            FlightMode_ControlDebugState.rawThrottle = input_throttle;
+            FlightMode_ControlDebugState.slewedThrottle = demand_throttle;
 
             if (demand_throttle <= FM_CONTROLLED_FLIGHT_THROTTLE) {
+                FlightMode_SetControlDebugFlag(FLIGHT_MODE_CTL_FLAG_LOW_THROTTLE, true);
                 if (FlightMode_Mode == FM_RUNNING_AUTO) {
                     demand_yaw = FlightMode_NormalizeYaw(imuAngles.fYaw);
                 } else {
@@ -502,11 +552,19 @@ void FlightMode_OnTick(uint32_t now) {
                 esc_2 = 0;
                 esc_3 = 0;
                 esc_4 = 0;
+                FlightMode_ControlDebugState.slewedThrottle = 0;
                 Output_SetMotorSpeeds(0, 0, 0, 0);
                 break;
             }
 
+            uint16_t throttle_before_slew = demand_throttle;
             demand_throttle = FlightMode_ApplyThrottleSlew(demand_throttle);
+            FlightMode_ControlDebugState.slewedThrottle = demand_throttle;
+            FlightMode_SetControlDebugFlag(FLIGHT_MODE_CTL_FLAG_THROTTLE_SLEW,
+                                           demand_throttle != throttle_before_slew);
+            FlightMode_SetControlDebugFlag(FLIGHT_MODE_CTL_FLAG_MIXER_SATURATED,
+                                           FlightMode_PreviousMixerSaturated);
+            bool yaw_hold_locked = demand_throttle >= FM_YAW_HOLD_LOCK_THROTTLE;
 
             if (FlightMode_Mode == FM_RUNNING_MANUAL){
                 MixerMotorSpeeds speeds;
@@ -524,8 +582,15 @@ void FlightMode_OnTick(uint32_t now) {
 
             }else { // FM_RUNNING_AUTO
                 MixerMotorSpeeds speeds;
-                bool integrate = demand_throttle > FM_CONTROLLED_FLIGHT_THROTTLE &&
+                if (!yaw_hold_locked) {
+                    demand_yaw = FlightMode_NormalizeYaw(imuAngles.fYaw);
+                }
+
+                bool integrate = yaw_hold_locked &&
                                  !FlightMode_PreviousMixerSaturated;
+                bool yaw_integrate = FlightMode_YawIntegralIsAllowed(integrate);
+                FlightMode_SetControlDebugFlag(FLIGHT_MODE_CTL_FLAG_PID_INTEGRATE, integrate);
+                FlightMode_SetControlDebugFlag(FLIGHT_MODE_CTL_FLAG_YAW_INTEGRATE, yaw_integrate);
 
                 if (!integrate) {
                     FlightMode_ResetPidIntegralState();
@@ -534,7 +599,9 @@ void FlightMode_OnTick(uint32_t now) {
                 if (FlightMode_IsAngleUpdateDue(now)) {
                     float pitch_angle_error = demand_pitch - imuAngles.fPitch;
                     float roll_angle_error = demand_roll - imuAngles.fRoll;
-                    float yaw_angle_error = FlightMode_GetWrappedYawError(imuAngles.fYaw, demand_yaw);
+                    float yaw_angle_error = yaw_hold_locked ?
+                                            FlightMode_GetWrappedYawError(imuAngles.fYaw, demand_yaw) :
+                                            0.0f;
 
                     demand_pitch_rate = FlightMode_ClampFloat(pitch_angle_error * FM_ANGLE_TO_RATE_GAIN,
                                                               -FM_MAX_ROLL_PITCH_RATE,

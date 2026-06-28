@@ -7,6 +7,25 @@
 
 
 #include <stdint.h>
+#include <stdbool.h>
+
+#define FLIGHT_MODE_CTL_FLAG_RUNNING_AUTO       0x01U
+#define FLIGHT_MODE_CTL_FLAG_RUNNING_MANUAL     0x02U
+#define FLIGHT_MODE_CTL_FLAG_THROTTLE_SLEW      0x04U
+#define FLIGHT_MODE_CTL_FLAG_PID_INTEGRATE      0x08U
+#define FLIGHT_MODE_CTL_FLAG_YAW_INTEGRATE      0x10U
+#define FLIGHT_MODE_CTL_FLAG_MIXER_SATURATED    0x20U
+#define FLIGHT_MODE_CTL_FLAG_LOW_THROTTLE       0x40U
+#define FLIGHT_MODE_CTL_FLAG_PID_RESET          0x80U
+
+typedef struct {
+    uint8_t mode;
+    uint8_t runningMode;
+    uint16_t rawThrottle;
+    uint16_t slewedThrottle;
+    uint8_t flags;
+    float yawIntegral;
+} FlightModeControlDebug;
 
 
 extern float pid_p_gain_roll;               //Gain setting for the pitch and roll P-controller (default = 1.3).
@@ -54,5 +73,6 @@ float FlightMode_GetPIDRoll(void);
 
 float FlightMode_GetPIDYaw(void);
 
+void FlightMode_GetControlDebug(FlightModeControlDebug *debug, bool clearResetFlag);
 
 #endif //STM32_FC_FLIGHT_MODE_H
