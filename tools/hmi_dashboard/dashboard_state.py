@@ -72,12 +72,24 @@ class PIDState:
 
 
 @dataclass
+class ControlDebugState:
+    mode: int = 0
+    run_mode: int = 0
+    raw_throttle: int = 0
+    slewed_throttle: int = 0
+    flags: int = 0
+    yaw_integral: float = 0.0
+    stale: bool = True
+
+
+@dataclass
 class DashboardState:
     status: StatusState = field(default_factory=StatusState)
     rc: RCState = field(default_factory=RCState)
     motors: MotorState = field(default_factory=MotorState)
     imu: IMUState = field(default_factory=IMUState)
     pid: PIDState = field(default_factory=PIDState)
+    control: ControlDebugState = field(default_factory=ControlDebugState)
     log_lines: List[str] = field(default_factory=list)
     last_rx_s: float | None = None
     last_rc_s: float | None = None
@@ -85,6 +97,7 @@ class DashboardState:
     last_mot_s: float | None = None
     last_stat_s: float | None = None
     last_pid_s: float | None = None
+    last_ctl_s: float | None = None
 
     def add_log(self, line: str, limit: int = 200) -> None:
         self.log_lines.append(line)

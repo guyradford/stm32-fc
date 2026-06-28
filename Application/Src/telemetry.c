@@ -12,7 +12,7 @@
 #include "flight_mode.h"
 
 #define TELEMETRY_COMMAND_BUFFER_LENGTH 64
-#define TELEMETRY_SUBJECT_COUNT 7
+#define TELEMETRY_SUBJECT_COUNT 9
 #define TELEMETRY_MAX_RATE_HZ 50
 
 typedef enum {
@@ -22,7 +22,9 @@ typedef enum {
     TELEMETRY_SUBJECT_IMUC,
     TELEMETRY_SUBJECT_IMUR,
     TELEMETRY_SUBJECT_MOT,
-    TELEMETRY_SUBJECT_PID
+    TELEMETRY_SUBJECT_PID,
+    TELEMETRY_SUBJECT_STAT,
+    TELEMETRY_SUBJECT_CTL
 } TelemetrySubjectIndex;
 
 typedef struct {
@@ -39,7 +41,9 @@ static TelemetrySubscription subscriptions[TELEMETRY_SUBJECT_COUNT] = {
         {"IMUC", 1000, 0, false},
         {"IMUR", 0, 0, false},
         {"MOT", 200, 0, false},
-        {"PID", 100, 0, false}
+        {"PID", 100, 0, false},
+        {"STAT", 500, 0, false},
+        {"CTL", 100, 0, false}
 };
 
 static char command_buffer[TELEMETRY_COMMAND_BUFFER_LENGTH];
@@ -147,18 +151,24 @@ static void Telemetry_SendImu(uint32_t now) {
     Telemetry_SendPayload(payload);
 }
 
-static void Telemetry_SendImur(uint32_t now) {
-    char payload[TELEMETRY_MAX_SENTENCE_LENGTH];
+bool Telemetry_FormatImurPayload(uint32_t now, char *out, size_t out_size) {
     IMU_ST_SENSOR_DATA accel = IMU_GetRawAccelerometer();
     IMU_ST_SENSOR_DATA gyro = IMU_GetRawGyroscope();
     IMU_ST_SENSOR_DATA mag = IMU_GetRawMagnetometer();
 
-    snprintf(payload, sizeof(payload), "IMUR,%lu,%d,%d,%d,%d,%d,%d,%d,%d,%d",
-             (unsigned long) now,
-             accel.s16X, accel.s16Y, accel.s16Z,
-             gyro.s16X, gyro.s16Y, gyro.s16Z,
-             mag.s16X, mag.s16Y, mag.s16Z);
-    Telemetry_SendPayload(payload);
+    int written = snprintf(out, out_size, "IMUR,%lu,%d,%d,%d,%d,%d,%d,%d,%d,%d",
+                           (unsigned long) now,
+                           accel.s16X, accel.s16Y, accel.s16Z,
+                           gyro.s16X, gyro.s16Y, gyro.s16Z,
+                           mag.s16X, mag.s16Y, mag.s16Z);
+    return written > 0 && (size_t) written < out_size;
+}
+
+static void Telemetry_SendImur(uint32_t now) {
+    char payload[TELEMETRY_MAX_SENTENCE_LENGTH];
+    if (Telemetry_FormatImurPayload(now, payload, sizeof(payload))) {
+        Telemetry_SendPayload(payload);
+    }
 }
 
 static void Telemetry_SendImuc(uint32_t now) {
@@ -186,6 +196,29 @@ static void Telemetry_SendMot(uint32_t now) {
     Telemetry_SendPayload(payload);
 }
 
+bool Telemetry_FormatStatPayload(uint32_t now, char *out, size_t out_size) {
+    uint8_t mode = FlightMode_GetMode();
+    char *flight = FlightMode_GetModeString(mode);
+    char *run = FlightMode_GetModeString(FlightMode_GetRunningMode());
+    uint8_t armed = (strcmp(flight, "AUTO") == 0 || strcmp(flight, "MANU") == 0) ? 1U : 0U;
+
+    int written = snprintf(out, out_size, "STAT,%lu,RUN,%s,%s,%u,%u,%u,0,0,0",
+                           (unsigned long) now,
+                           flight,
+                           run,
+                           armed,
+                           RCInput_IsSignalValid(now) ? 1U : 0U,
+                           IMU_IsReady() ? 1U : 0U);
+    return written > 0 && (size_t) written < out_size;
+}
+
+static void Telemetry_SendStat(uint32_t now) {
+    char payload[TELEMETRY_MAX_SENTENCE_LENGTH];
+    if (Telemetry_FormatStatPayload(now, payload, sizeof(payload))) {
+        Telemetry_SendPayload(payload);
+    }
+}
+
 bool Telemetry_FormatPidPayload(uint32_t now, char *out, size_t out_size) {
     int written = snprintf(out, out_size, "PID,%lu,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld",
                            (unsigned long) now,
@@ -204,6 +237,28 @@ bool Telemetry_FormatPidPayload(uint32_t now, char *out, size_t out_size) {
 static void Telemetry_SendPid(uint32_t now) {
     char payload[TELEMETRY_MAX_SENTENCE_LENGTH];
     if (Telemetry_FormatPidPayload(now, payload, sizeof(payload))) {
+        Telemetry_SendPayload(payload);
+    }
+}
+
+bool Telemetry_FormatCtlPayload(uint32_t now, char *out, size_t out_size) {
+    FlightModeControlDebug debug;
+    FlightMode_GetControlDebug(&debug, true);
+
+    int written = snprintf(out, out_size, "CTL,%lu,%u,%u,%u,%u,%02X,%ld",
+                           (unsigned long) now,
+                           debug.mode,
+                           debug.runningMode,
+                           debug.rawThrottle,
+                           debug.slewedThrottle,
+                           debug.flags,
+                           (long) Telemetry_ScaleFloat(debug.yawIntegral, 1.0f));
+    return written > 0 && (size_t) written < out_size;
+}
+
+static void Telemetry_SendCtl(uint32_t now) {
+    char payload[TELEMETRY_MAX_SENTENCE_LENGTH];
+    if (Telemetry_FormatCtlPayload(now, payload, sizeof(payload))) {
         Telemetry_SendPayload(payload);
     }
 }
@@ -230,6 +285,12 @@ static void Telemetry_SendSubject(TelemetrySubjectIndex index, uint32_t now) {
             break;
         case TELEMETRY_SUBJECT_PID:
             Telemetry_SendPid(now);
+            break;
+        case TELEMETRY_SUBJECT_STAT:
+            Telemetry_SendStat(now);
+            break;
+        case TELEMETRY_SUBJECT_CTL:
+            Telemetry_SendCtl(now);
             break;
     }
 }
@@ -278,6 +339,14 @@ void Telemetry_Start(uint32_t now) {
     subscriptions[TELEMETRY_SUBJECT_PID].period_ms = 100;
     subscriptions[TELEMETRY_SUBJECT_PID].enabled = true;
     subscriptions[TELEMETRY_SUBJECT_PID].next_due_ms = now;
+
+    subscriptions[TELEMETRY_SUBJECT_STAT].period_ms = 500;
+    subscriptions[TELEMETRY_SUBJECT_STAT].enabled = true;
+    subscriptions[TELEMETRY_SUBJECT_STAT].next_due_ms = now;
+
+    subscriptions[TELEMETRY_SUBJECT_CTL].period_ms = 100;
+    subscriptions[TELEMETRY_SUBJECT_CTL].enabled = true;
+    subscriptions[TELEMETRY_SUBJECT_CTL].next_due_ms = now;
 
     command_length = 0;
     command_receiving = false;

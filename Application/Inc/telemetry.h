@@ -14,7 +14,10 @@ typedef enum {
 
 uint8_t Telemetry_Checksum(const char *payload);
 bool Telemetry_FormatSentence(const char *payload, char *out, size_t out_size);
+bool Telemetry_FormatStatPayload(uint32_t now, char *out, size_t out_size);
+bool Telemetry_FormatImurPayload(uint32_t now, char *out, size_t out_size);
 bool Telemetry_FormatPidPayload(uint32_t now, char *out, size_t out_size);
+bool Telemetry_FormatCtlPayload(uint32_t now, char *out, size_t out_size);
 
 void Telemetry_Init(void);
 void Telemetry_Start(uint32_t now);

@@ -199,12 +199,18 @@ IMU_ST_SENSOR_DATA IMU_GetRawGyroscope(void) {
 }
 
 IMU_ST_SENSOR_DATA IMU_GetRawMagnetometer(void) {
-    UpdateIMUData();
+    bno055_vector_t v = bno055_getVectorMagnetometer();
+    stMagnRawData.s16X = (int16_t) v.x;
+    stMagnRawData.s16Y = (int16_t) v.y;
+    stMagnRawData.s16Z = (int16_t) v.z;
     return stMagnRawData;
 }
 
 IMU_ST_SENSOR_DATA IMU_GetRawAccelerometer(void) {
-    UpdateIMUData();
+    bno055_vector_t v = bno055_getVectorAccelerometer();
+    stAccelRawData.s16X = (int16_t) v.x;
+    stAccelRawData.s16Y = (int16_t) v.y;
+    stAccelRawData.s16Z = (int16_t) v.z;
     return stAccelRawData;
 }
 

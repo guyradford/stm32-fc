@@ -8,7 +8,7 @@ import unittest
 from dashboard_state import DashboardState, IMUState, MotorState, RCState, StatusState
 from serial_client import TelemetrySerialClient
 from telemetry_mapper import apply_frame, mark_stale, reset_live_state
-from telemetry_protocol import TelemetryError, format_sentence, format_stop, parse_sentence
+from telemetry_protocol import TelemetryError, format_sentence, format_stop, format_sub, parse_sentence
 from telemetry_recorder import TelemetryRecorder
 from widgets import (
     HEALTH_BAD,
@@ -36,6 +36,9 @@ class TelemetryProtocolTests(unittest.TestCase):
     def test_stop_command_formats_with_checksum(self) -> None:
         self.assertEqual("$STOP*18\r\n", format_stop())
 
+    def test_sub_command_formats_with_checksum(self) -> None:
+        self.assertEqual("$SUB,IMUR,10*46\r\n", format_sub("IMUR", 10))
+
     def test_parse_valid_sentence(self) -> None:
         frame = parse_sentence(format_sentence("MOT,1000,10,20,30,40"))
 
@@ -59,6 +62,11 @@ class TelemetryProtocolTests(unittest.TestCase):
         frame = parse_sentence(format_sentence("PID,1000,1,2,3,4,5,6,7,8,9"))
 
         self.assertEqual("PID", frame.subject)
+
+    def test_ctl_sentence_is_first_class(self) -> None:
+        frame = parse_sentence(format_sentence("CTL,1000,20,20,330,328,9C,-184"))
+
+        self.assertEqual("CTL", frame.subject)
 
     def test_parses_live_fc_sample_lines(self) -> None:
         self.assertEqual("RC", parse_sentence(LIVE_RC_LINE).subject)
@@ -153,11 +161,26 @@ class TelemetryMapperTests(unittest.TestCase):
         self.assertEqual(56.0, state.pid.roll_output)
         self.assertFalse(state.pid.stale)
 
+    def test_ctl_mapping_updates_control_debug_state(self) -> None:
+        state = DashboardState()
+        reset_live_state(state)
+
+        apply_frame(state, parse_sentence(format_sentence("CTL,1000,20,20,330,328,9C,-184")), 10.0)
+
+        self.assertEqual(20, state.control.mode)
+        self.assertEqual(20, state.control.run_mode)
+        self.assertEqual(330, state.control.raw_throttle)
+        self.assertEqual(328, state.control.slewed_throttle)
+        self.assertEqual(0x9C, state.control.flags)
+        self.assertEqual(-184.0, state.control.yaw_integral)
+        self.assertFalse(state.control.stale)
+
     def test_stale_keeps_values_but_marks_panels(self) -> None:
         state = DashboardState()
         reset_live_state(state)
         apply_frame(state, parse_sentence(format_sentence("MOT,1000,1,2,3,4")), 10.0)
         apply_frame(state, parse_sentence(LIVE_PID_LINE), 10.0)
+        apply_frame(state, parse_sentence(format_sentence("CTL,1000,20,20,330,328,9C,-184")), 10.0)
 
         mark_stale(state, 12.0)
 
@@ -165,6 +188,8 @@ class TelemetryMapperTests(unittest.TestCase):
         self.assertTrue(state.motors.stale)
         self.assertEqual(90.0, state.pid.yaw_setpoint)
         self.assertTrue(state.pid.stale)
+        self.assertEqual(330, state.control.raw_throttle)
+        self.assertTrue(state.control.stale)
         self.assertFalse(state.status.telemetry_active)
 
 
@@ -240,6 +265,15 @@ class TelemetrySerialClientTests(unittest.TestCase):
         client._process_line(b"n - Telemetry Mode.")  # noqa: SLF001
 
         self.assertEqual([b"n"], fake_serial.writes)
+
+    def test_subscribe_writes_formatted_sub_command(self) -> None:
+        client = TelemetrySerialClient()
+        fake_serial = FakeSerial()
+        client._serial = fake_serial  # noqa: SLF001
+
+        client.subscribe("IMUR", 10)
+
+        self.assertEqual([b"$SUB,IMUR,10*46\r\n"], fake_serial.writes)
 
     def test_live_samples_map_to_visible_dashboard_values(self) -> None:
         state = DashboardState()

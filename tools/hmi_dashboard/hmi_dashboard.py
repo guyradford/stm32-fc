@@ -38,6 +38,7 @@ class HMIDashboardApp:
         self.record_text = tk.StringVar(value="Record")
         self.recorder = TelemetryRecorder()
         self._rx_subject_counts: dict[str, int] = {}
+        self._telemetry_menu_state: str | None = None
         configure_styles(root)
 
         reset_live_state(self.state)
@@ -46,6 +47,7 @@ class HMIDashboardApp:
         root.columnconfigure(0, weight=1)
         root.rowconfigure(2, weight=1)
 
+        self._build_menu()
         self._build_top_bar()
         self.status_strip = StatusStrip(root)
         self.status_strip.grid(row=1, column=0, sticky="ew")
@@ -53,6 +55,17 @@ class HMIDashboardApp:
         self._build_log()
         self._refresh_ports()
         self._schedule_update()
+
+    def _build_menu(self) -> None:
+        self.menu_bar = tk.Menu(self.root)
+        self.telemetry_menu = tk.Menu(self.menu_bar, tearoff=False)
+        self.telemetry_menu.add_command(
+            label="Enable Raw IMU",
+            command=lambda: self._send_subscription("IMUR", 10),
+            state="disabled",
+        )
+        self.menu_bar.add_cascade(label="Telemetry", menu=self.telemetry_menu)
+        self.root.configure(menu=self.menu_bar)
 
     def _build_top_bar(self) -> None:
         top = ttk.Frame(self.root, style="Top.TFrame", padding=(12, 10))
@@ -142,6 +155,7 @@ class HMIDashboardApp:
         self.rc.update_state(self.state.rc)
         self.pid.update_state(self.state)
         self._sync_record_button()
+        self._sync_telemetry_menu()
         self._sync_log()
 
     def _sync_log(self) -> None:
@@ -211,6 +225,22 @@ class HMIDashboardApp:
             self.record_button.configure(state="disabled")
             self.record_text.set("Record")
 
+    def _sync_telemetry_menu(self) -> None:
+        state = "normal" if self.mode.get() == "Live" and self.serial_client.connected else "disabled"
+        if state == self._telemetry_menu_state:
+            return
+        self.telemetry_menu.entryconfigure("Enable Raw IMU", state=state)
+        self._telemetry_menu_state = state
+
+    def _send_subscription(self, subject: str, rate_hz: int) -> None:
+        if self.mode.get() != "Live" or not self.serial_client.connected:
+            self.state.add_log("SUB %s %d skipped: not connected" % (subject, rate_hz))
+            return
+        try:
+            self.serial_client.subscribe(subject, rate_hz)
+        except Exception as exc:
+            self.state.add_log("SUB ERROR %s %d: %s" % (subject, rate_hz, exc))
+
     def _connect(self) -> None:
         if self.mode.get() != "Live":
             self.mode.set("Live")
@@ -229,6 +259,7 @@ class HMIDashboardApp:
 
         self.state.status.connected = True
         self.connect_text.set("Disconnect")
+        self._sync_telemetry_menu()
 
     def _disconnect(self) -> None:
         if self.recorder.active:
@@ -240,6 +271,7 @@ class HMIDashboardApp:
         reset_live_state(self.state)
         self.connect_text.set("Connect")
         self._sync_record_button()
+        self._sync_telemetry_menu()
 
     def _drain_serial_events(self) -> None:
         while True:
@@ -254,7 +286,7 @@ class HMIDashboardApp:
                 except OSError as exc:
                     self.state.add_log("RECORD ERROR %s" % exc)
                     self._stop_recording()
-                if event.frame.subject in ("RC", "IMU", "IMUC", "MOT", "STAT", "PID"):
+                if event.frame.subject in ("RC", "IMU", "IMUC", "IMUR", "MOT", "STAT", "PID", "CTL"):
                     try:
                         apply_frame(self.state, event.frame)
                         subject_count = self._rx_subject_counts.get(event.frame.subject, 0) + 1
