@@ -13,6 +13,7 @@
 #define TEST_FM_STOPPED 0
 #define TEST_FM_RUNNING_AUTO 20
 #define TEST_FM_RUNNING_MANUAL 30
+#define TEST_FM_PREPARING_TO_STOP 15
 
 extern uint8_t FlightMode_Mode;
 extern uint8_t FlightMode_RunningMode;
@@ -45,6 +46,8 @@ extern float demand_pitch_rate;
 extern float demand_roll_rate;
 extern float demand_yaw_rate;
 extern bool FlightMode_PreviousMixerSaturated;
+extern uint16_t FlightMode_SlewedThrottle;
+extern bool FlightMode_SlewedThrottleValid;
 
 void calculate_pid(bool integrate, float dt);
 
@@ -84,6 +87,8 @@ static void reset_flight_mode_state(void) {
     demand_roll_rate = 0.0f;
     demand_yaw_rate = 0.0f;
     FlightMode_PreviousMixerSaturated = false;
+    FlightMode_SlewedThrottle = 0;
+    FlightMode_SlewedThrottleValid = false;
     Output_SetMotorSpeeds(0, 0, 0, 0);
     FakeEscOutput_Reset();
     FakeFlightHardware_Reset();
@@ -311,6 +316,88 @@ static void test_zero_throttle_ignores_auto_level_and_rc_correction(void) {
     assert_all_motors_equal(0);
 }
 
+static void test_upward_throttle_is_not_slew_limited(void) {
+    arm_auto_at_heading(0.0f);
+    set_throttle_and_centered_sticks(140);
+    FakeFlightHardware_SetAngles(0.0f, 0.0f, 0.0f);
+    FakeFlightHardware_SetRates(0.0f, 0.0f, 0.0f);
+    FlightMode_OnTick(40);
+
+    set_throttle_and_centered_sticks(440);
+    FlightMode_OnTick(50);
+
+    TEST_ASSERT_EQUAL_UINT16(440, demand_throttle);
+    assert_all_motors_equal(440);
+}
+
+static void test_downward_throttle_is_slew_limited_while_running(void) {
+    arm_auto_at_heading(0.0f);
+    set_throttle_and_centered_sticks(440);
+    FakeFlightHardware_SetAngles(0.0f, 0.0f, 0.0f);
+    FakeFlightHardware_SetRates(0.0f, 0.0f, 0.0f);
+    FlightMode_OnTick(40);
+
+    set_throttle_and_centered_sticks(140);
+    FlightMode_OnTick(50);
+
+    TEST_ASSERT_EQUAL_UINT16(438, demand_throttle);
+    assert_all_motors_equal(438);
+}
+
+static void test_low_throttle_cutoff_bypasses_throttle_slew(void) {
+    arm_auto_at_heading(0.0f);
+    set_throttle_and_centered_sticks(440);
+    FakeFlightHardware_SetAngles(0.0f, 0.0f, 0.0f);
+    FakeFlightHardware_SetRates(0.0f, 0.0f, 0.0f);
+    FlightMode_OnTick(40);
+
+    set_throttle_and_centered_sticks(FM_CONTROLLED_FLIGHT_THROTTLE);
+    FlightMode_OnTick(50);
+
+    TEST_ASSERT_EQUAL_UINT16(FM_CONTROLLED_FLIGHT_THROTTLE, input_throttle);
+    TEST_ASSERT_EQUAL_UINT16(FM_CONTROLLED_FLIGHT_THROTTLE, demand_throttle);
+    TEST_ASSERT_FALSE(FlightMode_SlewedThrottleValid);
+    assert_all_motors_equal(0);
+}
+
+static void test_disarm_bypasses_throttle_slew(void) {
+    arm_auto_at_heading(0.0f);
+    set_throttle_and_centered_sticks(440);
+    FakeFlightHardware_SetAngles(0.0f, 0.0f, 0.0f);
+    FakeFlightHardware_SetRates(0.0f, 0.0f, 0.0f);
+    FlightMode_OnTick(40);
+
+    FakeFlightHardware_SetRcInput(RC_THROTTLE, 0);
+    FakeFlightHardware_SetRcInput(RC_YAW, 1000);
+    FlightMode_OnTick(50);
+
+    TEST_ASSERT_EQUAL_UINT8(TEST_FM_PREPARING_TO_STOP, FlightMode_GetMode());
+    TEST_ASSERT_FALSE(FlightMode_SlewedThrottleValid);
+    assert_all_motors_equal(0);
+}
+
+static void test_throttle_slew_resets_after_stop_and_rearm(void) {
+    arm_auto_at_heading(0.0f);
+    set_throttle_and_centered_sticks(440);
+    FakeFlightHardware_SetAngles(0.0f, 0.0f, 0.0f);
+    FakeFlightHardware_SetRates(0.0f, 0.0f, 0.0f);
+    FlightMode_OnTick(40);
+
+    set_throttle_and_centered_sticks(FM_CONTROLLED_FLIGHT_THROTTLE);
+    FlightMode_OnTick(50);
+    FakeFlightHardware_SetRcInput(RC_YAW, 1000);
+    FlightMode_OnTick(60);
+    FakeFlightHardware_SetRcInput(RC_YAW, 500);
+    FlightMode_OnTick(70);
+
+    arm_auto_at_heading(0.0f);
+    set_throttle_and_centered_sticks(300);
+    FlightMode_OnTick(120);
+
+    TEST_ASSERT_EQUAL_UINT16(300, demand_throttle);
+    assert_all_motors_equal(300);
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_centered_yaw_holds_arming_heading_without_motor_bias);
@@ -325,5 +412,10 @@ int main(void) {
     RUN_TEST(test_low_throttle_rebases_auto_yaw_target_to_current_heading);
     RUN_TEST(test_full_roll_stick_has_authoritative_auto_level_response);
     RUN_TEST(test_zero_throttle_ignores_auto_level_and_rc_correction);
+    RUN_TEST(test_upward_throttle_is_not_slew_limited);
+    RUN_TEST(test_downward_throttle_is_slew_limited_while_running);
+    RUN_TEST(test_low_throttle_cutoff_bypasses_throttle_slew);
+    RUN_TEST(test_disarm_bypasses_throttle_slew);
+    RUN_TEST(test_throttle_slew_resets_after_stop_and_rearm);
     return UNITY_END();
 }

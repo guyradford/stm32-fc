@@ -57,6 +57,8 @@ int16_t input_pitch = 0;
 int16_t input_roll = 0;
 
 uint16_t demand_throttle = 0;
+uint16_t FlightMode_SlewedThrottle = 0;
+bool FlightMode_SlewedThrottleValid = false;
 float demand_pitch = 0;
 float demand_roll = 0;
 float demand_yaw = 0;
@@ -117,6 +119,34 @@ static bool FlightMode_YawIntegralIsAllowed(bool integrate) {
            demand_throttle >= FM_YAW_INTEGRAL_MIN_THROTTLE;
 }
 
+static void FlightMode_ResetThrottleSlewState(void) {
+    FlightMode_SlewedThrottle = 0;
+    FlightMode_SlewedThrottleValid = false;
+}
+
+static uint16_t FlightMode_ApplyThrottleSlew(uint16_t throttle) {
+    if (!FM_THROTTLE_SLEW_ENABLED) return throttle;
+
+    if (!FlightMode_SlewedThrottleValid || throttle >= FlightMode_SlewedThrottle) {
+        FlightMode_SlewedThrottle = throttle;
+        FlightMode_SlewedThrottleValid = true;
+        return throttle;
+    }
+
+    float max_descent = FM_THROTTLE_DESCENT_SLEW_LIMIT_PER_SECOND * FM_CONTROL_DT_SECONDS;
+    uint16_t max_step = (uint16_t) max_descent;
+    if (max_step < 1U) max_step = 1U;
+
+    uint16_t delta = (uint16_t) (FlightMode_SlewedThrottle - throttle);
+    if (delta <= max_step) {
+        FlightMode_SlewedThrottle = throttle;
+    } else {
+        FlightMode_SlewedThrottle = (uint16_t) (FlightMode_SlewedThrottle - max_step);
+    }
+
+    return FlightMode_SlewedThrottle;
+}
+
 static void FlightMode_ResetPidState(void) {
     pid_i_mem_roll = 0;
     pid_output_roll = 0;
@@ -130,6 +160,7 @@ static void FlightMode_ResetPidState(void) {
     demand_pitch_rate = 0;
     demand_roll_rate = 0;
     demand_yaw_rate = 0;
+    FlightMode_ResetThrottleSlewState();
 }
 
 static void FlightMode_ResetPidIntegralState(void) {
@@ -474,6 +505,8 @@ void FlightMode_OnTick(uint32_t now) {
                 Output_SetMotorSpeeds(0, 0, 0, 0);
                 break;
             }
+
+            demand_throttle = FlightMode_ApplyThrottleSlew(demand_throttle);
 
             if (FlightMode_Mode == FM_RUNNING_MANUAL){
                 MixerMotorSpeeds speeds;
