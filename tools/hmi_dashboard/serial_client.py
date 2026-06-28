@@ -38,6 +38,7 @@ class SerialEvent:
     kind: SerialEventKind
     message: str
     frame: TelemetryFrame | None = None
+    raw_sentence: str | None = None
 
 
 def list_serial_ports() -> list[str]:
@@ -187,7 +188,7 @@ class TelemetrySerialClient:
             self.events.put(SerialEvent("error", "Telemetry parse error: %s" % exc))
             return
 
-        self.events.put(SerialEvent("frame", frame.payload, frame))
+        self.events.put(SerialEvent("frame", frame.payload, frame, line + "\r\n"))
         self._telemetry_seen.set()
 
     def _handshake_loop(self) -> None:
